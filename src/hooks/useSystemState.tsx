@@ -5,7 +5,7 @@ interface SystemState {
   isOn: boolean;
   hasWater: boolean;
   mode: string;
-  swingDirection: string;
+  speed: number;
   timer: number | null;
   outsideTemp: number;
   insideTemp: number;
@@ -21,7 +21,7 @@ const initialState: SystemState = {
   isOn: false,
   hasWater: true,
   mode: 'Off',
-  swingDirection: 'center',
+  speed: 1,
   timer: null,
   outsideTemp: 30.2,
   insideTemp: 28.5,
@@ -114,8 +114,8 @@ export const useSystemState = () => {
     });
   }, [state.hasWater]);
 
-  // Swing control
-  const toggleSwing = useCallback((direction: string) => {
+  // Speed control
+  const changeSpeed = useCallback((direction: 'increase' | 'decrease') => {
     if (!state.isOn) {
       toast({
         title: "System Not Running",
@@ -126,16 +126,18 @@ export const useSystemState = () => {
     }
 
     setState(prev => {
-      const newDirection = prev.swingDirection === direction ? 'center' : direction;
+      const newSpeed = direction === 'increase' 
+        ? Math.min(3, prev.speed + 1)
+        : Math.max(1, prev.speed - 1);
       
       toast({
-        title: "Air Direction Changed",
-        description: `Swing ${newDirection === 'center' ? 'stopped' : newDirection}`,
+        title: "Speed Changed",
+        description: `Speed set to ${newSpeed}`,
       });
 
       return {
         ...prev,
-        swingDirection: newDirection,
+        speed: newSpeed,
       };
     });
   }, [state.isOn]);
@@ -245,7 +247,7 @@ export const useSystemState = () => {
     actions: {
       togglePower,
       setMode,
-      toggleSwing,
+      changeSpeed,
       setTimer,
     },
   };

@@ -58,11 +58,11 @@ const Index = () => {
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          actions.toggleSwing('left');
+          actions.changeSpeed('decrease');
           break;
         case 'ArrowRight':
           e.preventDefault();
-          actions.toggleSwing('right');
+          actions.changeSpeed('increase');
           break;
         case 'KeyH':
           e.preventDefault();
@@ -87,56 +87,106 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Control Panel */}
-          <div className="lg:col-span-1">
+          {/* Left Column - Controls and Status */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Control Panel */}
             <ControlPanel
               mode={state.mode}
               isOn={state.isOn}
-              swingDirection={state.swingDirection}
+              speed={state.speed}
               onModeChange={actions.setMode}
               onPowerToggle={actions.togglePower}
-              onSwingToggle={actions.toggleSwing}
+              onSpeedChange={actions.changeSpeed}
               onTimerSet={actions.setTimer}
               disabled={!state.hasWater}
             />
+            
+            {/* System Status below Controls */}
+            <StatusPanel data={state} />
           </div>
 
-          {/* Fan Display */}
-          <div className="lg:col-span-1 flex items-center justify-center">
-            <div className="panel w-full max-w-md">
-              <div className="panel-header">
-                <span className="text-lg">🌀</span>
-                <h3 className="panel-title">Cooling System</h3>
+          {/* Right Side - Fan and Readings */}
+          <div className="lg:col-span-2">
+            <div className="grid grid-rows-2 gap-6 h-full">
+              {/* Top Right - Fan */}
+              <div className="panel flex items-center justify-center">
+                <div className="panel-header absolute top-4 left-4">
+                  <span className="text-lg">🌀</span>
+                  <h3 className="panel-title">Cooling System</h3>
+                </div>
+                
+                <div className="flex flex-col items-center">
+                  <FanComponent 
+                    isSpinning={state.isOn && state.mode !== 'Off'}
+                    speed={getFanSpeed()}
+                    size="lg"
+                  />
+                  
+                  {/* Mode Display */}
+                  <div className="mt-4 text-center">
+                    <div className="text-2xl font-bold text-primary mb-1">
+                      {state.mode} - Speed {state.speed}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {state.timer && (
+                        <span>Timer: {state.timer}h</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              <div className="flex flex-col items-center">
-                <FanComponent 
-                  isSpinning={state.isOn && state.mode !== 'Off'}
-                  speed={getFanSpeed()}
-                  size="lg"
-                />
-                
-                {/* Mode Display */}
-                <div className="mt-4 text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">
-                    {state.mode}
+              {/* Bottom Right - Temperature and Electrical */}
+              <div className="grid grid-cols-2 gap-6">
+                {/* Temperature */}
+                <div className="panel">
+                  <div className="panel-header">
+                    <span className="text-lg">🌡️</span>
+                    <h3 className="panel-title">Temperatures</h3>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {state.swingDirection !== 'center' && (
-                      <span>Swing: {state.swingDirection}</span>
-                    )}
-                    {state.timer && (
-                      <span>Timer: {state.timer}h</span>
-                    )}
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Outside</span>
+                      <span className="font-semibold text-primary">{state.outsideTemp.toFixed(1)}°C</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Inside</span>
+                      <span className="font-semibold text-primary">{state.insideTemp.toFixed(1)}°C</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Motor</span>
+                      <span className="font-semibold text-primary">{state.motorTemp.toFixed(1)}°C</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-muted-foreground">ΔT</span>
+                      <span className="font-bold text-accent">{state.deltaT.toFixed(1)}°C</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Electrical */}
+                <div className="panel">
+                  <div className="panel-header">
+                    <span className="text-lg">⚡</span>
+                    <h3 className="panel-title">Electrical</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Current</span>
+                      <span className="font-semibold text-primary">{state.currentAmps.toFixed(1)}A</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Voltage</span>
+                      <span className="font-semibold text-primary">{state.voltage.toFixed(0)}V</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-muted-foreground">Power</span>
+                      <span className="font-bold text-accent">{Math.round(state.power)}W</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Status Panel */}
-          <div className="lg:col-span-1">
-            <StatusPanel data={state} />
           </div>
         </div>
 
@@ -168,11 +218,11 @@ const Index = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Swing Left</span>
+                <span className="text-muted-foreground">Speed Down</span>
                 <kbd className="px-2 py-1 bg-muted rounded text-xs">←</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Swing Right</span>
+                <span className="text-muted-foreground">Speed Up</span>
                 <kbd className="px-2 py-1 bg-muted rounded text-xs">→</kbd>
               </div>
               <div className="flex justify-between">

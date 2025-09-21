@@ -5,10 +5,10 @@ import { cn } from '@/lib/utils';
 interface ControlPanelProps {
   mode: string;
   isOn: boolean;
-  swingDirection: string;
+  speed: number;
   onModeChange: (mode: string) => void;
   onPowerToggle: () => void;
-  onSwingToggle: (direction: string) => void;
+  onSpeedChange: (direction: 'increase' | 'decrease') => void;
   onTimerSet: () => void;
   disabled?: boolean;
 }
@@ -16,20 +16,13 @@ interface ControlPanelProps {
 const ControlPanel: React.FC<ControlPanelProps> = ({
   mode,
   isOn,
-  swingDirection,
+  speed,
   onModeChange,
   onPowerToggle,
-  onSwingToggle,
+  onSpeedChange,
   onTimerSet,
   disabled = false
 }) => {
-  const modes = [
-    { key: 'Cool', label: 'Cool', icon: '❄️' },
-    { key: 'Fan', label: 'Fan', icon: '🌀' },
-    { key: 'Exhaust', label: 'Exhaust', icon: '💨' },
-    { key: 'Auto', label: 'Auto', icon: '🔄' }
-  ];
-
   return (
     <div className="panel">
       <div className="panel-header">
@@ -37,84 +30,91 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <h3 className="panel-title">System Controls</h3>
       </div>
       
-      {/* Power Control */}
-      <div className="mb-6">
+      {/* Control Grid - 2 columns, 4 rows */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Row 1: Cool, On/Off */}
+        <Button
+          onClick={() => onModeChange('Cool')}
+          className={cn(
+            "btn-control",
+            mode === 'Cool' ? "active" : ""
+          )}
+          disabled={disabled}
+        >
+          <span className="mr-1">❄️</span>
+          COOL
+        </Button>
         <Button
           onClick={onPowerToggle}
           className={cn(
-            "btn-control w-full py-4 text-base",
+            "btn-control",
             isOn ? "active" : ""
           )}
           disabled={disabled}
         >
-          <span className="mr-2">{isOn ? '🟢' : '🔴'}</span>
-          {isOn ? 'SYSTEM ON' : 'SYSTEM OFF'}
+          <span className="mr-1">{isOn ? '🟢' : '🔴'}</span>
+          {isOn ? 'ON' : 'OFF'}
         </Button>
-      </div>
 
-      {/* Mode Controls */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-          Operating Mode
-        </h4>
-        <div className="control-grid">
-          {modes.map((modeItem) => (
-            <Button
-              key={modeItem.key}
-              onClick={() => onModeChange(modeItem.key)}
-              className={cn(
-                "btn-control",
-                mode === modeItem.key && isOn ? "active" : ""
-              )}
-              disabled={disabled || !isOn}
-            >
-              <span className="mr-1">{modeItem.icon}</span>
-              {modeItem.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Swing Controls */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-          Air Direction
-        </h4>
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={() => onSwingToggle('left')}
-            className={cn(
-              "btn-control",
-              swingDirection === 'left' ? "active" : ""
-            )}
-            disabled={disabled || !isOn}
-          >
-            <span className="mr-1">⬅️</span>
-            Left
-          </Button>
-          <Button
-            onClick={() => onSwingToggle('right')}
-            className={cn(
-              "btn-control",
-              swingDirection === 'right' ? "active" : ""
-            )}
-            disabled={disabled || !isOn}
-          >
-            <span className="mr-1">➡️</span>
-            Right
-          </Button>
-        </div>
-      </div>
-
-      {/* Timer Control */}
-      <div>
+        {/* Row 2: Fan, Timer */}
+        <Button
+          onClick={() => onModeChange('Fan')}
+          className={cn(
+            "btn-control",
+            mode === 'Fan' ? "active" : ""
+          )}
+          disabled={disabled}
+        >
+          <span className="mr-1">🌀</span>
+          FAN
+        </Button>
         <Button
           onClick={onTimerSet}
-          className="btn-control w-full"
+          className="btn-control"
           disabled={disabled || !isOn}
         >
-          <span className="mr-2">⏰</span>
-          Set Timer
+          <span className="mr-1">⏰</span>
+          TIMER
+        </Button>
+
+        {/* Row 3: Exhaust, Auto */}
+        <Button
+          onClick={() => onModeChange('Exhaust')}
+          className={cn(
+            "btn-control",
+            mode === 'Exhaust' ? "active" : ""
+          )}
+          disabled={disabled}
+        >
+          <span className="mr-1">💨</span>
+          EXHAUST
+        </Button>
+        <Button
+          onClick={() => onModeChange('Auto')}
+          className={cn(
+            "btn-control",
+            mode === 'Auto' ? "active" : ""
+          )}
+          disabled={disabled}
+        >
+          <span className="mr-1">🔄</span>
+          AUTO
+        </Button>
+
+        {/* Row 4: Speed Controls */}
+        <Button
+          onClick={() => onSpeedChange('decrease')}
+          className="btn-control"
+          disabled={disabled || !isOn}
+        >
+          &lt;&lt;
+        </Button>
+        <Button
+          onClick={() => onSpeedChange('increase')}
+          className="btn-control"
+          disabled={disabled || !isOn}
+        >
+          &gt;&gt;
         </Button>
       </div>
     </div>
