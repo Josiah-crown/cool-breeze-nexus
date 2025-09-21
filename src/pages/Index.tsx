@@ -19,13 +19,10 @@ const Index = () => {
   };
 
   const getFanSpeed = () => {
-    if (!state.isOn) return 'slow';
-    switch (state.mode) {
-      case 'Cool': return 'fast';
-      case 'Fan': return 'medium';
-      case 'Auto': return state.deltaT > 5 ? 'fast' : 'medium';
-      default: return 'slow';
-    }
+    if (!state.isOn || !state.fanMode) return 'slow';
+    if (state.coolMode) return 'fast';
+    if (state.exhaustMode) return 'medium';
+    return 'medium';
   };
 
   // Keyboard shortcuts
@@ -38,19 +35,15 @@ const Index = () => {
           break;
         case 'KeyC':
           e.preventDefault();
-          actions.setMode('Cool');
+          actions.toggleCool();
           break;
         case 'KeyF':
           e.preventDefault();
-          actions.setMode('Fan');
+          actions.toggleFan();
           break;
         case 'KeyE':
           e.preventDefault();
-          actions.setMode('Exhaust');
-          break;
-        case 'KeyA':
-          e.preventDefault();
-          actions.setMode('Auto');
+          actions.toggleExhaust();
           break;
         case 'KeyT':
           e.preventDefault();
@@ -91,11 +84,15 @@ const Index = () => {
           <div className="lg:col-span-1 space-y-6">
             {/* Control Panel */}
             <ControlPanel
-              mode={state.mode}
               isOn={state.isOn}
+              coolMode={state.coolMode}
+              fanMode={state.fanMode}
+              exhaustMode={state.exhaustMode}
               speed={state.speed}
-              onModeChange={actions.setMode}
               onPowerToggle={actions.togglePower}
+              onCoolToggle={actions.toggleCool}
+              onFanToggle={actions.toggleFan}
+              onExhaustToggle={actions.toggleExhaust}
               onSpeedChange={actions.changeSpeed}
               onTimerSet={actions.setTimer}
               disabled={!state.hasWater}
@@ -117,7 +114,7 @@ const Index = () => {
                 
                 <div className="flex flex-col items-center">
                   <FanComponent 
-                    isSpinning={state.isOn && state.mode !== 'Off'}
+                    isSpinning={state.isOn && state.fanMode}
                     speed={getFanSpeed()}
                     size="lg"
                   />
@@ -125,7 +122,7 @@ const Index = () => {
                   {/* Mode Display */}
                   <div className="mt-4 text-center">
                     <div className="text-2xl font-bold text-primary mb-1">
-                      {state.mode} - Speed {state.speed}
+                      {state.coolMode && 'Cool'} {state.fanMode && 'Fan'} {state.exhaustMode && 'Exhaust'} - Speed {state.speed}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {state.timer && (
@@ -136,56 +133,6 @@ const Index = () => {
                 </div>
               </div>
               
-              {/* Bottom Right - Temperature and Electrical */}
-              <div className="grid grid-cols-2 gap-6">
-                {/* Temperature */}
-                <div className="panel">
-                  <div className="panel-header">
-                    <span className="text-lg">🌡️</span>
-                    <h3 className="panel-title">Temperatures</h3>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Outside</span>
-                      <span className="font-semibold text-primary">{state.outsideTemp.toFixed(1)}°C</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Inside</span>
-                      <span className="font-semibold text-primary">{state.insideTemp.toFixed(1)}°C</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Motor</span>
-                      <span className="font-semibold text-primary">{state.motorTemp.toFixed(1)}°C</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-muted-foreground">ΔT</span>
-                      <span className="font-bold text-accent">{state.deltaT.toFixed(1)}°C</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Electrical */}
-                <div className="panel">
-                  <div className="panel-header">
-                    <span className="text-lg">⚡</span>
-                    <h3 className="panel-title">Electrical</h3>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Current</span>
-                      <span className="font-semibold text-primary">{state.currentAmps.toFixed(1)}A</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Voltage</span>
-                      <span className="font-semibold text-primary">{state.voltage.toFixed(0)}V</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-muted-foreground">Power</span>
-                      <span className="font-bold text-accent">{Math.round(state.power)}W</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -212,8 +159,8 @@ const Index = () => {
                 <kbd className="px-2 py-1 bg-muted rounded text-xs">F</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Auto Mode</span>
-                <kbd className="px-2 py-1 bg-muted rounded text-xs">A</kbd>
+                <span className="text-muted-foreground">Exhaust Mode</span>
+                <kbd className="px-2 py-1 bg-muted rounded text-xs">E</kbd>
               </div>
             </div>
             <div className="space-y-2">

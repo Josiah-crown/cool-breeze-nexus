@@ -3,22 +3,30 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface ControlPanelProps {
-  mode: string;
   isOn: boolean;
+  coolMode: boolean;
+  fanMode: boolean;
+  exhaustMode: boolean;
   speed: number;
-  onModeChange: (mode: string) => void;
   onPowerToggle: () => void;
+  onCoolToggle: () => void;
+  onFanToggle: () => void;
+  onExhaustToggle: () => void;
   onSpeedChange: (direction: 'increase' | 'decrease') => void;
   onTimerSet: () => void;
   disabled?: boolean;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
-  mode,
   isOn,
+  coolMode,
+  fanMode,
+  exhaustMode,
   speed,
-  onModeChange,
   onPowerToggle,
+  onCoolToggle,
+  onFanToggle,
+  onExhaustToggle,
   onSpeedChange,
   onTimerSet,
   disabled = false
@@ -34,12 +42,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       <div className="grid grid-cols-2 gap-3 mb-6">
         {/* Row 1: Cool, On/Off */}
         <Button
-          onClick={() => onModeChange('Cool')}
+          onClick={onCoolToggle}
           className={cn(
             "btn-control",
-            mode === 'Cool' ? "active" : ""
+            coolMode ? "active" : ""
           )}
-          disabled={disabled}
+          disabled={disabled || !isOn}
         >
           <span className="mr-1">❄️</span>
           COOL
@@ -58,12 +66,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
         {/* Row 2: Fan, Timer */}
         <Button
-          onClick={() => onModeChange('Fan')}
+          onClick={onFanToggle}
           className={cn(
             "btn-control",
-            mode === 'Fan' ? "active" : ""
+            fanMode ? "active" : ""
           )}
-          disabled={disabled}
+          disabled={disabled || !isOn}
         >
           <span className="mr-1">🌀</span>
           FAN
@@ -79,23 +87,23 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
         {/* Row 3: Exhaust, Auto */}
         <Button
-          onClick={() => onModeChange('Exhaust')}
+          onClick={onExhaustToggle}
           className={cn(
             "btn-control",
-            mode === 'Exhaust' ? "active" : ""
+            exhaustMode ? "active" : ""
           )}
-          disabled={disabled}
+          disabled={disabled || !isOn}
         >
           <span className="mr-1">💨</span>
           EXHAUST
         </Button>
         <Button
-          onClick={() => onModeChange('Auto')}
+          onClick={onExhaustToggle}
           className={cn(
             "btn-control",
-            mode === 'Auto' ? "active" : ""
+            exhaustMode ? "active" : ""
           )}
-          disabled={disabled}
+          disabled={disabled || !isOn}
         >
           <span className="mr-1">🔄</span>
           AUTO

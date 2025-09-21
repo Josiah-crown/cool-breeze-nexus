@@ -13,8 +13,8 @@ const FanComponent: React.FC<FanComponentProps> = ({
 }) => {
   const sizeClasses = {
     sm: 'w-32 h-32',
-    md: 'w-48 h-48',
-    lg: 'w-64 h-64'
+    md: 'w-80 h-80', 
+    lg: 'w-96 h-96'
   };
 
   const speedDuration = {

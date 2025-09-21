@@ -4,7 +4,9 @@ import { toast } from '@/hooks/use-toast';
 interface SystemState {
   isOn: boolean;
   hasWater: boolean;
-  mode: string;
+  coolMode: boolean;
+  fanMode: boolean;
+  exhaustMode: boolean;
   speed: number;
   timer: number | null;
   outsideTemp: number;
@@ -20,7 +22,9 @@ interface SystemState {
 const initialState: SystemState = {
   isOn: false,
   hasWater: true,
-  mode: 'Off',
+  coolMode: false,
+  fanMode: false,
+  exhaustMode: false,
   speed: 1,
   timer: null,
   outsideTemp: 30.2,
@@ -39,9 +43,7 @@ export const useSystemState = () => {
   // Calculate derived values
   useEffect(() => {
     const deltaT = state.outsideTemp - state.insideTemp;
-    const isCooling = state.isOn && 
-                     (state.mode === 'Cool' || state.mode === 'Auto') && 
-                     deltaT > 2;
+    const isCooling = state.isOn && state.coolMode && deltaT > 2;
     
     setState(prev => ({
       ...prev,
@@ -49,11 +51,11 @@ export const useSystemState = () => {
       isCooling,
       power: prev.isOn ? prev.currentAmps * prev.voltage : 0
     }));
-  }, [state.outsideTemp, state.insideTemp, state.isOn, state.mode, state.currentAmps, state.voltage]);
+  }, [state.outsideTemp, state.insideTemp, state.isOn, state.coolMode, state.currentAmps, state.voltage]);
 
   // Power control
   const togglePower = useCallback(() => {
-    if (!state.hasWater && state.mode === 'Off') {
+    if (!state.hasWater && !state.isOn) {
       toast({
         title: "Water Level Low",
         description: "Please check water supply before starting system.",
@@ -64,55 +66,109 @@ export const useSystemState = () => {
 
     setState(prev => {
       const newIsOn = !prev.isOn;
-      const newMode = newIsOn ? 'Cool' : 'Off';
-      const newCurrent = newIsOn ? getCurrentForMode('Cool') : 0;
       
       toast({
         title: newIsOn ? "System Powered ON" : "System Powered OFF",
-        description: newIsOn ? "Cool mode activated" : "All systems stopped",
+        description: newIsOn ? "System ready" : "All systems stopped",
         variant: newIsOn ? "default" : "destructive",
       });
 
       return {
         ...prev,
         isOn: newIsOn,
-        mode: newMode,
-        currentAmps: newCurrent,
+        coolMode: newIsOn ? prev.coolMode : false,
+        fanMode: newIsOn ? prev.fanMode : false,
+        exhaustMode: newIsOn ? prev.exhaustMode : false,
+        currentAmps: newIsOn ? getCurrentForModes(prev.coolMode, prev.fanMode, prev.exhaustMode) : 0,
         motorTemp: newIsOn ? 35.0 : 25.0,
       };
     });
-  }, [state.hasWater, state.mode]);
+  }, [state.hasWater]);
 
   // Mode control
-  const setMode = useCallback((newMode: string) => {
-    if (!state.hasWater && newMode !== 'Off') {
+  const toggleCool = useCallback(() => {
+    if (!state.hasWater) {
       toast({
         title: "Water Level Low",
-        description: "Cannot change mode without adequate water supply.",
+        description: "Cannot activate cooling without water supply.",
         variant: "destructive",
       });
       return;
     }
 
     setState(prev => {
-      const wasOff = prev.mode === 'Off';
-      const isOn = newMode !== 'Off';
-      const current = isOn ? getCurrentForMode(newMode) : 0;
-
+      const newCoolMode = !prev.coolMode;
+      const newFanMode = newCoolMode ? true : prev.fanMode; // Auto-enable fan when cool is on
+      
       toast({
-        title: wasOff && isOn ? "System Powered ON" : "Mode Changed",
-        description: `${newMode} mode ${isOn ? 'activated' : 'deactivated'}`,
+        title: newCoolMode ? "Cool Mode ON" : "Cool Mode OFF",
+        description: newCoolMode ? "Cooling activated, fan enabled" : "Cooling deactivated",
       });
 
       return {
         ...prev,
-        isOn,
-        mode: newMode,
-        currentAmps: current,
-        motorTemp: isOn ? 35.0 : 25.0,
+        coolMode: newCoolMode,
+        fanMode: newFanMode,
+        currentAmps: getCurrentForModes(newCoolMode, newFanMode, prev.exhaustMode),
       };
     });
   }, [state.hasWater]);
+
+  const toggleFan = useCallback(() => {
+    if (!state.isOn) {
+      toast({
+        title: "System Not Running",
+        description: "Please turn the system on first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setState(prev => {
+      const newFanMode = !prev.fanMode;
+      
+      toast({
+        title: newFanMode ? "Fan Mode ON" : "Fan Mode OFF",
+        description: newFanMode ? "Fan activated" : "Fan deactivated",
+      });
+
+      return {
+        ...prev,
+        fanMode: newFanMode,
+        currentAmps: getCurrentForModes(prev.coolMode, newFanMode, prev.exhaustMode),
+      };
+    });
+  }, [state.isOn]);
+
+  const toggleExhaust = useCallback(() => {
+    if (!state.isOn) {
+      toast({
+        title: "System Not Running",
+        description: "Please turn the system on first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setState(prev => {
+      const newExhaustMode = !prev.exhaustMode;
+      const newFanMode = newExhaustMode ? true : prev.fanMode; // Auto-enable fan when exhaust is on
+      const newCoolMode = newExhaustMode ? false : prev.coolMode; // Turn off cool when exhaust is on
+      
+      toast({
+        title: newExhaustMode ? "Exhaust Mode ON" : "Exhaust Mode OFF",
+        description: newExhaustMode ? "Exhaust activated, cool disabled" : "Exhaust deactivated",
+      });
+
+      return {
+        ...prev,
+        exhaustMode: newExhaustMode,
+        fanMode: newFanMode,
+        coolMode: newCoolMode,
+        currentAmps: getCurrentForModes(newCoolMode, newFanMode, newExhaustMode),
+      };
+    });
+  }, [state.isOn]);
 
   // Speed control
   const changeSpeed = useCallback((direction: 'increase' | 'decrease') => {
@@ -181,7 +237,14 @@ export const useSystemState = () => {
 
       // Simulate timer countdown (in real app, this would be handled by backend)
       setTimeout(() => {
-        setMode('Off');
+        setState(prev => ({
+          ...prev,
+          isOn: false,
+          coolMode: false,
+          fanMode: false,
+          exhaustMode: false,
+          currentAmps: 0,
+        }));
         toast({
           title: "Auto-Off Timer",
           description: "System powered off automatically.",
@@ -189,7 +252,7 @@ export const useSystemState = () => {
         });
       }, timerHours * 60 * 60 * 1000);
     }
-  }, [state.isOn, setMode]);
+  }, [state.isOn]);
 
   // Environment simulation
   useEffect(() => {
@@ -199,8 +262,8 @@ export const useSystemState = () => {
         newOutsideTemp = Math.max(15, Math.min(45, newOutsideTemp));
 
         let newInsideTemp = prev.insideTemp;
-        if (prev.isOn && prev.mode !== 'Off') {
-          const coolingRate = getCoolingRate(prev.mode);
+        if (prev.isOn && (prev.coolMode || prev.fanMode || prev.exhaustMode)) {
+          const coolingRate = getCoolingRate(prev.coolMode, prev.fanMode, prev.exhaustMode);
           newInsideTemp = Math.max(18, prev.insideTemp - coolingRate);
         } else {
           // Temperature rises when off
@@ -246,7 +309,9 @@ export const useSystemState = () => {
     state,
     actions: {
       togglePower,
-      setMode,
+      toggleCool,
+      toggleFan,
+      toggleExhaust,
       changeSpeed,
       setTimer,
     },
@@ -254,22 +319,18 @@ export const useSystemState = () => {
 };
 
 // Helper functions
-const getCurrentForMode = (mode: string): number => {
-  const currentMap: Record<string, number> = {
-    'Cool': 4.2,
-    'Fan': 3.1,
-    'Exhaust': 2.8,
-    'Auto': 3.8,
-  };
-  return currentMap[mode] || 0;
+const getCurrentForModes = (coolMode: boolean, fanMode: boolean, exhaustMode: boolean): number => {
+  let current = 0;
+  if (coolMode) current += 4.2;
+  if (fanMode) current += 3.1;
+  if (exhaustMode) current += 2.8;
+  return current;
 };
 
-const getCoolingRate = (mode: string): number => {
-  const rateMap: Record<string, number> = {
-    'Cool': 0.3,
-    'Fan': 0.1,
-    'Exhaust': 0.05,
-    'Auto': 0.25,
-  };
-  return rateMap[mode] || 0;
+const getCoolingRate = (coolMode: boolean, fanMode: boolean, exhaustMode: boolean): number => {
+  let rate = 0;
+  if (coolMode) rate += 0.3;
+  if (fanMode) rate += 0.1;
+  if (exhaustMode) rate += 0.05;
+  return rate;
 };
