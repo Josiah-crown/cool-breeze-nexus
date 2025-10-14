@@ -62,56 +62,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      console.log('Loading profile for user:', supabaseUser.id);
-      
-      // Get user profile
+      console.log('Loading/initializing profile for user:', supabaseUser.id);
+
+      // 1) Ensure profile exists (use maybeSingle to avoid throwing on empty)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('name')
+        .select('id, name')
         .eq('id', supabaseUser.id)
-        .single();
-
-      if (profileError) {
-        console.error('Profile error:', profileError);
-        throw profileError;
-      }
+        .maybeSingle();
+      if (profileError) throw profileError;
 
       if (!profile) {
-        console.error('No profile found for user');
-        throw new Error('Profile not found');
+        const defaultName =
+          (supabaseUser.user_metadata as any)?.name ||
+          supabaseUser.email?.split('@')[0] ||
+          'New User';
+
+        const { error: insertProfileError } = await supabase.from('profiles').insert({
+          id: supabaseUser.id,
+          name: defaultName,
+          email: supabaseUser.email,
+          cell_number: '',
+          country: '',
+          state: '',
+          city: '',
+          street: '',
+          suburb: '',
+          full_name_business: defaultName,
+        });
+        if (insertProfileError) throw insertProfileError;
       }
 
-      // Get user role
+      // 2) Ensure role exists (default to 'client')
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', supabaseUser.id)
-        .single();
-
-      if (roleError) {
-        console.error('Role error:', roleError);
-        throw roleError;
-      }
+        .maybeSingle();
+      if (roleError) throw roleError;
 
       if (!roleData) {
-        console.error('No role found for user');
-        throw new Error('Role not found');
+        const { error: insertRoleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: supabaseUser.id, role: 'client' });
+        if (insertRoleError) throw insertRoleError;
       }
 
-      console.log('User loaded successfully:', { id: supabaseUser.id, role: roleData.role });
+      // 3) Fetch final values and set user
+      const [{ data: finalProfile }, { data: finalRole }] = await Promise.all([
+        supabase.from('profiles').select('name').eq('id', supabaseUser.id).single(),
+        supabase.from('user_roles').select('role').eq('user_id', supabaseUser.id).single(),
+      ]);
 
       setUser({
         id: supabaseUser.id,
         email: supabaseUser.email!,
-        role: roleData.role as UserRole,
-        name: profile.name,
+        role: (finalRole as any).role as UserRole,
+        name: (finalProfile as any).name,
       });
     } catch (error) {
-      console.error('Error loading user profile:', error);
-      // If profile/role loading fails, sign out the user
-      await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
+      console.error('Error loading/initializing user profile:', error);
+      // Fallback: set minimal user so app can proceed
+      setUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        role: 'client',
+        name: supabaseUser.email?.split('@')[0] || 'User',
+      });
     } finally {
       setIsLoading(false);
     }
