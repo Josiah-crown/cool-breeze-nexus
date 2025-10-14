@@ -84,11 +84,13 @@ const MachineCard: React.FC<MachineCardProps> = ({ machine, onClick, ownerName }
           label="Cool"
           size="sm"
         />
-        <StatusLight
-          status={machine.hasWater ? 'active' : 'error'}
-          label="Water"
-          size="sm"
-        />
+        {machine.type !== 'airconditioner' && (
+          <StatusLight
+            status={machine.hasWater ? 'active' : 'error'}
+            label="Water"
+            size="sm"
+          />
+        )}
         <StatusLight
           status={
             Math.abs(machine.deltaT) >= 5 && Math.abs(machine.deltaT) <= 15
