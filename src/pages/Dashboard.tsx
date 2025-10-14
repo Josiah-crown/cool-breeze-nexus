@@ -155,25 +155,23 @@ const Dashboard: React.FC = () => {
                 </p>
               </div>
 
-              {clients.length > 0 && (
-                <div className="flex gap-3 items-center">
-                  <Users className="h-5 w-5 text-muted-foreground" />
-                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Machines</SelectItem>
-                      <SelectItem value={user.id}>My Machines</SelectItem>
-                      {clients.map(client => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="flex gap-3 items-center">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger className="w-[200px] bg-card">
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="all">All Machines</SelectItem>
+                    <SelectItem value={user.id}>My Machines</SelectItem>
+                    {clients.map(client => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -194,7 +192,7 @@ const Dashboard: React.FC = () => {
               <div className="text-center py-12">
                 <p className="text-muted-foreground text-lg">No machines found</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  {selectedUserId !== 'all' ? 'This user has no machines' : 'No machines available'}
+                  {selectedUserId !== 'all' ? 'This user has no machines' : 'Click "Add Machine" to create your first machine'}
                 </p>
               </div>
             )}
