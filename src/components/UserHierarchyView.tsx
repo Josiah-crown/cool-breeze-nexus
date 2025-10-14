@@ -44,7 +44,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
             value={admin.id}
             className={`border-2 rounded-lg bg-card/50 backdrop-blur-sm ${
               hasFailing 
-                ? 'border-destructive/40 animate-pulse' 
+                ? 'border-destructive/40' 
                 : 'border-primary/20'
             }`}
           >
@@ -105,7 +105,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                       value={client.id}
                       className={`border rounded-md bg-card ${
                         clientHasFailing 
-                          ? 'border-destructive/40 animate-pulse' 
+                          ? 'border-destructive/40' 
                           : 'border-border'
                       }`}
                     >
