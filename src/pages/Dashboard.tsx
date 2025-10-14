@@ -81,8 +81,10 @@ const Dashboard: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">On</p>
-                  <p className={`text-xl font-bold mt-1 ${machines.filter(m => m.isOn).length > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {machines.filter(m => m.isOn).length}
+                  <p className="text-xl font-bold mt-1">
+                    <span className="text-green-500">{machines.filter(m => m.isOn).length}</span>
+                    <span className="text-muted-foreground"> | </span>
+                    <span className="text-red-500">{machines.filter(m => !m.isOn).length}</span>
                   </p>
                 </div>
               </div>
@@ -90,8 +92,10 @@ const Dashboard: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected</p>
-                  <p className={`text-xl font-bold mt-1 ${machines.filter(m => m.isConnected).length > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {machines.filter(m => m.isConnected).length}
+                  <p className="text-xl font-bold mt-1">
+                    <span className="text-green-500">{machines.filter(m => m.isConnected).length}</span>
+                    <span className="text-muted-foreground"> | </span>
+                    <span className="text-red-500">{machines.filter(m => !m.isConnected).length}</span>
                   </p>
                 </div>
               </div>
