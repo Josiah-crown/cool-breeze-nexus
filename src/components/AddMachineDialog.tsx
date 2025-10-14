@@ -63,16 +63,30 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
         setAssignableUsers((profiles || []).map(p => ({ ...p, role: 'admin' })));
       } else if (userRole === 'admin') {
         // Admin can assign to their clients
-        const { data, error } = await supabase
+        const { data: assignments, error: assignError } = await supabase
           .from('client_admin_assignments')
-          .select('client_id, profiles!client_admin_assignments_client_id_fkey(name)')
+          .select('client_id')
           .eq('admin_id', ownerId);
 
-        if (error) throw error;
+        if (assignError) throw assignError;
 
-        const userList = (data || []).map((assignment: any) => ({
-          id: assignment.client_id,
-          name: assignment.profiles?.name || 'Unknown',
+        const clientIds = (assignments || []).map((a: any) => a.client_id);
+
+        if (clientIds.length === 0) {
+          setAssignableUsers([]);
+          return;
+        }
+
+        const { data: clientProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', clientIds);
+
+        if (profilesError) throw profilesError;
+
+        const userList = (clientProfiles || []).map((p: any) => ({
+          id: p.id,
+          name: p.name,
           role: 'client',
         }));
 

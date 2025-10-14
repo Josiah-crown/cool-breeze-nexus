@@ -179,6 +179,11 @@ const Dashboard: React.FC = () => {
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="all">All Machines</SelectItem>
                     <SelectItem value={user.id}>My Machines</SelectItem>
+                    {admins.map((admin) => (
+                      <SelectItem key={admin.id} value={admin.id}>
+                        {admin.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
