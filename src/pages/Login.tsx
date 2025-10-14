@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -13,8 +14,13 @@ const Login: React.FC = () => {
   const [name, setName] = useState('');
   const [isSignup, setIsSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Replace with your actual reCAPTCHA site key
+  const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Test key
 
   useEffect(() => {
     if (user) {
@@ -24,6 +30,12 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSignup && !recaptchaToken) {
+      toast.error('Please complete the reCAPTCHA verification');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -36,6 +48,7 @@ const Login: React.FC = () => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
+            captchaToken: recaptchaToken || undefined,
           },
         });
 
@@ -70,19 +83,26 @@ const Login: React.FC = () => {
 
         if (roleError) throw roleError;
 
-        toast.success('Account created successfully! Please log in.');
-        setIsSignup(false);
-        setName('');
-        setPassword('');
+        // Redirect to email confirmation page
+        navigate('/email-confirmation');
       } else {
         await login(email, password);
         toast.success('Login successful!');
       }
     } catch (error: any) {
       toast.error(error.message || (isSignup ? 'Failed to create account' : 'Invalid credentials'));
+      // Reset reCAPTCHA on error
+      if (isSignup && recaptchaRef.current) {
+        recaptchaRef.current.reset();
+        setRecaptchaToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRecaptchaChange = (token: string | null) => {
+    setRecaptchaToken(token);
   };
 
   return (
@@ -134,7 +154,20 @@ const Login: React.FC = () => {
                 minLength={6}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            {isSignup && (
+              <div className="flex justify-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={handleRecaptchaChange}
+                />
+              </div>
+            )}
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || (isSignup && !recaptchaToken)}
+            >
               {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
             </Button>
             <Button
@@ -145,6 +178,10 @@ const Login: React.FC = () => {
                 setIsSignup(!isSignup);
                 setName('');
                 setPassword('');
+                setRecaptchaToken(null);
+                if (recaptchaRef.current) {
+                  recaptchaRef.current.reset();
+                }
               }}
             >
               {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
