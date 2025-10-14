@@ -259,7 +259,10 @@ const Dashboard: React.FC = () => {
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-2">Machines</h2>
                 <p className="text-muted-foreground">
-                  {filteredMachines.length} {filteredMachines.length === 1 ? 'machine' : 'machines'} {selectedUserId !== 'all' ? 'for selected user' : 'total'}
+                  {selectedUserId === 'all' 
+                    ? 'All machines organized by owner'
+                    : `${filteredMachines.length} ${filteredMachines.length === 1 ? 'machine' : 'machines'} for selected user`
+                  }
                 </p>
               </div>
 
@@ -282,30 +285,96 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredMachines.map((machine) => {
-                const owner = users.find(u => u.id === machine.ownerId);
-                return (
-                  <MachineCard
-                    key={machine.id}
-                    machine={machine}
-                    onClick={() => setSelectedMachine(machine)}
-                    ownerName={owner?.name}
-                    onDelete={handleDeleteMachine}
-                    onChangeOwner={handleChangeOwner}
-                    showManagement={user.role === 'admin'}
-                  />
-                );
-              })}
-            </div>
+            {selectedUserId === 'all' ? (
+              <>
+                {/* Admin's Own Machines */}
+                {filteredMachines.filter(m => m.ownerId === user.id).length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold text-foreground mb-4">My Machines</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredMachines.filter(m => m.ownerId === user.id).map((machine) => {
+                        const owner = users.find(u => u.id === machine.ownerId);
+                        return (
+                          <MachineCard
+                            key={machine.id}
+                            machine={machine}
+                            onClick={() => setSelectedMachine(machine)}
+                            ownerName={owner?.name}
+                            onDelete={handleDeleteMachine}
+                            onChangeOwner={handleChangeOwner}
+                            showManagement={true}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-            {filteredMachines.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">No machines found</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {selectedUserId !== 'all' ? 'This user has no machines' : 'Click "Add Machine" to create your first machine'}
-                </p>
-              </div>
+                {/* Client Sections */}
+                {clients.map((client) => {
+                  const clientMachines = filteredMachines.filter(m => m.ownerId === client.id);
+                  if (clientMachines.length === 0) return null;
+
+                  return (
+                    <div key={client.id} className="mb-8">
+                      <h3 className="text-xl font-semibold text-foreground mb-4">{client.name}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {clientMachines.map((machine) => {
+                          const owner = users.find(u => u.id === machine.ownerId);
+                          return (
+                            <MachineCard
+                              key={machine.id}
+                              machine={machine}
+                              onClick={() => setSelectedMachine(machine)}
+                              ownerName={owner?.name}
+                              onDelete={handleDeleteMachine}
+                              onChangeOwner={handleChangeOwner}
+                              showManagement={true}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {filteredMachines.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground text-lg">No machines found</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Click "Add Machine" to create your first machine
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredMachines.map((machine) => {
+                    const owner = users.find(u => u.id === machine.ownerId);
+                    return (
+                      <MachineCard
+                        key={machine.id}
+                        machine={machine}
+                        onClick={() => setSelectedMachine(machine)}
+                        ownerName={owner?.name}
+                        onDelete={handleDeleteMachine}
+                        onChangeOwner={handleChangeOwner}
+                        showManagement={user.role === 'admin'}
+                      />
+                    );
+                  })}
+                </div>
+
+                {filteredMachines.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground text-lg">No machines found</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {selectedUserId !== 'all' ? 'This user has no machines' : 'Click "Add Machine" to create your first machine'}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         ) : (
