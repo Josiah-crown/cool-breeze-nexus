@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
           /* Super Admin - Hierarchical View */
           <div>
             {/* Analytics Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-4 gap-2 mb-6">
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
@@ -80,22 +80,18 @@ const Dashboard: React.FC = () => {
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">On / Off</p>
-                  <p className="text-xl font-bold text-foreground mt-1">
-                    <span className="text-accent">{machines.filter(m => m.isOn).length}</span>
-                    {' / '}
-                    <span className="text-muted-foreground">{machines.filter(m => !m.isOn).length}</span>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">On</p>
+                  <p className={`text-xl font-bold mt-1 ${machines.filter(m => m.isOn).length > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {machines.filter(m => m.isOn).length}
                   </p>
                 </div>
               </div>
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected / Disconnected</p>
-                  <p className="text-xl font-bold text-foreground mt-1">
-                    <span className="text-accent">{machines.filter(m => m.isConnected).length}</span>
-                    {' / '}
-                    <span className="text-muted-foreground">{machines.filter(m => !m.isConnected).length}</span>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected</p>
+                  <p className={`text-xl font-bold mt-1 ${machines.filter(m => m.isConnected).length > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {machines.filter(m => m.isConnected).length}
                   </p>
                 </div>
               </div>
