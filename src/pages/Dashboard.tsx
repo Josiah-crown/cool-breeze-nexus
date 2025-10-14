@@ -4,16 +4,24 @@ import { useMachineData } from '@/hooks/useMachineData';
 import MachineCard from '@/components/MachineCard';
 import MachineDetailView from '@/components/MachineDetailView';
 import UserHierarchyView from '@/components/UserHierarchyView';
+import { AddUserDialog } from '@/components/AddUserDialog';
+import { AddMachineDialog } from '@/components/AddMachineDialog';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Users } from 'lucide-react';
+import { LogOut, Users, UserPlus, Plus } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const { machines, historicalData, users } = useMachineData(user?.id || '', user?.role || 'client');
   const [selectedMachine, setSelectedMachine] = useState<MachineStatus | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showAddMachineDialog, setShowAddMachineDialog] = useState(false);
+  
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   // Get admins (for super admin view)
   const admins = useMemo(() => users.filter(u => u.role === 'admin'), [users]);
@@ -56,10 +64,24 @@ const Dashboard: React.FC = () => {
               Welcome, {user.name} ({user.role.replace('_', ' ')})
             </p>
           </div>
-          <Button variant="outline" onClick={logout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            {(user.role === 'admin' || user.role === 'super_admin') && (
+              <>
+                <Button variant="outline" onClick={() => setShowAddUserDialog(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add Client
+                </Button>
+                <Button variant="outline" onClick={() => setShowAddMachineDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Machine
+                </Button>
+              </>
+            )}
+            <Button variant="outline" onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -216,6 +238,25 @@ const Dashboard: React.FC = () => {
           historicalData={historicalData[selectedMachine.id]}
           onClose={() => setSelectedMachine(null)}
         />
+      )}
+      
+      {/* Add User Dialog */}
+      {(user.role === 'admin' || user.role === 'super_admin') && (
+        <>
+          <AddUserDialog
+            open={showAddUserDialog}
+            onOpenChange={setShowAddUserDialog}
+            userRole={user.role}
+            currentUserId={user.id}
+            onUserAdded={handleRefresh}
+          />
+          <AddMachineDialog
+            open={showAddMachineDialog}
+            onOpenChange={setShowAddMachineDialog}
+            ownerId={user.id}
+            onMachineAdded={handleRefresh}
+          />
+        </>
       )}
     </div>
   );
