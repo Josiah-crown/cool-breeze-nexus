@@ -185,11 +185,37 @@ const Dashboard: React.FC = () => {
             </div>
             
             {selectedUserId === 'all' ? (
-              <UserHierarchyView
-                users={users}
-                machines={machines}
-                onMachineClick={setSelectedMachine}
-              />
+              <>
+                {/* Super Admin's Own Machines */}
+                {filteredMachines.filter(m => m.ownerId === user.id).length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold text-foreground mb-4">Your Machines</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredMachines.filter(m => m.ownerId === user.id).map((machine) => {
+                        const owner = users.find(u => u.id === machine.ownerId);
+                        return (
+                          <MachineCard
+                            key={machine.id}
+                            machine={machine}
+                            onClick={() => setSelectedMachine(machine)}
+                            ownerName={owner?.name}
+                            onDelete={handleDeleteMachine}
+                            onChangeOwner={handleChangeOwner}
+                            showManagement={true}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Admin Hierarchy */}
+                <UserHierarchyView
+                  users={users}
+                  machines={machines}
+                  onMachineClick={setSelectedMachine}
+                />
+              </>
             ) : (
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -333,6 +359,7 @@ const Dashboard: React.FC = () => {
             open={showAddMachineDialog}
             onOpenChange={setShowAddMachineDialog}
             ownerId={user.id}
+            userRole={user.role}
             onMachineAdded={handleRefresh}
           />
         </>

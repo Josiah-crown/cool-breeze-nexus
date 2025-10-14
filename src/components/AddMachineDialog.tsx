@@ -13,44 +13,73 @@ interface AddMachineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ownerId: string;
+  userRole: 'super_admin' | 'admin' | 'client';
   onMachineAdded: () => void;
 }
 
-export const AddMachineDialog = ({ open, onOpenChange, ownerId, onMachineAdded }: AddMachineDialogProps) => {
+export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMachineAdded }: AddMachineDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
-  const [assignmentType, setAssignmentType] = useState<'self' | 'client'>('self');
+  const [assignableUsers, setAssignableUsers] = useState<Array<{ id: string; name: string; role: string }>>([]);
+  const [assignmentType, setAssignmentType] = useState<'self' | 'other'>('self');
   const [formData, setFormData] = useState({
     name: '',
     type: 'fan' as MachineType,
     apiEndpoint: '',
-    clientId: '',
+    assignedUserId: '',
   });
 
   useEffect(() => {
     if (open) {
-      loadClients();
+      loadAssignableUsers();
     }
-  }, [open]);
+  }, [open, userRole]);
 
-  const loadClients = async () => {
+  const loadAssignableUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('client_admin_assignments')
-        .select('client_id, profiles!client_admin_assignments_client_id_fkey(name)')
-        .eq('admin_id', ownerId);
+      if (userRole === 'super_admin') {
+        // Super admin can assign to admins
+        const { data: adminRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
 
-      if (error) throw error;
+        if (rolesError) throw rolesError;
 
-      const clientList = (data || []).map((assignment: any) => ({
-        id: assignment.client_id,
-        name: assignment.profiles?.name || 'Unknown',
-      }));
+        const adminIds = (adminRoles || []).map(r => r.user_id);
+        
+        if (adminIds.length === 0) {
+          setAssignableUsers([]);
+          return;
+        }
 
-      setClients(clientList);
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', adminIds);
+
+        if (profilesError) throw profilesError;
+
+        setAssignableUsers((profiles || []).map(p => ({ ...p, role: 'admin' })));
+      } else if (userRole === 'admin') {
+        // Admin can assign to their clients
+        const { data, error } = await supabase
+          .from('client_admin_assignments')
+          .select('client_id, profiles!client_admin_assignments_client_id_fkey(name)')
+          .eq('admin_id', ownerId);
+
+        if (error) throw error;
+
+        const userList = (data || []).map((assignment: any) => ({
+          id: assignment.client_id,
+          name: assignment.profiles?.name || 'Unknown',
+          role: 'client',
+        }));
+
+        setAssignableUsers(userList);
+      }
     } catch (error) {
-      console.error('Error loading clients:', error);
+      console.error('Error loading assignable users:', error);
     }
   };
 
@@ -59,10 +88,10 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, onMachineAdded }
     setLoading(true);
 
     try {
-      const finalOwnerId = assignmentType === 'client' ? formData.clientId : ownerId;
+      const finalOwnerId = assignmentType === 'other' ? formData.assignedUserId : ownerId;
       
-      if (assignmentType === 'client' && !formData.clientId) {
-        throw new Error('Please select a client');
+      if (assignmentType === 'other' && !formData.assignedUserId) {
+        throw new Error(`Please select ${userRole === 'super_admin' ? 'an admin' : 'a client'}`);
       }
 
       const { data, error } = await supabase
@@ -96,7 +125,7 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, onMachineAdded }
         name: '',
         type: 'fan',
         apiEndpoint: '',
-        clientId: '',
+        assignedUserId: '',
       });
       setAssignmentType('self');
     } catch (error: any) {
@@ -120,31 +149,38 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, onMachineAdded }
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Assign To</Label>
-            <RadioGroup value={assignmentType} onValueChange={(value: 'self' | 'client') => setAssignmentType(value)}>
+            <RadioGroup value={assignmentType} onValueChange={(value: 'self' | 'other') => setAssignmentType(value)}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="self" id="self" />
                 <Label htmlFor="self" className="font-normal cursor-pointer">My Account</Label>
               </div>
-              {clients.length > 0 && (
+              {assignableUsers.length > 0 && (
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="client" id="client" />
-                  <Label htmlFor="client" className="font-normal cursor-pointer">A Client</Label>
+                  <RadioGroupItem value="other" id="other" />
+                  <Label htmlFor="other" className="font-normal cursor-pointer">
+                    {userRole === 'super_admin' ? 'An Admin' : 'A Client'}
+                  </Label>
                 </div>
               )}
             </RadioGroup>
           </div>
 
-          {assignmentType === 'client' && (
+          {assignmentType === 'other' && (
             <div className="space-y-2">
-              <Label htmlFor="client-select">Select Client *</Label>
-              <Select value={formData.clientId} onValueChange={(value) => setFormData({ ...formData, clientId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a client" />
+              <Label htmlFor="user-select">
+                Select {userRole === 'super_admin' ? 'Admin' : 'Client'} *
+              </Label>
+              <Select 
+                value={formData.assignedUserId} 
+                onValueChange={(value) => setFormData({ ...formData, assignedUserId: value })}
+              >
+                <SelectTrigger className="bg-card">
+                  <SelectValue placeholder={`Choose ${userRole === 'super_admin' ? 'an admin' : 'a client'}`} />
                 </SelectTrigger>
-                <SelectContent>
-                  {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
+                <SelectContent className="bg-card border-border">
+                  {assignableUsers.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
