@@ -10,6 +10,7 @@ import { ChangeOwnerDialog } from '@/components/ChangeOwnerDialog';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { LogOut, Users, UserPlus, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -62,11 +63,20 @@ const Dashboard: React.FC = () => {
 
   // Filter machines based on selected user
   const filteredMachines = useMemo(() => {
+    if (user?.role === 'admin') {
+      // For admin, "all" shows everything, "unassigned" shows only admin's own machines
+      if (selectedUserId === 'unassigned') {
+        return machines.filter(m => m.ownerId === user.id);
+      }
+      // "all" or default shows all machines (admin's + clients')
+      return machines;
+    }
+    
     if (selectedUserId === 'all') {
       return machines;
     }
     
-    // If admin is selected, show their machines + their clients' machines
+    // If admin is selected (for super_admin), show their machines + their clients' machines
     const selectedUser = users.find(u => u.id === selectedUserId);
     if (selectedUser?.role === 'admin') {
       const clientIds = users.filter(u => u.parentId === selectedUserId).map(u => u.id);
@@ -75,7 +85,7 @@ const Dashboard: React.FC = () => {
     
     // Otherwise show machines for the selected user
     return machines.filter(m => m.ownerId === selectedUserId);
-  }, [machines, selectedUserId, users]);
+  }, [machines, selectedUserId, users, user?.role, user?.id]);
 
   if (!user) return null;
 
@@ -253,7 +263,7 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         ) : user.role === 'admin' ? (
-          /* Admin - View with Client Filter */
+          /* Admin - Expandable View with Client Sections */
           <div>
             <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
               <div>
@@ -261,7 +271,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-muted-foreground">
                   {selectedUserId === 'all' 
                     ? 'All machines organized by owner'
-                    : `${filteredMachines.length} ${filteredMachines.length === 1 ? 'machine' : 'machines'} for selected user`
+                    : `${filteredMachines.length} unassigned ${filteredMachines.length === 1 ? 'machine' : 'machines'}`
                   }
                 </p>
               </div>
@@ -270,44 +280,44 @@ const Dashboard: React.FC = () => {
                 <Users className="h-5 w-5 text-muted-foreground" />
                 <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                   <SelectTrigger className="w-[200px] bg-card">
-                    <SelectValue placeholder="Select user" />
+                    <SelectValue placeholder="Select view" />
                   </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="all">All Machines</SelectItem>
-                    <SelectItem value={user.id}>My Machines</SelectItem>
-                    {clients.map(client => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="bg-card border-border z-50">
+                    <SelectItem value="all">Everything</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             {selectedUserId === 'all' ? (
-              <>
-                {/* Admin's Own Machines */}
+              <Accordion type="multiple" className="space-y-4">
+                {/* Unassigned Machines Section */}
                 {filteredMachines.filter(m => m.ownerId === user.id).length > 0 && (
-                  <div className="mb-8">
-                    <h3 className="text-xl font-semibold text-foreground mb-4">My Machines</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {filteredMachines.filter(m => m.ownerId === user.id).map((machine) => {
-                        const owner = users.find(u => u.id === machine.ownerId);
-                        return (
+                  <AccordionItem value="unassigned" className="border border-border rounded-lg bg-card px-4">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <h3 className="text-lg font-semibold text-foreground">Unassigned Machines</h3>
+                        <span className="text-sm text-muted-foreground">
+                          {filteredMachines.filter(m => m.ownerId === user.id).length} {filteredMachines.filter(m => m.ownerId === user.id).length === 1 ? 'machine' : 'machines'}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+                        {filteredMachines.filter(m => m.ownerId === user.id).map((machine) => (
                           <MachineCard
                             key={machine.id}
                             machine={machine}
                             onClick={() => setSelectedMachine(machine)}
-                            ownerName={owner?.name}
                             onDelete={handleDeleteMachine}
                             onChangeOwner={handleChangeOwner}
                             showManagement={true}
                           />
-                        );
-                      })}
-                    </div>
-                  </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
                 )}
 
                 {/* Client Sections */}
@@ -316,25 +326,34 @@ const Dashboard: React.FC = () => {
                   if (clientMachines.length === 0) return null;
 
                   return (
-                    <div key={client.id} className="mb-8">
-                      <h3 className="text-xl font-semibold text-foreground mb-4">{client.name}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {clientMachines.map((machine) => {
-                          const owner = users.find(u => u.id === machine.ownerId);
-                          return (
-                            <MachineCard
-                              key={machine.id}
-                              machine={machine}
-                              onClick={() => setSelectedMachine(machine)}
-                              ownerName={owner?.name}
-                              onDelete={handleDeleteMachine}
-                              onChangeOwner={handleChangeOwner}
-                              showManagement={true}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
+                    <AccordionItem key={client.id} value={client.id} className="border border-border rounded-lg bg-card px-4">
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <h3 className="text-lg font-semibold text-foreground">{client.name}</h3>
+                          <span className="text-sm text-muted-foreground">
+                            {clientMachines.length} {clientMachines.length === 1 ? 'machine' : 'machines'}
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+                          {clientMachines.map((machine) => {
+                            const owner = users.find(u => u.id === machine.ownerId);
+                            return (
+                              <MachineCard
+                                key={machine.id}
+                                machine={machine}
+                                onClick={() => setSelectedMachine(machine)}
+                                ownerName={owner?.name}
+                                onDelete={handleDeleteMachine}
+                                onChangeOwner={handleChangeOwner}
+                                showManagement={true}
+                              />
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
                   );
                 })}
 
@@ -346,31 +365,27 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
                 )}
-              </>
+              </Accordion>
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredMachines.map((machine) => {
-                    const owner = users.find(u => u.id === machine.ownerId);
-                    return (
-                      <MachineCard
-                        key={machine.id}
-                        machine={machine}
-                        onClick={() => setSelectedMachine(machine)}
-                        ownerName={owner?.name}
-                        onDelete={handleDeleteMachine}
-                        onChangeOwner={handleChangeOwner}
-                        showManagement={user.role === 'admin'}
-                      />
-                    );
-                  })}
+                  {filteredMachines.map((machine) => (
+                    <MachineCard
+                      key={machine.id}
+                      machine={machine}
+                      onClick={() => setSelectedMachine(machine)}
+                      onDelete={handleDeleteMachine}
+                      onChangeOwner={handleChangeOwner}
+                      showManagement={true}
+                    />
+                  ))}
                 </div>
 
                 {filteredMachines.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-muted-foreground text-lg">No machines found</p>
+                    <p className="text-muted-foreground text-lg">No unassigned machines</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      {selectedUserId !== 'all' ? 'This user has no machines' : 'Click "Add Machine" to create your first machine'}
+                      All machines are assigned to clients
                     </p>
                   </div>
                 )}
