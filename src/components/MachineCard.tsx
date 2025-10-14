@@ -72,11 +72,13 @@ const MachineCard: React.FC<MachineCardProps> = ({ machine, onClick, ownerName }
           label="Power"
           size="sm"
         />
-        <StatusLight
-          status={machine.fanActive ? 'active' : 'inactive'}
-          label="Fan"
-          size="sm"
-        />
+        {machine.type !== 'heatpump' && (
+          <StatusLight
+            status={machine.fanActive ? 'active' : 'inactive'}
+            label="Fan"
+            size="sm"
+          />
+        )}
         <StatusLight
           status={machine.isCooling ? 'active' : 'inactive'}
           label="Cool"
