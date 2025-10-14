@@ -21,8 +21,8 @@ const HeatPumpComponent: React.FC<HeatPumpComponentProps> = ({
           width="140"
           height="100"
           rx="8"
-          className="fill-muted stroke-border"
-          strokeWidth="3"
+          className="fill-muted stroke-green-500/60"
+          strokeWidth="4"
         />
         
         {/* Top vent lines */}

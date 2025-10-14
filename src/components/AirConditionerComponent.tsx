@@ -20,8 +20,8 @@ const AirConditionerComponent: React.FC<AirConditionerComponentProps> = ({
           width="120"
           height="80"
           rx="6"
-          className="fill-muted stroke-border"
-          strokeWidth="3"
+          className="fill-muted stroke-green-500/60"
+          strokeWidth="4"
         />
         
         {/* Display panel */}
