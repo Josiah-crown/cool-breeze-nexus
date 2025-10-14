@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import NavigationHeader from '@/components/NavigationHeader';
 import ControlPanel from '@/components/ControlPanel';
 import FanComponent from '@/components/FanComponent';
-import StatusPanel from '@/components/StatusPanel';
+import StatusLight from '@/components/StatusLight';
 import { useSystemState } from '@/hooks/useSystemState';
 
 const Index = () => {
@@ -80,9 +80,8 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Controls and Status */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Control Panel */}
+          {/* Left Column - Control Panel */}
+          <div className="lg:col-span-1">
             <ControlPanel
               isOn={state.isOn}
               coolMode={state.coolMode}
@@ -97,42 +96,103 @@ const Index = () => {
               onTimerSet={actions.setTimer}
               disabled={!state.hasWater}
             />
-            
-            {/* System Status below Controls */}
-            <StatusPanel data={state} />
           </div>
 
-          {/* Right Side - Fan and Readings */}
+          {/* Right Side - Machine Container */}
           <div className="lg:col-span-2">
-            <div className="grid grid-rows-2 gap-6 h-full">
-              {/* Top Right - Fan */}
-              <div className="panel flex items-center justify-center">
-                <div className="panel-header absolute top-4 left-4">
-                  <span className="text-lg">🌀</span>
-                  <h3 className="panel-title">Cooling System</h3>
-                </div>
-                
-                <div className="flex flex-col items-center">
+            <div className="panel">
+              <div className="panel-header">
+                <span className="text-lg">🏭</span>
+                <h3 className="panel-title">Machine Monitor</h3>
+              </div>
+              
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Left - Fan */}
+                <div className="flex items-center justify-center lg:col-span-2">
                   <FanComponent 
                     isSpinning={state.isOn && state.fanMode}
                     speed={getFanSpeed()}
                     size="lg"
                   />
-                  
-                  {/* Mode Display */}
-                  <div className="mt-4 text-center">
-                    <div className="text-2xl font-bold text-primary mb-1">
-                      {state.coolMode && 'Cool'} {state.fanMode && 'Fan'} {state.exhaustMode && 'Exhaust'} - Speed {state.speed}
+                </div>
+
+                {/* Bottom Left - System Status */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-primary mb-3">System Status</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <StatusLight 
+                      status={state.isOn ? 'active' : 'inactive'} 
+                      label="Power" 
+                    />
+                    <StatusLight 
+                      status={state.hasWater ? 'active' : 'error'} 
+                      label="Water Level" 
+                    />
+                    <StatusLight 
+                      status={state.isCooling ? 'active' : 'inactive'} 
+                      label="Cooling Active" 
+                    />
+                    <StatusLight 
+                      status={state.motorTemp > 80 ? 'error' : state.motorTemp > 60 ? 'warning' : 'active'} 
+                      label="Motor Status" 
+                    />
+                  </div>
+
+                  {/* Delta T Display */}
+                  <div className="mt-4 p-3 bg-status rounded-lg border border-border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">ΔT Efficiency</span>
+                      <div className="text-xl font-bold text-primary">
+                        {state.deltaT.toFixed(1)}°C
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {state.timer && (
-                        <span>Timer: {state.timer}h</span>
-                      )}
+                  </div>
+                </div>
+
+                {/* Bottom Right - Temperature & Electrical */}
+                <div className="space-y-4">
+                  {/* Temperature Monitoring */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-primary mb-3">🌡️ Temperature</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center p-2 bg-status rounded-lg">
+                        <span className="text-xs text-muted-foreground">Outside</span>
+                        <span className="text-sm font-bold text-warning">{state.outsideTemp.toFixed(1)}°C</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-status rounded-lg">
+                        <span className="text-xs text-muted-foreground">Inside</span>
+                        <span className="text-sm font-bold text-accent">{state.insideTemp.toFixed(1)}°C</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-status rounded-lg">
+                        <span className="text-xs text-muted-foreground">Motor</span>
+                        <span className={`text-sm font-bold ${
+                          state.motorTemp > 80 ? 'text-destructive' : 
+                          state.motorTemp > 60 ? 'text-warning' : 'text-accent'
+                        }`}>{state.motorTemp.toFixed(1)}°C</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Electrical Monitoring */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-primary mb-3">⚡ Electrical</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center p-2 bg-status rounded-lg">
+                        <span className="text-xs text-muted-foreground">Current</span>
+                        <span className="text-sm font-bold text-primary">{state.currentAmps.toFixed(1)}A</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-status rounded-lg">
+                        <span className="text-xs text-muted-foreground">Voltage</span>
+                        <span className="text-sm font-bold text-primary">{state.voltage.toFixed(0)}V</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-status rounded-lg">
+                        <span className="text-xs text-muted-foreground">Power</span>
+                        <span className="text-sm font-bold text-primary">{Math.round(state.power)}W</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-              
             </div>
           </div>
         </div>
