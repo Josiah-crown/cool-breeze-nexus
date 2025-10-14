@@ -90,7 +90,10 @@ const Login: React.FC = () => {
         toast.success('Login successful!');
       }
     } catch (error: any) {
-      toast.error(error.message || (isSignup ? 'Failed to create account' : 'Invalid credentials'));
+      const errorMessage = isSignup 
+        ? error.message || 'Failed to create account'
+        : 'Email or password incorrect';
+      toast.error(errorMessage);
       // Reset reCAPTCHA on error
       if (isSignup && recaptchaRef.current) {
         recaptchaRef.current.reset();
