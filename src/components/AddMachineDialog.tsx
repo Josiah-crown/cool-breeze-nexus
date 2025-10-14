@@ -205,7 +205,7 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="fan">Fan</SelectItem>
+                <SelectItem value="fan">Evaporative Cooler</SelectItem>
                 <SelectItem value="heatpump">Heat Pump</SelectItem>
                 <SelectItem value="airconditioner">Air Conditioner</SelectItem>
               </SelectContent>

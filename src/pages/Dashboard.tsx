@@ -199,9 +199,7 @@ const Dashboard: React.FC = () => {
                             machine={machine}
                             onClick={() => setSelectedMachine(machine)}
                             ownerName={owner?.name}
-                            onDelete={handleDeleteMachine}
-                            onChangeOwner={handleChangeOwner}
-                            showManagement={true}
+                            showManagement={false}
                           />
                         );
                       })}
