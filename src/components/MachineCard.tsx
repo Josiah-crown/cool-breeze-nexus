@@ -10,9 +10,10 @@ import { cn } from '@/lib/utils';
 interface MachineCardProps {
   machine: MachineStatus;
   onClick: () => void;
+  ownerName?: string;
 }
 
-const MachineCard: React.FC<MachineCardProps> = ({ machine, onClick }) => {
+const MachineCard: React.FC<MachineCardProps> = ({ machine, onClick, ownerName }) => {
   const getMachineComponent = () => {
     const size = 'w-24 h-24';
     switch (machine.type) {
@@ -53,9 +54,16 @@ const MachineCard: React.FC<MachineCardProps> = ({ machine, onClick }) => {
       </div>
 
       {/* Machine Name */}
-      <h3 className="text-lg font-semibold text-center mb-4 text-foreground">
+      <h3 className="text-lg font-semibold text-center mb-2 text-foreground">
         {machine.name}
       </h3>
+      
+      {/* Owner Name */}
+      {ownerName && (
+        <p className="text-xs text-muted-foreground text-center mb-4">
+          Owner: {ownerName}
+        </p>
+      )}
 
       {/* Status Grid */}
       <div className="grid grid-cols-2 gap-2">
