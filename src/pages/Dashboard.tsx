@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
           /* Super Admin - Hierarchical View */
           <div>
             {/* Analytics Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] rounded-xl p-6 shadow-xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
@@ -85,6 +85,17 @@ const Dashboard: React.FC = () => {
                     <span className="text-accent">{machines.filter(m => m.isOn).length}</span>
                     {' / '}
                     <span className="text-muted-foreground">{machines.filter(m => !m.isOn).length}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] rounded-xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
+                <div className="relative">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Connected / Disconnected</p>
+                  <p className="text-4xl font-bold text-foreground mt-2">
+                    <span className="text-primary">{machines.filter(m => m.overallStatus !== 'error').length}</span>
+                    {' / '}
+                    <span className="text-muted-foreground">{machines.filter(m => m.overallStatus === 'error').length}</span>
                   </p>
                 </div>
               </div>

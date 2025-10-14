@@ -5,8 +5,11 @@ import StatusLight from './StatusLight';
 import FanComponent from './FanComponent';
 import HeatPumpComponent from './HeatPumpComponent';
 import AirConditionerComponent from './AirConditionerComponent';
+import CircularGauge from './CircularGauge';
+import PowerBar from './PowerBar';
+import MetricDisplay from './MetricDisplay';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { X } from 'lucide-react';
+import { X, Zap, Thermometer, Wind, Droplet } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface MachineDetailViewProps {
@@ -51,13 +54,44 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
         
         <CardContent className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Machine Visual & Status */}
+            {/* Left: Machine Visual & Gauges */}
             <div className="space-y-6">
               <div className="flex justify-center">
                 {getMachineComponent()}
               </div>
               
-              <Card className="bg-control">
+              {/* Circular Gauges */}
+              <div className="grid grid-cols-2 gap-4">
+                <CircularGauge
+                  value={machine.motorTemp}
+                  max={100}
+                  label="Motor Temp"
+                  unit="°C"
+                  size={140}
+                  warningThreshold={0.7}
+                  criticalThreshold={0.85}
+                />
+                <CircularGauge
+                  value={machine.deltaT}
+                  max={20}
+                  label="Delta T"
+                  unit="°C"
+                  size={140}
+                  warningThreshold={0.8}
+                  criticalThreshold={0.95}
+                />
+              </div>
+
+              {/* Power Bar */}
+              <PowerBar
+                value={machine.power / 1000}
+                max={2}
+                label="Power"
+                unit="kW"
+              />
+              
+              {/* Status Lights */}
+              <Card className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))]">
                 <CardHeader>
                   <CardTitle className="text-lg">System Status</CardTitle>
                 </CardHeader>
@@ -75,49 +109,52 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   />
                 </CardContent>
               </Card>
-
-              <Card className="bg-control">
-                <CardHeader>
-                  <CardTitle className="text-lg">Current Readings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Outside Temp:</span>
-                    <span className="font-semibold text-foreground">{machine.outsideTemp.toFixed(1)}°C</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Inside Temp:</span>
-                    <span className="font-semibold text-foreground">{machine.insideTemp.toFixed(1)}°C</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Motor Temp:</span>
-                    <span className="font-semibold text-foreground">{machine.motorTemp.toFixed(1)}°C</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delta T:</span>
-                    <span className="font-semibold text-accent">{machine.deltaT.toFixed(1)}°C</span>
-                  </div>
-                  <div className="flex justify-between border-t border-border pt-2">
-                    <span className="text-muted-foreground">Voltage:</span>
-                    <span className="font-semibold text-foreground">{machine.voltage.toFixed(1)}V</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Current:</span>
-                    <span className="font-semibold text-foreground">{machine.current.toFixed(2)}A</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Power:</span>
-                    <span className="font-semibold text-primary">{machine.power.toFixed(1)}W</span>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
-            {/* Right: Historical Charts */}
+            {/* Right: Metrics & Charts */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Metric Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <MetricDisplay
+                  label="Outside"
+                  value={machine.outsideTemp}
+                  unit="°C"
+                  icon={Thermometer}
+                />
+                <MetricDisplay
+                  label="Inside"
+                  value={machine.insideTemp}
+                  unit="°C"
+                  icon={Thermometer}
+                />
+                <MetricDisplay
+                  label="Voltage"
+                  value={machine.voltage}
+                  unit="V"
+                  icon={Zap}
+                  highlight
+                />
+                <MetricDisplay
+                  label="Current"
+                  value={machine.current}
+                  unit="A"
+                  icon={Zap}
+                />
+                <MetricDisplay
+                  label="Speed"
+                  value={machine.fanActive ? "240" : "0"}
+                  unit="rpm"
+                  icon={Wind}
+                />
+                <MetricDisplay
+                  label="Water"
+                  value={machine.hasWater ? "OK" : "LOW"}
+                  icon={Droplet}
+                />
+              </div>
               {/* Power Usage Chart */}
               {machine.isOn && (
-                <Card className="bg-control">
+                <Card className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))]">
                   <CardHeader>
                     <CardTitle className="text-lg">Electrical Usage History</CardTitle>
                   </CardHeader>
@@ -149,7 +186,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
               {/* Delta T Chart */}
               {machine.isCooling && (
-                <Card className="bg-control">
+                <Card className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))]">
                   <CardHeader>
                     <CardTitle className="text-lg">Delta T Efficiency History</CardTitle>
                   </CardHeader>
@@ -180,7 +217,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               )}
 
               {/* Motor Temperature Chart */}
-              <Card className="bg-control">
+              <Card className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))]">
                 <CardHeader>
                   <CardTitle className="text-lg">Motor Temperature History</CardTitle>
                 </CardHeader>
