@@ -58,6 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
+      console.log('Loading profile for user:', supabaseUser.id);
+      
       // Get user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -65,7 +67,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', supabaseUser.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw profileError;
+      }
+
+      if (!profile) {
+        console.error('No profile found for user');
+        throw new Error('Profile not found');
+      }
 
       // Get user role
       const { data: roleData, error: roleError } = await supabase
@@ -74,7 +84,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', supabaseUser.id)
         .single();
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Role error:', roleError);
+        throw roleError;
+      }
+
+      if (!roleData) {
+        console.error('No role found for user');
+        throw new Error('Role not found');
+      }
+
+      console.log('User loaded successfully:', { id: supabaseUser.id, role: roleData.role });
 
       setUser({
         id: supabaseUser.id,
@@ -84,6 +104,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (error) {
       console.error('Error loading user profile:', error);
+      // If profile/role loading fails, sign out the user
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
     } finally {
       setIsLoading(false);
     }
