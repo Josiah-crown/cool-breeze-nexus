@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMachineData } from '@/hooks/useMachineData';
 import MachineCard from '@/components/MachineCard';
 import MachineDetailView from '@/components/MachineDetailView';
+import UserHierarchyView from '@/components/UserHierarchyView';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -64,80 +65,104 @@ const Dashboard: React.FC = () => {
 
       {/* Machine Grid */}
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+        {user.role === 'super_admin' ? (
+          /* Super Admin - Hierarchical View */
           <div>
-            <h2 className="text-xl font-semibold text-foreground mb-2">Machines</h2>
-            <p className="text-muted-foreground">
-              {filteredMachines.length} {filteredMachines.length === 1 ? 'machine' : 'machines'} {selectedUserId !== 'all' ? 'for selected user' : 'total'}
-            </p>
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-foreground mb-2">All Admins & Their Machines</h2>
+              <p className="text-muted-foreground">
+                Expand each admin to view their machines and clients
+              </p>
+            </div>
+            <UserHierarchyView
+              users={users}
+              machines={machines}
+              onMachineClick={setSelectedMachine}
+            />
           </div>
+        ) : user.role === 'admin' ? (
+          /* Admin - View with Client Filter */
+          <div>
+            <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-2">Machines</h2>
+                <p className="text-muted-foreground">
+                  {filteredMachines.length} {filteredMachines.length === 1 ? 'machine' : 'machines'} {selectedUserId !== 'all' ? 'for selected user' : 'total'}
+                </p>
+              </div>
 
-          {/* User Filter Dropdowns */}
-          {(user?.role === 'super_admin' || user?.role === 'admin') && (
-            <div className="flex gap-3 items-center">
-              <Users className="h-5 w-5 text-muted-foreground" />
-              
-              {user.role === 'super_admin' && (
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {admins.map(admin => (
-                      <SelectItem key={admin.id} value={admin.id}>
-                        👤 {admin.name} (Admin)
-                      </SelectItem>
-                    ))}
-                    {clients.map(client => (
-                      <SelectItem key={client.id} value={client.id}>
-                        👥 {client.name} (Client)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {user.role === 'admin' && clients.length > 0 && (
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Machines</SelectItem>
-                    <SelectItem value={user.id}>My Machines</SelectItem>
-                    {clients.map(client => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {clients.length > 0 && (
+                <div className="flex gap-3 items-center">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Machines</SelectItem>
+                      <SelectItem value={user.id}>My Machines</SelectItem>
+                      {clients.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
-          )}
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredMachines.map((machine) => {
-            const owner = users.find(u => u.id === machine.ownerId);
-            return (
-              <MachineCard
-                key={machine.id}
-                machine={machine}
-                onClick={() => setSelectedMachine(machine)}
-                ownerName={owner?.name}
-              />
-            );
-          })}
-        </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredMachines.map((machine) => {
+                const owner = users.find(u => u.id === machine.ownerId);
+                return (
+                  <MachineCard
+                    key={machine.id}
+                    machine={machine}
+                    onClick={() => setSelectedMachine(machine)}
+                    ownerName={owner?.name}
+                  />
+                );
+              })}
+            </div>
 
-        {filteredMachines.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No machines found</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              {selectedUserId !== 'all' ? 'This user has no machines' : 'Contact your administrator to add machines'}
-            </p>
+            {filteredMachines.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">No machines found</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {selectedUserId !== 'all' ? 'This user has no machines' : 'No machines available'}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Client - Simple Grid View */
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Your Machines</h2>
+              <p className="text-muted-foreground">
+                {machines.length} {machines.length === 1 ? 'machine' : 'machines'} available
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {machines.map((machine) => (
+                <MachineCard
+                  key={machine.id}
+                  machine={machine}
+                  onClick={() => setSelectedMachine(machine)}
+                />
+              ))}
+            </div>
+
+            {machines.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">No machines found</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Contact your administrator to add machines
+                </p>
+              </div>
+            )}
           </div>
         )}
       </main>
