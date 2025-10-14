@@ -15,10 +15,10 @@
     --popover: 217 19% 18%;
     --popover-foreground: 213 31% 91%;
     
-    /* Professional Blue-Grey Palette */
-    --primary: 217 91% 60%;
+    /* Green-Blue Palette inspired by MagicPie UI */
+    --primary: 195 100% 45%;
     --primary-foreground: 213 31% 91%;
-    --primary-glow: 217 91% 70%;
+    --primary-glow: 195 100% 55%;
     
     --secondary: 215 25% 27%;
     --secondary-foreground: 213 31% 91%;
@@ -26,9 +26,13 @@
     --muted: 215 25% 27%;
     --muted-foreground: 215 20% 65%;
     
-    --accent: 142 76% 36%;
-    --accent-foreground: 213 31% 91%;
-    --accent-glow: 142 76% 46%;
+    --accent: 142 76% 45%;
+    --accent-foreground: 210 11% 15%;
+    --accent-glow: 142 76% 55%;
+    
+    /* Electric Green for active states */
+    --electric-green: 85 100% 50%;
+    --electric-green-foreground: 210 11% 15%;
     
     /* Status Colors */
     --success: 142 76% 36%;

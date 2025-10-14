@@ -3,7 +3,7 @@ import React from 'react';
 interface FanComponentProps {
   isSpinning: boolean;
   speed?: 'slow' | 'medium' | 'fast';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | string;
 }
 
 const FanComponent: React.FC<FanComponentProps> = ({ 
@@ -11,7 +11,7 @@ const FanComponent: React.FC<FanComponentProps> = ({
   speed = 'medium',
   size = 'lg' 
 }) => {
-  const sizeClasses = {
+  const sizeClasses: Record<string, string> = {
     sm: 'w-32 h-32',
     md: 'w-80 h-80', 
     lg: 'w-96 h-96'
@@ -23,9 +23,12 @@ const FanComponent: React.FC<FanComponentProps> = ({
     fast: '0.4s'
   };
 
+  // Use size directly if it's a custom string, otherwise use the preset
+  const sizeClass = typeof size === 'string' && size.includes('w-') ? size : sizeClasses[size as 'sm' | 'md' | 'lg'];
+
   return (
     <div className="flex items-center justify-center p-8">
-      <div className={`relative ${sizeClasses[size]}`}>
+      <div className={`relative ${sizeClass}`}>
         {/* Outer Fan Housing */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-panel to-control border-2 border-control-border shadow-xl">
           {/* Concentric Circles */}
