@@ -70,34 +70,31 @@ const Dashboard: React.FC = () => {
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Machines</p>
-                    <p className="text-3xl font-bold text-foreground mt-1">{machines.length}</p>
-                  </div>
+              <div className="bg-gradient-to-br from-panel to-card border-2 border-control-border rounded-xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
+                <div className="relative">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Machines</p>
+                  <p className="text-4xl font-bold text-foreground mt-2">{machines.length}</p>
                 </div>
               </div>
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Online / Offline</p>
-                    <p className="text-3xl font-bold text-foreground mt-1">
-                      <span className="text-green-500">{machines.filter(m => m.isOn).length}</span>
-                      {' / '}
-                      <span className="text-muted-foreground">{machines.filter(m => !m.isOn).length}</span>
-                    </p>
-                  </div>
+              <div className="bg-gradient-to-br from-panel to-card border-2 border-control-border rounded-xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
+                <div className="relative">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">On / Off</p>
+                  <p className="text-4xl font-bold text-foreground mt-2">
+                    <span className="text-accent">{machines.filter(m => m.isOn).length}</span>
+                    {' / '}
+                    <span className="text-muted-foreground">{machines.filter(m => !m.isOn).length}</span>
+                  </p>
                 </div>
               </div>
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Not Working</p>
-                    <p className="text-3xl font-bold text-destructive mt-1">
-                      {machines.filter(m => m.overallStatus === 'error').length}
-                    </p>
-                  </div>
+              <div className="bg-gradient-to-br from-panel to-card border-2 border-destructive/40 rounded-xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent pointer-events-none"></div>
+                <div className="relative">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Not Working</p>
+                  <p className="text-4xl font-bold text-destructive mt-2">
+                    {machines.filter(m => m.overallStatus === 'error').length}
+                  </p>
                 </div>
               </div>
             </div>
