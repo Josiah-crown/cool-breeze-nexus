@@ -88,6 +88,7 @@ const Login: React.FC = () => {
       } else {
         await login(email, password);
         toast.success('Login successful!');
+        navigate('/');
       }
     } catch (error: any) {
       const errorMessage = isSignup 
