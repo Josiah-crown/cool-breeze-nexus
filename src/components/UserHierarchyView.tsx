@@ -32,22 +32,23 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
   };
 
   return (
-    <Accordion type="multiple" className="w-full space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {admins.map(admin => {
         const adminMachines = machines.filter(m => m.ownerId === admin.id);
         const clients = users.filter(u => u.role === 'client' && u.parentId === admin.id);
         const hasFailing = hasFailingMachines(admin.id);
 
         return (
-          <AccordionItem 
-            key={admin.id} 
-            value={admin.id}
-            className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm shadow-xl ${
-              hasFailing 
-                ? 'border-destructive/60 shadow-[0_0_20px_hsl(var(--destructive)/0.2)]' 
-                : 'border-[hsl(var(--control-border))]'
-            }`}
-          >
+          <div key={admin.id} className="h-full">
+            <Accordion type="multiple" className="h-full">
+              <AccordionItem 
+                value={admin.id}
+                className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm shadow-xl h-full ${
+                  hasFailing 
+                    ? 'border-destructive/60 shadow-[0_0_20px_hsl(var(--destructive)/0.2)]' 
+                    : 'border-[hsl(var(--control-border))]'
+                }`}
+              >
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
               <div className="flex items-center gap-3">
                 <Building2 className="h-5 w-5 text-primary" />
@@ -60,7 +61,8 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
-              <Accordion type="multiple" className="space-y-3">
+              <div className="grid grid-cols-1 gap-3">
+                <Accordion type="multiple" className="space-y-3">
                 {/* Admin's own machines */}
                 {adminMachines.length > 0 && (
                   <AccordionItem
@@ -148,11 +150,14 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                   No machines or clients for this admin
                 </p>
               )}
+              </div>
             </AccordionContent>
-          </AccordionItem>
+              </AccordionItem>
+            </Accordion>
+          </div>
         );
       })}
-    </Accordion>
+    </div>
   );
 };
 
