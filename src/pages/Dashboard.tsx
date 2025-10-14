@@ -68,6 +68,40 @@ const Dashboard: React.FC = () => {
         {user.role === 'super_admin' ? (
           /* Super Admin - Hierarchical View */
           <div>
+            {/* Analytics Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Machines</p>
+                    <p className="text-3xl font-bold text-foreground mt-1">{machines.length}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Online / Offline</p>
+                    <p className="text-3xl font-bold text-foreground mt-1">
+                      <span className="text-green-500">{machines.filter(m => m.isOn).length}</span>
+                      {' / '}
+                      <span className="text-muted-foreground">{machines.filter(m => !m.isOn).length}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Not Working</p>
+                    <p className="text-3xl font-bold text-destructive mt-1">
+                      {machines.filter(m => m.overallStatus === 'error').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-foreground mb-2">All Admins & Their Machines</h2>
               <p className="text-muted-foreground">

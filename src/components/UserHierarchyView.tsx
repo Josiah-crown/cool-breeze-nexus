@@ -14,17 +14,39 @@ interface UserHierarchyViewProps {
 const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick }) => {
   const admins = users.filter(u => u.role === 'admin');
 
+  // Check if admin or any of their clients have failing machines
+  const hasFailingMachines = (adminId: string) => {
+    const adminMachines = machines.filter(m => m.ownerId === adminId);
+    const clients = users.filter(u => u.role === 'client' && u.parentId === adminId);
+    const clientIds = clients.map(c => c.id);
+    const clientMachines = machines.filter(m => clientIds.includes(m.ownerId));
+    
+    const allMachines = [...adminMachines, ...clientMachines];
+    return allMachines.some(m => m.overallStatus === 'error');
+  };
+
+  // Check if a specific client has failing machines
+  const clientHasFailingMachines = (clientId: string) => {
+    const clientMachines = machines.filter(m => m.ownerId === clientId);
+    return clientMachines.some(m => m.overallStatus === 'error');
+  };
+
   return (
     <Accordion type="multiple" className="w-full space-y-4">
       {admins.map(admin => {
         const adminMachines = machines.filter(m => m.ownerId === admin.id);
         const clients = users.filter(u => u.role === 'client' && u.parentId === admin.id);
+        const hasFailing = hasFailingMachines(admin.id);
 
         return (
           <AccordionItem 
             key={admin.id} 
             value={admin.id}
-            className="border-2 border-primary/20 rounded-lg bg-card/50 backdrop-blur-sm"
+            className={`border-2 rounded-lg bg-card/50 backdrop-blur-sm ${
+              hasFailing 
+                ? 'border-destructive/40 animate-pulse' 
+                : 'border-primary/20'
+            }`}
           >
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
               <div className="flex items-center gap-3">
@@ -75,12 +97,17 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                 {/* Clients under this admin */}
                 {clients.map(client => {
                   const clientMachines = machines.filter(m => m.ownerId === client.id);
+                  const clientHasFailing = clientHasFailingMachines(client.id);
                   
                   return (
                     <AccordionItem
                       key={client.id}
                       value={client.id}
-                      className="border border-border rounded-md bg-card"
+                      className={`border rounded-md bg-card ${
+                        clientHasFailing 
+                          ? 'border-destructive/40 animate-pulse' 
+                          : 'border-border'
+                      }`}
                     >
                           <AccordionTrigger className="px-4 py-3 hover:no-underline">
                             <div className="flex items-center gap-2">
