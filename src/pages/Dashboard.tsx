@@ -6,10 +6,13 @@ import MachineDetailView from '@/components/MachineDetailView';
 import UserHierarchyView from '@/components/UserHierarchyView';
 import { AddUserDialog } from '@/components/AddUserDialog';
 import { AddMachineDialog } from '@/components/AddMachineDialog';
+import { ChangeOwnerDialog } from '@/components/ChangeOwnerDialog';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LogOut, Users, UserPlus, Plus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -18,10 +21,33 @@ const Dashboard: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddMachineDialog, setShowAddMachineDialog] = useState(false);
+  const [changeOwnerMachineId, setChangeOwnerMachineId] = useState<string | null>(null);
   
   const handleRefresh = () => {
     window.location.reload();
   };
+
+  const handleDeleteMachine = async (machineId: string) => {
+    try {
+      const { error } = await supabase
+        .from('machines')
+        .delete()
+        .eq('id', machineId);
+
+      if (error) throw error;
+
+      toast.success('Machine deleted successfully');
+      handleRefresh();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete machine');
+    }
+  };
+
+  const handleChangeOwner = (machineId: string) => {
+    setChangeOwnerMachineId(machineId);
+  };
+
+  const selectedMachineForOwnerChange = machines.find(m => m.id === changeOwnerMachineId);
 
   // Get admins (for super admin view)
   const admins = useMemo(() => users.filter(u => u.role === 'admin'), [users]);
@@ -134,9 +160,14 @@ const Dashboard: React.FC = () => {
 
             <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-2xl font-semibold text-foreground mb-2">All Admins & Their Machines</h2>
+                <h2 className="text-2xl font-semibold text-foreground mb-2">
+                  {selectedUserId === 'all' ? 'All Admins & Their Machines' : 'Your Machines'}
+                </h2>
                 <p className="text-muted-foreground">
-                  Expand each admin to view their machines and clients
+                  {selectedUserId === 'all' 
+                    ? 'Expand each admin to view their machines and clients'
+                    : `${filteredMachines.length} ${filteredMachines.length === 1 ? 'machine' : 'machines'} assigned to you`
+                  }
                 </p>
               </div>
               <div className="flex gap-3 items-center">
@@ -152,17 +183,15 @@ const Dashboard: React.FC = () => {
                 </Select>
               </div>
             </div>
-            <UserHierarchyView
-              users={users}
-              machines={machines}
-              onMachineClick={setSelectedMachine}
-            />
-            {selectedUserId === user.id && (
-              <div className="mt-8">
-                <h3 className="text-xl font-semibold text-foreground mb-2">Your Machines</h3>
-                <p className="text-muted-foreground mb-4">
-                  {filteredMachines.length} {filteredMachines.length === 1 ? 'machine' : 'machines'} assigned to you
-                </p>
+            
+            {selectedUserId === 'all' ? (
+              <UserHierarchyView
+                users={users}
+                machines={machines}
+                onMachineClick={setSelectedMachine}
+              />
+            ) : (
+              <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredMachines.map((machine) => {
                     const owner = users.find(u => u.id === machine.ownerId);
@@ -172,6 +201,9 @@ const Dashboard: React.FC = () => {
                         machine={machine}
                         onClick={() => setSelectedMachine(machine)}
                         ownerName={owner?.name}
+                        onDelete={handleDeleteMachine}
+                        onChangeOwner={handleChangeOwner}
+                        showManagement={true}
                       />
                     );
                   })}
@@ -226,6 +258,9 @@ const Dashboard: React.FC = () => {
                     machine={machine}
                     onClick={() => setSelectedMachine(machine)}
                     ownerName={owner?.name}
+                    onDelete={handleDeleteMachine}
+                    onChangeOwner={handleChangeOwner}
+                    showManagement={user.role === 'admin'}
                   />
                 );
               })}
@@ -256,6 +291,9 @@ const Dashboard: React.FC = () => {
                   key={machine.id}
                   machine={machine}
                   onClick={() => setSelectedMachine(machine)}
+                  onDelete={handleDeleteMachine}
+                  onChangeOwner={handleChangeOwner}
+                  showManagement={false}
                 />
               ))}
             </div>
@@ -298,6 +336,19 @@ const Dashboard: React.FC = () => {
             onMachineAdded={handleRefresh}
           />
         </>
+      )}
+
+      {/* Change Owner Dialog */}
+      {changeOwnerMachineId && selectedMachineForOwnerChange && (
+        <ChangeOwnerDialog
+          open={!!changeOwnerMachineId}
+          onOpenChange={(open) => !open && setChangeOwnerMachineId(null)}
+          machineId={changeOwnerMachineId}
+          machineName={selectedMachineForOwnerChange.name}
+          currentOwnerId={selectedMachineForOwnerChange.ownerId}
+          users={users}
+          onOwnerChanged={handleRefresh}
+        />
       )}
     </div>
   );

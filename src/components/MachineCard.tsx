@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from './ui/card';
 import { MachineStatus } from '@/types/machine';
 import StatusLight from './StatusLight';
@@ -6,14 +6,52 @@ import FanComponent from './FanComponent';
 import HeatPumpComponent from './HeatPumpComponent';
 import AirConditionerComponent from './AirConditionerComponent';
 import { cn } from '@/lib/utils';
+import { Lock, Trash2, UserCog } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 
 interface MachineCardProps {
   machine: MachineStatus;
   onClick: () => void;
   ownerName?: string;
+  onDelete?: (machineId: string) => void;
+  onChangeOwner?: (machineId: string) => void;
+  showManagement?: boolean;
 }
 
-const MachineCard: React.FC<MachineCardProps> = ({ machine, onClick, ownerName }) => {
+const MachineCard: React.FC<MachineCardProps> = ({ 
+  machine, 
+  onClick, 
+  ownerName,
+  onDelete,
+  onChangeOwner,
+  showManagement = false
+}) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleDelete = () => {
+    onDelete?.(machine.id);
+    setShowDeleteDialog(false);
+  };
+
+  const handleChangeOwner = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChangeOwner?.(machine.id);
+  };
+
+  const handleManagementClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   const getMachineComponent = () => {
     const size = 'w-24 h-24';
     switch (machine.type) {
@@ -40,81 +78,131 @@ const MachineCard: React.FC<MachineCardProps> = ({ machine, onClick, ownerName }
   };
 
   return (
-    <Card
-      className={cn(
-        'p-4 cursor-pointer transition-all hover:scale-105 hover:shadow-xl',
-        'bg-gradient-to-br from-card to-panel border-2',
-        getStatusColor()
-      )}
-      onClick={onClick}
-    >
-      {/* Machine Visual */}
-      <div className="flex justify-center mb-4">
-        {getMachineComponent()}
-      </div>
+    <>
+      <Card
+        className={cn(
+          'p-4 cursor-pointer transition-all hover:scale-105 hover:shadow-xl relative',
+          'bg-gradient-to-br from-card to-panel border-2',
+          getStatusColor()
+        )}
+        onClick={onClick}
+      >
+        {/* Management Menu */}
+        {showManagement && (
+          <div className="absolute top-2 right-2 z-10" onClick={handleManagementClick}>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="p-1 hover:bg-accent rounded-md transition-colors">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border">
+                <DropdownMenuItem 
+                  onClick={handleChangeOwner}
+                  className="cursor-pointer"
+                >
+                  <UserCog className="mr-2 h-4 w-4" />
+                  Change Owner
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteDialog(true);
+                  }}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
 
-      {/* Machine Name */}
-      <h3 className="text-lg font-semibold text-center mb-2 text-foreground">
-        {machine.name}
-      </h3>
-      
-      {/* Owner Name */}
-      {ownerName && (
-        <p className="text-xs text-muted-foreground text-center mb-4">
-          Owner: {ownerName}
-        </p>
-      )}
+        {/* Machine Visual */}
+        <div className="flex justify-center mb-4">
+          {getMachineComponent()}
+        </div>
 
-      {/* Status Grid */}
-      <div className="grid grid-cols-2 gap-2">
-        <StatusLight
-          status={machine.isOn ? 'active' : 'inactive'}
-          label="Power"
-          size="sm"
-        />
-        {machine.type !== 'heatpump' && (
+        {/* Machine Name */}
+        <h3 className="text-lg font-semibold text-center mb-2 text-foreground">
+          {machine.name}
+        </h3>
+        
+        {/* Owner Name */}
+        {ownerName && (
+          <p className="text-xs text-muted-foreground text-center mb-4">
+            Owner: {ownerName}
+          </p>
+        )}
+
+        {/* Status Grid */}
+        <div className="grid grid-cols-2 gap-2">
           <StatusLight
-            status={machine.fanActive ? 'active' : 'inactive'}
-            label="Fan"
+            status={machine.isOn ? 'active' : 'inactive'}
+            label="Power"
             size="sm"
           />
-        )}
-        <StatusLight
-          status={machine.isCooling ? 'active' : 'inactive'}
-          label={machine.type === 'airconditioner' ? 'Climate' : 'Cool'}
-          size="sm"
-        />
-        {machine.type !== 'airconditioner' && (
+          {machine.type !== 'heatpump' && (
+            <StatusLight
+              status={machine.fanActive ? 'active' : 'inactive'}
+              label="Fan"
+              size="sm"
+            />
+          )}
           <StatusLight
-            status={machine.hasWater ? 'active' : 'error'}
-            label="Water"
+            status={machine.isCooling ? 'active' : 'inactive'}
+            label={machine.type === 'airconditioner' ? 'Climate' : 'Cool'}
             size="sm"
           />
-        )}
-        <StatusLight
-          status={
-            Math.abs(machine.deltaT) >= 5 && Math.abs(machine.deltaT) <= 15
-              ? 'active'
-              : Math.abs(machine.deltaT) > 15
-              ? 'warning'
-              : 'inactive'
-          }
-          label="ΔT"
-          size="sm"
-        />
-        <StatusLight
-          status={
-            machine.motorTemp < 70
-              ? 'active'
-              : machine.motorTemp < 80
-              ? 'warning'
-              : 'error'
-          }
-          label="Motor"
-          size="sm"
-        />
-      </div>
-    </Card>
+          {machine.type !== 'airconditioner' && (
+            <StatusLight
+              status={machine.hasWater ? 'active' : 'error'}
+              label="Water"
+              size="sm"
+            />
+          )}
+          <StatusLight
+            status={
+              Math.abs(machine.deltaT) >= 5 && Math.abs(machine.deltaT) <= 15
+                ? 'active'
+                : Math.abs(machine.deltaT) > 15
+                ? 'warning'
+                : 'inactive'
+            }
+            label="ΔT"
+            size="sm"
+          />
+          <StatusLight
+            status={
+              machine.motorTemp < 70
+                ? 'active'
+                : machine.motorTemp < 80
+                ? 'warning'
+                : 'error'
+            }
+            label="Motor"
+            size="sm"
+          />
+        </div>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Machine</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{machine.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
