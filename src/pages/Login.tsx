@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -25,10 +27,59 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      toast.success('Login successful!');
-    } catch (error) {
-      toast.error('Invalid credentials');
+      if (isSignup) {
+        const { supabase } = await import('@/integrations/supabase/client');
+        
+        // Sign up the user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+          },
+        });
+
+        if (authError) throw authError;
+        if (!authData.user) throw new Error('Failed to create user');
+
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            name,
+            email,
+            cell_number: '',
+            country: '',
+            state: '',
+            city: '',
+            street: '',
+            suburb: '',
+            full_name_business: name,
+          });
+
+        if (profileError) throw profileError;
+
+        // Assign client role by default
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: 'client',
+          });
+
+        if (roleError) throw roleError;
+
+        toast.success('Account created successfully! Please log in.');
+        setIsSignup(false);
+        setName('');
+        setPassword('');
+      } else {
+        await login(email, password);
+        toast.success('Login successful!');
+      }
+    } catch (error: any) {
+      toast.error(error.message || (isSignup ? 'Failed to create account' : 'Invalid credentials'));
     } finally {
       setIsLoading(false);
     }
@@ -41,10 +92,25 @@ const Login: React.FC = () => {
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Machine Monitor
           </CardTitle>
-          <CardDescription>Sign in to access your dashboard</CardDescription>
+          <CardDescription>
+            {isSignup ? 'Create a new account' : 'Sign in to access your dashboard'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignup && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -65,10 +131,23 @@ const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                setIsSignup(!isSignup);
+                setName('');
+                setPassword('');
+              }}
+            >
+              {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </Button>
           </form>
         </CardContent>
