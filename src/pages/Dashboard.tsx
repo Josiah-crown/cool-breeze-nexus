@@ -132,17 +132,60 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-2">All Admins & Their Machines</h2>
-              <p className="text-muted-foreground">
-                Expand each admin to view their machines and clients
-              </p>
+            <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground mb-2">All Admins & Their Machines</h2>
+                <p className="text-muted-foreground">
+                  Expand each admin to view their machines and clients
+                </p>
+              </div>
+              <div className="flex gap-3 items-center">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger className="w-[200px] bg-card">
+                    <SelectValue placeholder="Filter machines" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="all">All Machines</SelectItem>
+                    <SelectItem value={user.id}>My Machines</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <UserHierarchyView
               users={users}
               machines={machines}
               onMachineClick={setSelectedMachine}
             />
+            {selectedUserId === user.id && (
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-foreground mb-2">Your Machines</h3>
+                <p className="text-muted-foreground mb-4">
+                  {filteredMachines.length} {filteredMachines.length === 1 ? 'machine' : 'machines'} assigned to you
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredMachines.map((machine) => {
+                    const owner = users.find(u => u.id === machine.ownerId);
+                    return (
+                      <MachineCard
+                        key={machine.id}
+                        machine={machine}
+                        onClick={() => setSelectedMachine(machine)}
+                        ownerName={owner?.name}
+                      />
+                    );
+                  })}
+                </div>
+                {filteredMachines.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground text-lg">No machines found</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Click "Add Machine" to create your first machine
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : user.role === 'admin' ? (
           /* Admin - View with Client Filter */
