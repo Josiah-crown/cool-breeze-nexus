@@ -14,16 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      client_admin_assignments: {
+        Row: {
+          admin_id: string
+          assigned_at: string
+          assigned_by: string | null
+          client_id: string
+          id: string
+        }
+        Insert: {
+          admin_id: string
+          assigned_at?: string
+          assigned_by?: string | null
+          client_id: string
+          id?: string
+        }
+        Update: {
+          admin_id?: string
+          assigned_at?: string
+          assigned_by?: string | null
+          client_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      machines: {
+        Row: {
+          api_endpoint: string | null
+          api_key: string
+          created_at: string
+          current: number
+          delta_t: number
+          fan_active: boolean
+          has_water: boolean
+          id: string
+          inside_temp: number
+          is_connected: boolean
+          is_cooling: boolean
+          is_on: boolean
+          motor_status: string
+          motor_temp: number
+          name: string
+          outside_temp: number
+          overall_status: string
+          owner_id: string
+          power: number
+          type: string
+          updated_at: string
+          voltage: number
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_key?: string
+          created_at?: string
+          current?: number
+          delta_t?: number
+          fan_active?: boolean
+          has_water?: boolean
+          id?: string
+          inside_temp?: number
+          is_connected?: boolean
+          is_cooling?: boolean
+          is_on?: boolean
+          motor_status?: string
+          motor_temp?: number
+          name: string
+          outside_temp?: number
+          overall_status?: string
+          owner_id: string
+          power?: number
+          type: string
+          updated_at?: string
+          voltage?: number
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_key?: string
+          created_at?: string
+          current?: number
+          delta_t?: number
+          fan_active?: boolean
+          has_water?: boolean
+          id?: string
+          inside_temp?: number
+          is_connected?: boolean
+          is_cooling?: boolean
+          is_on?: boolean
+          motor_status?: string
+          motor_temp?: number
+          name?: string
+          outside_temp?: number
+          overall_status?: string
+          owner_id?: string
+          power?: number
+          type?: string
+          updated_at?: string
+          voltage?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          cell_number: string
+          city: string
+          country: string
+          created_at: string
+          email: string
+          full_name_business: string
+          id: string
+          name: string
+          po_box: string | null
+          state: string
+          street: string
+          suburb: string
+          updated_at: string
+        }
+        Insert: {
+          cell_number: string
+          city: string
+          country: string
+          created_at?: string
+          email: string
+          full_name_business: string
+          id: string
+          name: string
+          po_box?: string | null
+          state: string
+          street: string
+          suburb: string
+          updated_at?: string
+        }
+        Update: {
+          cell_number?: string
+          city?: string
+          country?: string
+          created_at?: string
+          email?: string
+          full_name_business?: string
+          id?: string
+          name?: string
+          po_box?: string | null
+          state?: string
+          street?: string
+          suburb?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_admin: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "admin" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +330,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "admin", "client"],
+    },
   },
 } as const

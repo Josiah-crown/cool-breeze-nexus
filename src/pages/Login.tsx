@@ -34,17 +34,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const quickLogin = (role: string) => {
-    if (role === 'super_admin') {
-      setEmail('super@admin.com');
-    } else if (role === 'admin') {
-      setEmail('admin@test.com');
-    } else {
-      setEmail('client@test.com');
-    }
-    setPassword('demo');
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-card">
@@ -82,36 +71,6 @@ const Login: React.FC = () => {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-
-          <div className="mt-6">
-            <p className="text-sm text-muted-foreground text-center mb-3">Demo Accounts:</p>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => quickLogin('super_admin')}
-              >
-                <span className="font-semibold mr-2">Super Admin:</span>
-                <span className="text-muted-foreground">super@admin.com</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => quickLogin('admin')}
-              >
-                <span className="font-semibold mr-2">Admin:</span>
-                <span className="text-muted-foreground">admin@test.com</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => quickLogin('client')}
-              >
-                <span className="font-semibold mr-2">Client:</span>
-                <span className="text-muted-foreground">client@test.com</span>
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
