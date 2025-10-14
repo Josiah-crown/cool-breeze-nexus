@@ -190,7 +190,7 @@ const Dashboard: React.FC = () => {
                 {filteredMachines.filter(m => m.ownerId === user.id).length > 0 && (
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold text-foreground mb-4">Your Machines</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filteredMachines.filter(m => m.ownerId === user.id).map((machine) => {
                         const owner = users.find(u => u.id === machine.ownerId);
                         return (
@@ -199,7 +199,9 @@ const Dashboard: React.FC = () => {
                             machine={machine}
                             onClick={() => setSelectedMachine(machine)}
                             ownerName={owner?.name}
-                            showManagement={false}
+                            onDelete={handleDeleteMachine}
+                            onChangeOwner={handleChangeOwner}
+                            showManagement={true}
                           />
                         );
                       })}
@@ -364,7 +366,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Change Owner Dialog */}
-      {changeOwnerMachineId && selectedMachineForOwnerChange && (
+      {changeOwnerMachineId && selectedMachineForOwnerChange && user && (
         <ChangeOwnerDialog
           open={!!changeOwnerMachineId}
           onOpenChange={(open) => !open && setChangeOwnerMachineId(null)}
@@ -373,6 +375,8 @@ const Dashboard: React.FC = () => {
           currentOwnerId={selectedMachineForOwnerChange.ownerId}
           users={users}
           onOwnerChanged={handleRefresh}
+          currentUserRole={user.role}
+          currentUserId={user.id}
         />
       )}
     </div>
