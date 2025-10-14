@@ -214,6 +214,8 @@ const Dashboard: React.FC = () => {
                   users={users}
                   machines={machines}
                   onMachineClick={setSelectedMachine}
+                  onDeleteMachine={handleDeleteMachine}
+                  onChangeOwner={handleChangeOwner}
                 />
               </>
             ) : (
