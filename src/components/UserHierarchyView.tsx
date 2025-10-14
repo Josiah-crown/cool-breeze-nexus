@@ -42,10 +42,10 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
           <AccordionItem 
             key={admin.id} 
             value={admin.id}
-            className={`border-2 rounded-xl bg-gradient-to-br from-panel to-card backdrop-blur-sm shadow-xl ${
+            className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm shadow-xl ${
               hasFailing 
                 ? 'border-destructive/60 shadow-[0_0_20px_hsl(var(--destructive)/0.2)]' 
-                : 'border-control-border'
+                : 'border-[hsl(var(--control-border))]'
             }`}
           >
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -65,7 +65,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                 {adminMachines.length > 0 && (
                   <AccordionItem
                     value={`${admin.id}-machines`}
-                    className="border-2 border-control-border rounded-xl bg-gradient-to-br from-panel to-card shadow-lg"
+                    className="border-2 border-[hsl(var(--control-border))] rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg"
                   >
                     <AccordionTrigger className="px-4 py-3 hover:no-underline">
                       <div className="flex items-center gap-2">
@@ -103,10 +103,10 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     <AccordionItem
                       key={client.id}
                       value={client.id}
-                      className={`border-2 rounded-xl bg-gradient-to-br from-panel to-card shadow-lg ${
+                      className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg ${
                         clientHasFailing 
                           ? 'border-destructive/60 shadow-[0_0_15px_hsl(var(--destructive)/0.15)]' 
-                          : 'border-control-border'
+                          : 'border-[hsl(var(--control-border))]'
                       }`}
                     >
                           <AccordionTrigger className="px-4 py-3 hover:no-underline">

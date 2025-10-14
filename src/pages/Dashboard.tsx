@@ -70,14 +70,14 @@ const Dashboard: React.FC = () => {
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="bg-gradient-to-br from-panel to-card border-2 border-control-border rounded-xl p-6 shadow-xl relative overflow-hidden">
+              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] rounded-xl p-6 shadow-xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Machines</p>
                   <p className="text-4xl font-bold text-foreground mt-2">{machines.length}</p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-panel to-card border-2 border-control-border rounded-xl p-6 shadow-xl relative overflow-hidden">
+              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] rounded-xl p-6 shadow-xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">On / Off</p>
@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-panel to-card border-2 border-destructive/40 rounded-xl p-6 shadow-xl relative overflow-hidden">
+              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-destructive/40 rounded-xl p-6 shadow-xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent pointer-events-none"></div>
                 <div className="relative">
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Not Working</p>
