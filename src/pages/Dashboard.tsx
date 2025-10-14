@@ -157,12 +157,14 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-destructive/40 rounded-lg p-3 shadow-md relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent pointer-events-none"></div>
+              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Not Working</p>
-                  <p className="text-xl font-bold text-destructive mt-1">
-                    {machines.filter(m => m.overallStatus === 'error').length}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
+                  <p className="text-xl font-bold mt-1">
+                    <span className="text-green-500">{machines.filter(m => m.overallStatus === 'good').length}</span>
+                    <span className="text-muted-foreground"> | </span>
+                    <span className="text-red-500">{machines.filter(m => m.overallStatus === 'error').length}</span>
                   </p>
                 </div>
               </div>
@@ -296,12 +298,14 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-destructive/40 rounded-lg p-3 shadow-md relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent pointer-events-none"></div>
+              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Not Working</p>
-                  <p className="text-xl font-bold text-destructive mt-1">
-                    {machines.filter(m => m.overallStatus === 'error').length}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
+                  <p className="text-xl font-bold mt-1">
+                    <span className="text-green-500">{machines.filter(m => m.overallStatus === 'good').length}</span>
+                    <span className="text-muted-foreground"> | </span>
+                    <span className="text-red-500">{machines.filter(m => m.overallStatus === 'error').length}</span>
                   </p>
                 </div>
               </div>
@@ -468,12 +472,14 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-destructive/40 rounded-lg p-3 shadow-md relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent pointer-events-none"></div>
+              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Not Working</p>
-                  <p className="text-xl font-bold text-destructive mt-1">
-                    {machines.filter(m => m.overallStatus === 'error').length}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
+                  <p className="text-xl font-bold mt-1">
+                    <span className="text-green-500">{machines.filter(m => m.overallStatus === 'good').length}</span>
+                    <span className="text-muted-foreground"> | </span>
+                    <span className="text-red-500">{machines.filter(m => m.overallStatus === 'error').length}</span>
                   </p>
                 </div>
               </div>
