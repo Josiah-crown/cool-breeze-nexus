@@ -30,7 +30,7 @@ const FanComponent: React.FC<FanComponentProps> = ({
     <div className="flex items-center justify-center p-8">
       <div className={`relative ${sizeClass}`}>
         {/* Outer Fan Housing */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-950 dark:to-green-900 border-2 border-green-300 dark:border-green-700 shadow-xl">
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-panel to-control border-2 border-control-border shadow-xl">
           {/* Concentric Circles */}
           <div className="absolute inset-4 rounded-full border border-border/30"></div>
           <div className="absolute inset-8 rounded-full border border-border/20"></div>
@@ -74,7 +74,7 @@ const FanComponent: React.FC<FanComponentProps> = ({
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="absolute bg-border/20"
+              className="absolute bg-green-500/40"
               style={{
                 width: '2px',
                 height: '100%',
