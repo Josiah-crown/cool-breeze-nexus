@@ -36,6 +36,7 @@ const ALL_MACHINES: Omit<MachineStatus, 'id'>[] = [
     type: 'fan',
     ownerId: '2', // Admin's machine
     isOn: true,
+    isConnected: true,
     hasWater: true,
     isCooling: true,
     fanActive: true,
@@ -54,6 +55,7 @@ const ALL_MACHINES: Omit<MachineStatus, 'id'>[] = [
     type: 'heatpump',
     ownerId: '3', // Client 1's machine
     isOn: true,
+    isConnected: true,
     hasWater: true,
     isCooling: false,
     fanActive: false,
@@ -72,6 +74,7 @@ const ALL_MACHINES: Omit<MachineStatus, 'id'>[] = [
     type: 'airconditioner',
     ownerId: '3', // Client 1's machine
     isOn: true,
+    isConnected: true,
     hasWater: true,
     isCooling: true,
     fanActive: true,
@@ -90,6 +93,7 @@ const ALL_MACHINES: Omit<MachineStatus, 'id'>[] = [
     type: 'fan',
     ownerId: '4', // Client 2's machine
     isOn: false,
+    isConnected: false,
     hasWater: false,
     isCooling: false,
     fanActive: false,
@@ -108,6 +112,7 @@ const ALL_MACHINES: Omit<MachineStatus, 'id'>[] = [
     type: 'heatpump',
     ownerId: '4', // Client 2's machine
     isOn: true,
+    isConnected: true,
     hasWater: true,
     isCooling: true,
     fanActive: true,

@@ -6,6 +6,7 @@ export interface MachineStatus {
   type: MachineType;
   ownerId: string;
   isOn: boolean;
+  isConnected: boolean;
   hasWater: boolean;
   isCooling: boolean;
   fanActive: boolean;
