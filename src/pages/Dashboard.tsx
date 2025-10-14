@@ -72,14 +72,14 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-4 gap-2 mb-6">
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
-                <div className="relative">
+                <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Machines</p>
                   <p className="text-xl font-bold text-foreground mt-1">{machines.length}</p>
                 </div>
               </div>
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
-                <div className="relative">
+                <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">On</p>
                   <p className="text-xl font-bold mt-1">
                     <span className="text-green-500">{machines.filter(m => m.isOn).length}</span>
@@ -90,7 +90,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
-                <div className="relative">
+                <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected</p>
                   <p className="text-xl font-bold mt-1">
                     <span className="text-green-500">{machines.filter(m => m.isConnected).length}</span>
@@ -101,7 +101,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-destructive/40 rounded-lg p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent pointer-events-none"></div>
-                <div className="relative">
+                <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Not Working</p>
                   <p className="text-xl font-bold text-destructive mt-1">
                     {machines.filter(m => m.overallStatus === 'error').length}
