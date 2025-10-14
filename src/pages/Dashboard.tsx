@@ -109,7 +109,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            </div>
 
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-foreground mb-2">All Admins & Their Machines</h2>
