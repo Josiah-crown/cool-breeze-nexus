@@ -38,43 +38,50 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
-              {/* Admin's own machines */}
-              {adminMachines.length > 0 && (
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    {admin.name}'s Machines
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {adminMachines.map(machine => (
-                      <MachineCard
-                        key={machine.id}
-                        machine={machine}
-                        onClick={() => onMachineClick(machine)}
-                        ownerName={admin.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
+              <Accordion type="multiple" className="space-y-3">
+                {/* Admin's own machines */}
+                {adminMachines.length > 0 && (
+                  <AccordionItem
+                    value={`${admin.id}-machines`}
+                    className="border border-border rounded-md bg-card"
+                  >
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-primary" />
+                        <div className="text-left">
+                          <span className="font-medium text-foreground">{admin.name}'s Machines</span>
+                          <span className="text-sm text-muted-foreground ml-2">
+                            ({adminMachines.length})
+                          </span>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                        {adminMachines.map(machine => (
+                          <MachineCard
+                            key={machine.id}
+                            machine={machine}
+                            onClick={() => onMachineClick(machine)}
+                            ownerName={admin.name}
+                          />
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
 
-              {/* Clients under this admin */}
-              {clients.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Clients
-                  </h4>
-                  <Accordion type="multiple" className="space-y-3">
-                    {clients.map(client => {
-                      const clientMachines = machines.filter(m => m.ownerId === client.id);
-                      
-                      return (
-                        <AccordionItem
-                          key={client.id}
-                          value={client.id}
-                          className="border border-border rounded-md bg-card"
-                        >
+
+                {/* Clients under this admin */}
+                {clients.map(client => {
+                  const clientMachines = machines.filter(m => m.ownerId === client.id);
+                  
+                  return (
+                    <AccordionItem
+                      key={client.id}
+                      value={client.id}
+                      className="border border-border rounded-md bg-card"
+                    >
                           <AccordionTrigger className="px-4 py-3 hover:no-underline">
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4 text-accent" />
@@ -104,12 +111,10 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                               </p>
                             )}
                           </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
-                </div>
-              )}
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
 
               {adminMachines.length === 0 && clients.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">
