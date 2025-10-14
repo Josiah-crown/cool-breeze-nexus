@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,65 +33,70 @@ export const AddUserDialog = ({ open, onOpenChange, userRole, currentUserId, onU
     fullNameBusiness: '',
     assignToAdmin: '',
   });
+  const [admins, setAdmins] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    const loadAdmins = async () => {
+      if (!open || userRole !== 'super_admin') return;
+      try {
+        const { data: roleRows, error: roleErr } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .eq('role', 'admin');
+        if (roleErr) throw roleErr;
+        const ids = (roleRows || []).map((r: any) => r.user_id);
+        if (ids.length === 0) {
+          setAdmins([]);
+          return;
+        }
+        const { data: profiles, error: profErr } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', ids);
+        if (profErr) throw profErr;
+        setAdmins((profiles || []).map((p: any) => ({ id: p.id, name: p.name })));
+      } catch (e) {
+        console.error('Failed to load admins', e);
+      }
+    };
+    loadAdmins();
+  }, [open, userRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: formData.password,
-        email_confirm: true,
-      });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: formData.role,
           name: formData.name,
           email: formData.email,
-          cell_number: formData.cellNumber,
+          password: formData.password,
+          cellNumber: formData.cellNumber,
           country: formData.country,
           state: formData.state,
           city: formData.city,
           street: formData.street,
           suburb: formData.suburb,
-          po_box: formData.poBox || null,
-          full_name_business: formData.fullNameBusiness,
-        });
+          poBox: formData.poBox,
+          fullNameBusiness: formData.fullNameBusiness,
+          assignToAdmin: formData.assignToAdmin || undefined,
+        }),
+      });
 
-      if (profileError) throw profileError;
-
-      // Assign role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: formData.role,
-          created_by: currentUserId,
-        });
-
-      if (roleError) throw roleError;
-
-      // If creating a client, assign to admin
-      if (formData.role === 'client') {
-        const adminId = userRole === 'admin' ? currentUserId : formData.assignToAdmin;
-        
-        const { error: assignError } = await supabase
-          .from('client_admin_assignments')
-          .insert({
-            client_id: authData.user.id,
-            admin_id: adminId,
-            assigned_by: currentUserId,
-          });
-
-        if (assignError) throw assignError;
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create user');
       }
 
       toast({
@@ -147,6 +152,22 @@ export const AddUserDialog = ({ open, onOpenChange, userRole, currentUserId, onU
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {userRole === 'super_admin' && formData.role === 'client' && (
+            <div className="space-y-2">
+              <Label htmlFor="assignToAdmin">Assign To Admin *</Label>
+              <Select value={formData.assignToAdmin} onValueChange={(value) => setFormData({ ...formData, assignToAdmin: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder={admins.length ? 'Choose admin' : 'No admins found'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {admins.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
