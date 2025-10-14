@@ -44,7 +44,7 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
   const loadAvailableUsers = async () => {
     try {
       if (currentUserRole === 'super_admin') {
-        // Super admins can only assign to admins
+        // Super admins can assign to themselves or other admins
         const { data: adminRoles, error: rolesError } = await supabase
           .from('user_roles')
           .select('user_id')
@@ -54,19 +54,21 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
 
         const adminIds = (adminRoles || []).map(r => r.user_id);
         
-        if (adminIds.length === 0) {
-          setAvailableUsers([]);
-          return;
-        }
+        const allIds = [currentUserId, ...adminIds];
 
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, name')
-          .in('id', adminIds);
+          .in('id', allIds);
 
         if (profilesError) throw profilesError;
 
-        setAvailableUsers((profiles || []).map(p => ({ ...p, role: 'admin' })));
+        const userList = (profiles || []).map(p => ({ 
+          ...p, 
+          role: p.id === currentUserId ? 'super_admin' : 'admin' 
+        }));
+
+        setAvailableUsers(userList);
       } else if (currentUserRole === 'admin') {
         if (assignmentType === 'client') {
           // Load admin's clients
@@ -146,7 +148,7 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {currentUserRole === 'super_admin' ? 'Assign to Admin' : 'Reassign Machine'}: {machineName}
+            {currentUserRole === 'super_admin' ? 'Assign Machine' : 'Reassign Machine'}: {machineName}
           </DialogTitle>
         </DialogHeader>
         
@@ -172,16 +174,16 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
 
           <div className="space-y-2">
             <Label>
-              Select {currentUserRole === 'super_admin' ? 'Admin' : assignmentType === 'client' ? 'Client' : 'Admin'}
+              Select {currentUserRole === 'super_admin' ? 'Owner' : assignmentType === 'client' ? 'Client' : 'Admin'}
             </Label>
             <Select value={newOwnerId} onValueChange={setNewOwnerId}>
               <SelectTrigger className="bg-card">
-                <SelectValue placeholder={`Select ${currentUserRole === 'super_admin' ? 'admin' : assignmentType}`} />
+                <SelectValue placeholder={`Select ${currentUserRole === 'super_admin' ? 'owner' : assignmentType}`} />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
                 {availableUsers.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.name}
+                    {user.name}{user.id === currentUserId ? ' (Me)' : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
