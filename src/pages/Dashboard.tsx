@@ -7,6 +7,7 @@ import UserHierarchyView from '@/components/UserHierarchyView';
 import { AddUserDialog } from '@/components/AddUserDialog';
 import { AddMachineDialog } from '@/components/AddMachineDialog';
 import { ChangeOwnerDialog } from '@/components/ChangeOwnerDialog';
+import { RenameMachineDialog } from '@/components/RenameMachineDialog';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +24,7 @@ const Dashboard: React.FC = () => {
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddMachineDialog, setShowAddMachineDialog] = useState(false);
   const [changeOwnerMachineId, setChangeOwnerMachineId] = useState<string | null>(null);
+  const [renameMachineId, setRenameMachineId] = useState<string | null>(null);
   
   const handleRefresh = () => {
     window.location.reload();
@@ -48,7 +50,12 @@ const Dashboard: React.FC = () => {
     setChangeOwnerMachineId(machineId);
   };
 
+  const handleRename = (machineId: string) => {
+    setRenameMachineId(machineId);
+  };
+
   const selectedMachineForOwnerChange = machines.find(m => m.id === changeOwnerMachineId);
+  const selectedMachineForRename = machines.find(m => m.id === renameMachineId);
 
   // Get admins (for super admin view)
   const admins = useMemo(() => users.filter(u => u.role === 'admin'), [users]);
@@ -218,6 +225,7 @@ const Dashboard: React.FC = () => {
                             ownerName={owner?.name}
                             onDelete={handleDeleteMachine}
                             onChangeOwner={handleChangeOwner}
+                            onRename={handleRename}
                             showManagement={true}
                           />
                         );
@@ -233,6 +241,7 @@ const Dashboard: React.FC = () => {
                   onMachineClick={setSelectedMachine}
                   onDeleteMachine={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
+                  onRename={handleRename}
                 />
               </>
             ) : (
@@ -248,6 +257,7 @@ const Dashboard: React.FC = () => {
                         ownerName={owner?.name}
                         onDelete={handleDeleteMachine}
                         onChangeOwner={handleChangeOwner}
+                        onRename={handleRename}
                         showManagement={true}
                       />
                     );
@@ -358,6 +368,7 @@ const Dashboard: React.FC = () => {
                             onClick={() => setSelectedMachine(machine)}
                             onDelete={handleDeleteMachine}
                             onChangeOwner={handleChangeOwner}
+                            onRename={handleRename}
                             showManagement={true}
                           />
                         ))}
@@ -393,6 +404,7 @@ const Dashboard: React.FC = () => {
                                 ownerName={owner?.name}
                                 onDelete={handleDeleteMachine}
                                 onChangeOwner={handleChangeOwner}
+                                onRename={handleRename}
                                 showManagement={true}
                               />
                             );
@@ -422,6 +434,7 @@ const Dashboard: React.FC = () => {
                       onClick={() => setSelectedMachine(machine)}
                       onDelete={handleDeleteMachine}
                       onChangeOwner={handleChangeOwner}
+                      onRename={handleRename}
                       showManagement={true}
                     />
                   ))}
@@ -558,6 +571,17 @@ const Dashboard: React.FC = () => {
           onOwnerChanged={handleRefresh}
           currentUserRole={user.role}
           currentUserId={user.id}
+        />
+      )}
+
+      {/* Rename Machine Dialog */}
+      {renameMachineId && selectedMachineForRename && (
+        <RenameMachineDialog
+          machineId={renameMachineId}
+          currentName={selectedMachineForRename.name}
+          open={!!renameMachineId}
+          onOpenChange={(open) => !open && setRenameMachineId(null)}
+          onSuccess={handleRefresh}
         />
       )}
     </div>

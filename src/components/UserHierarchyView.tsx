@@ -11,9 +11,10 @@ interface UserHierarchyViewProps {
   onMachineClick: (machine: MachineStatus) => void;
   onDeleteMachine?: (machineId: string) => void;
   onChangeOwner?: (machineId: string) => void;
+  onRename?: (machineId: string) => void;
 }
 
-const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner }) => {
+const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename }) => {
   const admins = users.filter(u => u.role === 'admin');
 
   // Check if admin or any of their clients have failing machines
@@ -92,6 +93,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                             ownerName={admin.name}
                             onDelete={onDeleteMachine}
                             onChangeOwner={onChangeOwner}
+                            onRename={onRename}
                             showManagement={true}
                           />
                         ))}

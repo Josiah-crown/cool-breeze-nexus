@@ -6,7 +6,7 @@ import FanComponent from './FanComponent';
 import HeatPumpComponent from './HeatPumpComponent';
 import AirConditionerComponent from './AirConditionerComponent';
 import { cn } from '@/lib/utils';
-import { Lock, Trash2, UserCog } from 'lucide-react';
+import { Lock, Trash2, UserCog, Edit } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import {
   AlertDialog,
@@ -25,6 +25,7 @@ interface MachineCardProps {
   ownerName?: string;
   onDelete?: (machineId: string) => void;
   onChangeOwner?: (machineId: string) => void;
+  onRename?: (machineId: string) => void;
   showManagement?: boolean;
 }
 
@@ -34,6 +35,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
   ownerName,
   onDelete,
   onChangeOwner,
+  onRename,
   showManagement = false
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -46,6 +48,11 @@ const MachineCard: React.FC<MachineCardProps> = ({
   const handleChangeOwner = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChangeOwner?.(machine.id);
+  };
+
+  const handleRename = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRename?.(machine.id);
   };
 
   const handleManagementClick = (e: React.MouseEvent) => {
@@ -101,6 +108,13 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 >
                   <UserCog className="mr-2 h-4 w-4" />
                   Change Owner
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleRename}
+                  className="cursor-pointer"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Rename
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={(e) => {
