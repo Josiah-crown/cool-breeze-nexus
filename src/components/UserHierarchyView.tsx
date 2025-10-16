@@ -80,8 +80,8 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                 </DropdownMenu>
               </div>
             )}
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center gap-3 flex-1">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%]">
+              <div className="flex items-center gap-3 flex-1 pr-12">
                 <Building2 className="h-5 w-5 text-primary" />
                 <div className="text-left flex-1">
                   <h3 className="text-lg font-semibold text-foreground">{admin.name}</h3>
@@ -100,8 +100,8 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     value={`${admin.id}-machines`}
                     className="border-2 border-[hsl(var(--control-border))] rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg"
                   >
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                      <div className="flex items-center gap-2">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%]">
+                      <div className="flex items-center gap-2 pr-12">
                         <Building2 className="h-4 w-4 text-primary" />
                         <div className="text-left">
                           <span className="font-medium text-foreground">{admin.name}'s Machines</span>
@@ -182,8 +182,8 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                               </DropdownMenu>
                             </div>
                           )}
-                          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                            <div className="flex items-center gap-2 flex-1">
+                          <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%]">
+                            <div className="flex items-center gap-2 flex-1 pr-12">
                               <User className="h-4 w-4 text-accent" />
                               <div className="text-left flex-1">
                                 <span className="font-medium text-foreground">{client.name}</span>
