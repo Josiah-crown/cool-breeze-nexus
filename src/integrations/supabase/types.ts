@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      installer_company_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          company_id: string
+          id: string
+          installer_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          company_id: string
+          id?: string
+          installer_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          company_id?: string
+          id?: string
+          installer_id?: string
+        }
+        Relationships: []
+      }
       machines: {
         Row: {
           api_endpoint: string | null
@@ -195,6 +219,10 @@ export type Database = {
         Returns: number
       }
       get_user_admin: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      get_user_company: {
         Args: { _user_id: string }
         Returns: string
       }

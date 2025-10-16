@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 interface AddUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userRole: 'super_admin' | 'admin';
+  userRole: 'super_admin' | 'company' | 'installer';
   currentUserId: string;
   onUserAdded: () => void;
 }
@@ -19,7 +19,7 @@ export const AddUserDialog = ({ open, onOpenChange, userRole, currentUserId, onU
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    role: 'client' as 'admin' | 'client',
+    role: 'client' as 'installer' | 'client' | 'company',
     name: '',
     email: '',
     password: '',
@@ -31,18 +31,37 @@ export const AddUserDialog = ({ open, onOpenChange, userRole, currentUserId, onU
     suburb: '',
     poBox: '',
     fullNameBusiness: '',
-    assignToAdmin: '',
+    assignToAdmin: '', // For super_admin/company assigning installer/client
   });
   const [admins, setAdmins] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
-    const loadAdmins = async () => {
-      if (!open || userRole !== 'super_admin') return;
+    const loadParentOptions = async () => {
+      if (!open) return;
+      
       try {
+        let targetRole: string | null = null;
+        
+        // Super admin can assign installers to companies or clients to installers
+        if (userRole === 'super_admin') {
+          if (formData.role === 'installer') {
+            targetRole = 'company'; // Load companies to assign installer to
+          } else if (formData.role === 'client') {
+            targetRole = 'installer'; // Load installers to assign client to
+          }
+        } else if (userRole === 'company' && formData.role === 'client') {
+          targetRole = 'installer'; // Company assigns clients to their installers
+        }
+        
+        if (!targetRole) {
+          setAdmins([]);
+          return;
+        }
+        
         const { data: roleRows, error: roleErr } = await supabase
           .from('user_roles')
           .select('user_id, role')
-          .eq('role', 'admin');
+          .eq('role', targetRole as any);
         if (roleErr) throw roleErr;
         const ids = (roleRows || []).map((r: any) => r.user_id);
         if (ids.length === 0) {
@@ -56,11 +75,11 @@ export const AddUserDialog = ({ open, onOpenChange, userRole, currentUserId, onU
         if (profErr) throw profErr;
         setAdmins((profiles || []).map((p: any) => ({ id: p.id, name: p.name })));
       } catch (e) {
-        console.error('Failed to load admins', e);
+        console.error('Failed to load parent options', e);
       }
     };
-    loadAdmins();
-  }, [open, userRole]);
+    loadParentOptions();
+  }, [open, userRole, formData.role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +120,7 @@ export const AddUserDialog = ({ open, onOpenChange, userRole, currentUserId, onU
 
       toast({
         title: 'Success',
-        description: `${formData.role === 'admin' ? 'Admin' : 'Client'} account created successfully`,
+        description: `${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)} account created successfully`,
       });
 
       onUserAdded();
@@ -138,31 +157,45 @@ export const AddUserDialog = ({ open, onOpenChange, userRole, currentUserId, onU
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New {userRole === 'super_admin' ? 'Admin or Client' : 'Client'}</DialogTitle>
+          <DialogTitle>
+            Add New {userRole === 'super_admin' 
+              ? 'User' 
+              : userRole === 'company'
+                ? 'Installer or Client'
+                : 'Client'}
+          </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          {userRole === 'super_admin' && (
+          {(userRole === 'super_admin' || userRole === 'company') && (
             <div className="space-y-2">
               <Label htmlFor="role">Account Type *</Label>
-              <Select value={formData.role} onValueChange={(value: 'admin' | 'client') => setFormData({ ...formData, role: value })}>
+              <Select 
+                value={formData.role} 
+                onValueChange={(value: 'installer' | 'client' | 'company') => setFormData({ ...formData, role: value, assignToAdmin: '' })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  {userRole === 'super_admin' && <SelectItem value="company">Company</SelectItem>}
+                  {(userRole === 'super_admin' || userRole === 'company') && <SelectItem value="installer">Installer</SelectItem>}
                   <SelectItem value="client">Client</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {userRole === 'super_admin' && formData.role === 'client' && (
+          {/* Show assignment dropdown when needed */}
+          {((userRole === 'super_admin' && (formData.role === 'installer' || formData.role === 'client')) ||
+            (userRole === 'company' && formData.role === 'client')) && admins.length > 0 && (
             <div className="space-y-2">
-              <Label htmlFor="assignToAdmin">Assign To Admin *</Label>
+              <Label htmlFor="assignToAdmin">
+                Assign To {formData.role === 'installer' ? 'Company' : 'Installer'} *
+              </Label>
               <Select value={formData.assignToAdmin} onValueChange={(value) => setFormData({ ...formData, assignToAdmin: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder={admins.length ? 'Choose admin' : 'No admins found'} />
+                  <SelectValue placeholder={`Choose ${formData.role === 'installer' ? 'company' : 'installer'}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {admins.map((a) => (

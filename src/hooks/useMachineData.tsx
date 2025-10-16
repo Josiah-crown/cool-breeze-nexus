@@ -6,8 +6,9 @@ export interface UserHierarchy {
   id: string;
   name: string;
   email: string;
-  role: 'super_admin' | 'admin' | 'client';
-  parentId?: string; // For clients, this is their admin's id
+  role: 'super_admin' | 'company' | 'installer' | 'client';
+  parentId?: string; // For clients, this is their installer's id; for installers, this is their company's id
+  companyId?: string; // For installers, reference to their company
 }
 
 const generateHistoricalData = (currentValue: number, variance: number, points: number = 20) => {
@@ -51,26 +52,38 @@ export const useMachineData = (userId: string, userRole: string) => {
           
           if (rolesError) throw rolesError;
 
-          const { data: assignments, error: assignmentsError } = await supabase
+          const { data: clientAssignments, error: clientAssignmentsError } = await supabase
             .from('client_admin_assignments')
             .select('client_id, admin_id');
           
-          if (assignmentsError) throw assignmentsError;
+          if (clientAssignmentsError) throw clientAssignmentsError;
+
+          const { data: installerAssignments, error: installerAssignmentsError } = await supabase
+            .from('installer_company_assignments')
+            .select('installer_id, company_id');
+          
+          if (installerAssignmentsError) throw installerAssignmentsError;
 
           availableUsers = (profiles || []).map((profile: any) => {
             const roleData = roles?.find((r: any) => r.user_id === profile.id);
-            const assignment = assignments?.find((a: any) => a.client_id === profile.id);
+            const clientAssignment = clientAssignments?.find((a: any) => a.client_id === profile.id);
+            const installerAssignment = installerAssignments?.find((a: any) => a.installer_id === profile.id);
+            
+            const role = roleData?.role || 'client';
+            // Map old 'admin' role to 'installer' for backwards compatibility
+            const mappedRole = role === 'admin' ? 'installer' : role;
             
             return {
               id: profile.id,
               name: profile.name,
               email: profile.email,
-              role: roleData?.role || 'client',
-              parentId: assignment?.admin_id,
+              role: mappedRole as 'super_admin' | 'company' | 'installer' | 'client',
+              parentId: clientAssignment?.admin_id || installerAssignment?.company_id,
+              companyId: installerAssignment?.company_id,
             };
           });
-        } else if (userRole === 'admin') {
-          // Admin sees themselves and their clients
+        } else if (userRole === 'company') {
+          // Company sees themselves, their installers, and their clients
           const { data: selfProfile } = await supabase
             .from('profiles')
             .select('id, name, email')
@@ -92,7 +105,95 @@ export const useMachineData = (userId: string, userRole: string) => {
             });
           }
 
-          // Get admin's clients
+          // Get company's installers
+          const { data: installerAssignments } = await supabase
+            .from('installer_company_assignments')
+            .select('installer_id')
+            .eq('company_id', userId);
+
+          if (installerAssignments && installerAssignments.length > 0) {
+            const installerIds = installerAssignments.map((a: any) => a.installer_id);
+            
+            const { data: installerProfiles } = await supabase
+              .from('profiles')
+              .select('id, name, email')
+              .in('id', installerIds);
+
+            const { data: installerRoles } = await supabase
+              .from('user_roles')
+              .select('user_id, role')
+              .in('user_id', installerIds);
+
+            (installerProfiles || []).forEach((profile: any) => {
+              const roleData = installerRoles?.find((r: any) => r.user_id === profile.id);
+              const role = roleData?.role || 'installer';
+              const mappedRole = role === 'admin' ? 'installer' : role;
+              availableUsers.push({
+                id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                role: mappedRole as 'super_admin' | 'company' | 'installer' | 'client',
+                parentId: userId,
+                companyId: userId,
+              });
+            });
+
+            // Get clients of those installers
+            const { data: clientAssignments } = await supabase
+              .from('client_admin_assignments')
+              .select('client_id, admin_id')
+              .in('admin_id', installerIds);
+
+            if (clientAssignments && clientAssignments.length > 0) {
+              const clientIds = clientAssignments.map((a: any) => a.client_id);
+              
+              const { data: clientProfiles } = await supabase
+                .from('profiles')
+                .select('id, name, email')
+                .in('id', clientIds);
+
+              const { data: clientRoles } = await supabase
+                .from('user_roles')
+                .select('user_id, role')
+                .in('user_id', clientIds);
+
+              (clientProfiles || []).forEach((profile: any) => {
+                const roleData = clientRoles?.find((r: any) => r.user_id === profile.id);
+                const assignment = clientAssignments.find((a: any) => a.client_id === profile.id);
+                availableUsers.push({
+                  id: profile.id,
+                  name: profile.name,
+                  email: profile.email,
+                  role: roleData?.role || 'client',
+                  parentId: assignment?.admin_id,
+                });
+              });
+            }
+          }
+        } else if (userRole === 'installer') {
+          // Installer sees themselves and their clients
+          const { data: selfProfile } = await supabase
+            .from('profiles')
+            .select('id, name, email')
+            .eq('id', userId)
+            .single();
+
+          const { data: selfRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId)
+            .single();
+
+          if (selfProfile && selfRole) {
+            availableUsers.push({
+              id: selfProfile.id,
+              name: selfProfile.name,
+              email: selfProfile.email,
+              role: selfRole.role,
+            });
+          }
+
+          // Get installer's clients
           const { data: assignments } = await supabase
             .from('client_admin_assignments')
             .select('client_id')
@@ -151,43 +252,16 @@ export const useMachineData = (userId: string, userRole: string) => {
         // Fetch machines based on role
         let visibleMachines: MachineStatus[] = [];
         
-        if (userRole === 'super_admin') {
-          // Super admin sees all machines
-          const { data: allMachines, error: machinesError } = await supabase
-            .from('machines')
-            .select('*');
-          
-          if (machinesError) throw machinesError;
-          visibleMachines = (allMachines || []).map((m: any) => ({
-            id: m.id,
-            name: m.name,
-            type: m.type,
-            ownerId: m.owner_id,
-            isOn: m.is_on,
-            isConnected: m.is_connected,
-            hasWater: m.has_water,
-            isCooling: m.is_cooling,
-            fanActive: m.fan_active,
-            motorTemp: m.motor_temp,
-            outsideTemp: m.outside_temp,
-            insideTemp: m.inside_temp,
-            deltaT: m.delta_t,
-            current: m.current,
-            voltage: m.voltage,
-            power: m.power,
-            overallStatus: m.overall_status,
-            motorStatus: m.motor_status,
-          }));
-        } else if (userRole === 'admin') {
-          // Admin sees their own machines and their clients' machines
+        if (userRole === 'super_admin' || userRole === 'company' || userRole === 'installer') {
+          // These roles see all machines visible to them via RLS policies
           const userIds = availableUsers.map(u => u.id);
-          const { data: adminMachines, error: machinesError } = await supabase
+          const { data: allMachines, error: machinesError } = await supabase
             .from('machines')
             .select('*')
             .in('owner_id', userIds);
           
           if (machinesError) throw machinesError;
-          visibleMachines = (adminMachines || []).map((m: any) => ({
+          visibleMachines = (allMachines || []).map((m: any) => ({
             id: m.id,
             name: m.name,
             type: m.type,

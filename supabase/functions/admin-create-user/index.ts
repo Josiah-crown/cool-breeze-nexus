@@ -61,7 +61,7 @@ serve(async (req) => {
       });
     }
 
-    const requesterRole = roleRows?.[0]?.role as 'super_admin' | 'admin' | 'client' | undefined;
+    const requesterRole = roleRows?.[0]?.role as 'super_admin' | 'company' | 'installer' | 'admin' | 'client' | undefined;
     if (!requesterRole) {
       return new Response(JSON.stringify({ error: 'Requester has no role assigned' }), { 
         status: 403,
@@ -87,7 +87,7 @@ serve(async (req) => {
     } = body as any;
 
     // Basic validation
-    if (!['admin','client'].includes(role)) {
+    if (!['company','installer','admin','client'].includes(role)) {
       return new Response(JSON.stringify({ error: 'Invalid target role' }), { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -101,8 +101,14 @@ serve(async (req) => {
     }
 
     // Authorization rules
-    if (requesterRole === 'admin' && role !== 'client') {
-      return new Response(JSON.stringify({ error: 'Only super admins can create admin accounts' }), { 
+    if ((requesterRole === 'installer' || requesterRole === 'admin') && role !== 'client') {
+      return new Response(JSON.stringify({ error: 'Only super admins and companies can create installer/company accounts' }), { 
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    if (requesterRole === 'company' && !['installer', 'client'].includes(role)) {
+      return new Response(JSON.stringify({ error: 'Companies can only create installer or client accounts' }), { 
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -159,19 +165,32 @@ serve(async (req) => {
       });
     }
 
-    // Optional: if creating a client, assign to an admin
-    if (role === 'client') {
-      let adminId: string | undefined;
-      if (requesterRole === 'admin') {
-        adminId = requesterId; // admin assigns client to self
-      } else if (requesterRole === 'super_admin') {
-        adminId = assignToAdmin || requesterId; // fallback to requester if not provided
+    // Handle assignments based on role
+    if (role === 'installer') {
+      const companyId = assignToAdmin || requesterId;
+      const { error: assignmentErr } = await adminClient.from('installer_company_assignments').insert({
+        installer_id: newUserId,
+        company_id: companyId,
+        assigned_by: requesterId,
+      });
+      if (assignmentErr) {
+        return new Response(JSON.stringify({ error: assignmentErr.message }), { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    } else if (role === 'client') {
+      let installerId: string | undefined;
+      if (requesterRole === 'installer' || requesterRole === 'admin') {
+        installerId = requesterId;
+      } else if (requesterRole === 'super_admin' || requesterRole === 'company') {
+        installerId = assignToAdmin || requesterId;
       }
 
-      if (adminId) {
+      if (installerId) {
         const { error: assignmentErr } = await adminClient.from('client_admin_assignments').insert({
           client_id: newUserId,
-          admin_id: adminId,
+          admin_id: installerId,
           assigned_by: requesterId,
         });
         if (assignmentErr) {

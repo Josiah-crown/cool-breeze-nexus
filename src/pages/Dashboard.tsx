@@ -73,25 +73,29 @@ const Dashboard: React.FC = () => {
   const selectedUserForDeletion = users.find(u => u.id === deleteUserId);
   const selectedUserForReassignment = users.find(u => u.id === reassignClientId);
 
-  // Get admins (for super admin view)
-  const admins = useMemo(() => users.filter(u => u.role === 'admin'), [users]);
+  // Get companies (for super admin view)
+  const companies = useMemo(() => users.filter(u => u.role === 'company'), [users]);
   
-  // Get clients under selected admin or all clients
+  // Get installers and clients based on selected company or all
+  const installers = useMemo(() => users.filter(u => u.role === 'installer'), [users]);
   const clients = useMemo(() => {
     if (user?.role === 'super_admin' && selectedUserId !== 'all') {
-      return users.filter(u => u.role === 'client' && u.parentId === selectedUserId);
+      // Filter clients based on selected company's installers
+      const selectedCompanyInstallers = users.filter(u => u.role === 'installer' && u.parentId === selectedUserId);
+      const installerIds = selectedCompanyInstallers.map(i => i.id);
+      return users.filter(u => u.role === 'client' && installerIds.includes(u.parentId || ''));
     }
     return users.filter(u => u.role === 'client');
   }, [users, selectedUserId, user?.role]);
 
   // Filter machines based on selected user
   const filteredMachines = useMemo(() => {
-    if (user?.role === 'admin') {
-      // For admin, "all" shows everything, "unassigned" shows only admin's own machines
+    if (user?.role === 'installer' || user?.role === 'company') {
+      // For installer/company, "all" shows everything, "unassigned" shows only their own machines
       if (selectedUserId === 'unassigned') {
         return machines.filter(m => m.ownerId === user.id);
       }
-      // "all" or default shows all machines (admin's + clients')
+      // "all" or default shows all machines (own + hierarchy)
       return machines;
     }
     
@@ -99,11 +103,12 @@ const Dashboard: React.FC = () => {
       return machines;
     }
     
-    // If admin is selected (for super_admin), show their machines + their clients' machines
+    // If company is selected (for super_admin), show their machines + their installers' + clients' machines
     const selectedUser = users.find(u => u.id === selectedUserId);
-    if (selectedUser?.role === 'admin') {
-      const clientIds = users.filter(u => u.parentId === selectedUserId).map(u => u.id);
-      return machines.filter(m => m.ownerId === selectedUserId || clientIds.includes(m.ownerId));
+    if (selectedUser?.role === 'company') {
+      const installerIds = users.filter(u => u.role === 'installer' && u.parentId === selectedUserId).map(u => u.id);
+      const clientIds = users.filter(u => u.role === 'client' && installerIds.includes(u.parentId || '')).map(u => u.id);
+      return machines.filter(m => m.ownerId === selectedUserId || installerIds.includes(m.ownerId) || clientIds.includes(m.ownerId));
     }
     
     // Otherwise show machines for the selected user
@@ -124,11 +129,11 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            {(user.role === 'admin' || user.role === 'super_admin') && (
+            {(user.role === 'installer' || user.role === 'company' || user.role === 'super_admin') && (
               <>
                 <Button variant="outline" onClick={() => setShowAddUserDialog(true)}>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Add Client
+                  {user.role === 'company' ? 'Add Installer' : 'Add Client'}
                 </Button>
                 <Button variant="outline" onClick={() => setShowAddMachineDialog(true)}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -200,11 +205,11 @@ const Dashboard: React.FC = () => {
             <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground mb-2">
-                  {selectedUserId === 'all' ? 'All Admins & Their Machines' : 'Your Machines'}
+                  {selectedUserId === 'all' ? 'All Companies & Their Machines' : 'Your Machines'}
                 </h2>
                 <p className="text-muted-foreground">
                   {selectedUserId === 'all' 
-                    ? 'Expand each admin to view their machines and clients'
+                    ? 'Expand each company to view their machines, installers and clients'
                     : `${filteredMachines.length} ${filteredMachines.length === 1 ? 'machine' : 'machines'} assigned to you`
                   }
                 </p>
@@ -218,9 +223,9 @@ const Dashboard: React.FC = () => {
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="all">All Machines</SelectItem>
                     <SelectItem value={user.id}>My Machines</SelectItem>
-                    {admins.map((admin) => (
-                      <SelectItem key={admin.id} value={admin.id}>
-                        {admin.name}
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -296,8 +301,8 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-        ) : user.role === 'admin' ? (
-          /* Admin - Expandable View with Client Sections */
+        ) : user.role === 'company' ? (
+          /* Company - Expandable View with Installer and Client Sections */
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-4 gap-2 mb-6">
@@ -562,12 +567,12 @@ const Dashboard: React.FC = () => {
       )}
       
       {/* Add User Dialog */}
-      {(user.role === 'admin' || user.role === 'super_admin') && (
+      {(user.role === 'installer' || user.role === 'company' || user.role === 'super_admin') && (
         <>
           <AddUserDialog
             open={showAddUserDialog}
             onOpenChange={setShowAddUserDialog}
-            userRole={user.role}
+            userRole={user.role as 'installer' | 'company' | 'super_admin'}
             currentUserId={user.id}
             onUserAdded={handleRefresh}
           />
@@ -575,7 +580,7 @@ const Dashboard: React.FC = () => {
             open={showAddMachineDialog}
             onOpenChange={setShowAddMachineDialog}
             ownerId={user.id}
-            userRole={user.role}
+            userRole={user.role === 'company' || user.role === 'installer' ? 'admin' : user.role}
             onMachineAdded={handleRefresh}
           />
         </>
@@ -591,7 +596,7 @@ const Dashboard: React.FC = () => {
           currentOwnerId={selectedMachineForOwnerChange.ownerId}
           users={users}
           onOwnerChanged={handleRefresh}
-          currentUserRole={user.role}
+          currentUserRole={user.role === 'company' || user.role === 'installer' ? 'admin' : user.role}
           currentUserId={user.id}
         />
       )}

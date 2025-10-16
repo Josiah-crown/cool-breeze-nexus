@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
-export type UserRole = 'super_admin' | 'admin' | 'client';
+export type UserRole = 'super_admin' | 'company' | 'installer' | 'client';
 
 export interface User {
   id: string;
@@ -102,9 +102,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (roleError) throw roleError;
 
       if (!roleData) {
-        const { error: insertRoleError } = await supabase
+        const { error: insertRoleError} = await supabase
           .from('user_roles')
-          .insert({ user_id: supabaseUser.id, role: 'admin' });
+          .insert({ user_id: supabaseUser.id, role: 'installer' });
         if (insertRoleError) throw insertRoleError;
       }
 
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser({
         id: supabaseUser.id,
         email: supabaseUser.email || '',
-        role: 'admin',
+        role: 'installer',
         name: supabaseUser.email?.split('@')[0] || 'User',
       });
     } finally {
