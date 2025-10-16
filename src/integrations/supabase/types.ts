@@ -190,6 +190,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_super_admins: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_user_admin: {
         Args: { _user_id: string }
         Returns: string

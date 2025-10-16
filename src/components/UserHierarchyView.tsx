@@ -1,9 +1,10 @@
 import React from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { UserHierarchy } from '@/hooks/useMachineData';
 import { MachineStatus } from '@/types/machine';
 import MachineCard from './MachineCard';
-import { Building2, User } from 'lucide-react';
+import { Building2, User, Trash2 } from 'lucide-react';
 
 interface UserHierarchyViewProps {
   users: UserHierarchy[];
@@ -12,9 +13,10 @@ interface UserHierarchyViewProps {
   onDeleteMachine?: (machineId: string) => void;
   onChangeOwner?: (machineId: string) => void;
   onRename?: (machineId: string) => void;
+  onDeleteUser?: (userId: string) => void;
 }
 
-const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename }) => {
+const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onDeleteUser }) => {
   const admins = users.filter(u => u.role === 'admin');
 
   // Check if admin or any of their clients have failing machines
@@ -53,14 +55,27 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                 }`}
               >
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-1">
                 <Building2 className="h-5 w-5 text-primary" />
-                <div className="text-left">
+                <div className="text-left flex-1">
                   <h3 className="text-lg font-semibold text-foreground">{admin.name}</h3>
                   <p className="text-sm text-muted-foreground">
                     {adminMachines.length} machines • {clients.length} clients
                   </p>
                 </div>
+                {onDeleteUser && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteUser(admin.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
@@ -119,14 +134,27 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                       }`}
                     >
                           <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-1">
                               <User className="h-4 w-4 text-accent" />
-                              <div className="text-left">
+                              <div className="text-left flex-1">
                                 <span className="font-medium text-foreground">{client.name}</span>
                                 <span className="text-sm text-muted-foreground ml-2">
                                   ({clientMachines.length} machines)
                                 </span>
                               </div>
+                              {onDeleteUser && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteUser(client.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="px-4 pb-4">

@@ -8,11 +8,13 @@ import { AddUserDialog } from '@/components/AddUserDialog';
 import { AddMachineDialog } from '@/components/AddMachineDialog';
 import { ChangeOwnerDialog } from '@/components/ChangeOwnerDialog';
 import { RenameMachineDialog } from '@/components/RenameMachineDialog';
+import { DeleteUserDialog } from '@/components/DeleteUserDialog';
+import { DeleteOwnAccountDialog } from '@/components/DeleteOwnAccountDialog';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { LogOut, Users, UserPlus, Plus } from 'lucide-react';
+import { LogOut, Users, UserPlus, Plus, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -25,6 +27,8 @@ const Dashboard: React.FC = () => {
   const [showAddMachineDialog, setShowAddMachineDialog] = useState(false);
   const [changeOwnerMachineId, setChangeOwnerMachineId] = useState<string | null>(null);
   const [renameMachineId, setRenameMachineId] = useState<string | null>(null);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [showDeleteOwnAccount, setShowDeleteOwnAccount] = useState(false);
   
   const handleRefresh = () => {
     window.location.reload();
@@ -54,8 +58,13 @@ const Dashboard: React.FC = () => {
     setRenameMachineId(machineId);
   };
 
+  const handleDeleteUser = (userId: string) => {
+    setDeleteUserId(userId);
+  };
+
   const selectedMachineForOwnerChange = machines.find(m => m.id === changeOwnerMachineId);
   const selectedMachineForRename = machines.find(m => m.id === renameMachineId);
+  const selectedUserForDeletion = users.find(u => u.id === deleteUserId);
 
   // Get admins (for super admin view)
   const admins = useMemo(() => users.filter(u => u.role === 'admin'), [users]);
@@ -120,6 +129,10 @@ const Dashboard: React.FC = () => {
                 </Button>
               </>
             )}
+            <Button variant="outline" onClick={() => setShowDeleteOwnAccount(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              Account
+            </Button>
             <Button variant="outline" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
@@ -242,6 +255,7 @@ const Dashboard: React.FC = () => {
                   onDeleteMachine={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
                   onRename={handleRename}
+                  onDeleteUser={handleDeleteUser}
                 />
               </>
             ) : (
@@ -573,6 +587,24 @@ const Dashboard: React.FC = () => {
           currentUserId={user.id}
         />
       )}
+
+      {/* Delete User Dialog */}
+      {deleteUserId && selectedUserForDeletion && (
+        <DeleteUserDialog
+          open={!!deleteUserId}
+          onOpenChange={(open) => !open && setDeleteUserId(null)}
+          userId={deleteUserId}
+          userName={selectedUserForDeletion.name}
+          userRole={selectedUserForDeletion.role}
+          onUserDeleted={handleRefresh}
+        />
+      )}
+
+      {/* Delete Own Account Dialog */}
+      <DeleteOwnAccountDialog
+        open={showDeleteOwnAccount}
+        onOpenChange={setShowDeleteOwnAccount}
+      />
 
       {/* Rename Machine Dialog */}
       {renameMachineId && selectedMachineForRename && (
