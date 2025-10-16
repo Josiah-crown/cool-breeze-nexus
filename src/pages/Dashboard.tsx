@@ -31,7 +31,6 @@ const Dashboard: React.FC = () => {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [showDeleteOwnAccount, setShowDeleteOwnAccount] = useState(false);
   const [reassignClientId, setReassignClientId] = useState<string | null>(null);
-  const [isManagementLocked, setIsManagementLocked] = useState(true);
   
   const handleRefresh = () => {
     window.location.reload();
@@ -136,18 +135,6 @@ const Dashboard: React.FC = () => {
                   Add Machine
                 </Button>
               </>
-            )}
-            {(user.role === 'admin' || user.role === 'super_admin') && (
-              <Button 
-                variant="outline" 
-                onClick={() => setIsManagementLocked(!isManagementLocked)}
-              >
-                {isManagementLocked ? (
-                  <><Lock className="mr-2 h-4 w-4" />Locked</>
-                ) : (
-                  <><Unlock className="mr-2 h-4 w-4" />Unlocked</>
-                )}
-              </Button>
             )}
             <Button variant="outline" onClick={() => setShowDeleteOwnAccount(true)}>
               <Settings className="mr-2 h-4 w-4" />
@@ -275,9 +262,8 @@ const Dashboard: React.FC = () => {
                   onDeleteMachine={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
                   onRename={handleRename}
-                  onDeleteUser={isManagementLocked ? undefined : handleDeleteUser}
-                  onReassignClient={isManagementLocked ? undefined : handleReassignClient}
-                  isManagementLocked={isManagementLocked}
+                  onDeleteUser={handleDeleteUser}
+                  onReassignClient={handleReassignClient}
                 />
               </>
             ) : (

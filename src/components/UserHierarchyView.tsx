@@ -1,10 +1,11 @@
 import React from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserHierarchy } from '@/hooks/useMachineData';
 import { MachineStatus } from '@/types/machine';
 import MachineCard from './MachineCard';
-import { Building2, User, Trash2, UserCog } from 'lucide-react';
+import { Building2, User, Trash2, UserCog, Lock } from 'lucide-react';
 
 interface UserHierarchyViewProps {
   users: UserHierarchy[];
@@ -15,10 +16,9 @@ interface UserHierarchyViewProps {
   onRename?: (machineId: string) => void;
   onDeleteUser?: (userId: string) => void;
   onReassignClient?: (userId: string) => void;
-  isManagementLocked?: boolean;
 }
 
-const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onDeleteUser, onReassignClient, isManagementLocked = true }) => {
+const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onDeleteUser, onReassignClient }) => {
   const admins = users.filter(u => u.role === 'admin');
 
   // Check if admin or any of their clients have failing machines
@@ -50,12 +50,36 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
             <Accordion type="multiple" className="h-full">
               <AccordionItem 
                 value={admin.id}
-                className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm shadow-xl h-full ${
+                className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm shadow-xl h-full relative ${
                   hasFailing 
                     ? 'border-destructive/60 shadow-[0_0_20px_hsl(var(--destructive)/0.2)]' 
                     : 'border-[hsl(var(--control-border))]'
                 }`}
               >
+            {/* Lock dropdown for admin management */}
+            {(onDeleteUser || onReassignClient) && (
+              <div className="absolute top-4 right-4 z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1 hover:bg-accent rounded-md transition-colors">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-card border-border">
+                    {onDeleteUser && (
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteUser(admin.id);
+                        }}
+                        className="cursor-pointer text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Admin
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
               <div className="flex items-center gap-3 flex-1">
                 <Building2 className="h-5 w-5 text-primary" />
@@ -65,19 +89,6 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     {adminMachines.length} machines • {clients.length} clients
                   </p>
                 </div>
-                {!isManagementLocked && onDeleteUser && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteUser(admin.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
@@ -129,14 +140,50 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     <AccordionItem
                       key={client.id}
                       value={client.id}
-                      className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg ${
+                      className={`border-2 rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg relative ${
                         clientHasFailing 
                           ? 'border-destructive/60 shadow-[0_0_15px_hsl(var(--destructive)/0.15)]' 
                           : 'border-[hsl(var(--control-border))]'
                       }`}
                     >
+                          {/* Lock dropdown for client management */}
+                          {(onDeleteUser || onReassignClient) && (
+                            <div className="absolute top-3 right-3 z-10">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className="p-1 hover:bg-accent rounded-md transition-colors">
+                                  <Lock className="h-4 w-4 text-muted-foreground" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="bg-card border-border">
+                                  {onReassignClient && (
+                                    <DropdownMenuItem 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onReassignClient(client.id);
+                                      }}
+                                      className="cursor-pointer"
+                                    >
+                                      <UserCog className="mr-2 h-4 w-4" />
+                                      Reassign Client
+                                    </DropdownMenuItem>
+                                  )}
+                                  {onDeleteUser && (
+                                    <DropdownMenuItem 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteUser(client.id);
+                                      }}
+                                      className="cursor-pointer text-destructive focus:text-destructive"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete Client
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          )}
                           <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                               <div className="flex items-center gap-2 flex-1">
+                            <div className="flex items-center gap-2 flex-1">
                               <User className="h-4 w-4 text-accent" />
                               <div className="text-left flex-1">
                                 <span className="font-medium text-foreground">{client.name}</span>
@@ -144,36 +191,6 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                   ({clientMachines.length} machines)
                                 </span>
                               </div>
-                              {!isManagementLocked && (
-                                <div className="flex gap-1">
-                                  {onReassignClient && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onReassignClient(client.id);
-                                      }}
-                                    >
-                                      <UserCog className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                  {onDeleteUser && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDeleteUser(client.id);
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="px-4 pb-4">
