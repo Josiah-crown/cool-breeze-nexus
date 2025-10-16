@@ -8,13 +8,14 @@ import { AddUserDialog } from '@/components/AddUserDialog';
 import { AddMachineDialog } from '@/components/AddMachineDialog';
 import { ChangeOwnerDialog } from '@/components/ChangeOwnerDialog';
 import { RenameMachineDialog } from '@/components/RenameMachineDialog';
+import { ReassignClientDialog } from '@/components/ReassignClientDialog';
 import { DeleteUserDialog } from '@/components/DeleteUserDialog';
 import { DeleteOwnAccountDialog } from '@/components/DeleteOwnAccountDialog';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { LogOut, Users, UserPlus, Plus, Settings } from 'lucide-react';
+import { LogOut, Users, UserPlus, Plus, Settings, Lock, Unlock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -29,6 +30,8 @@ const Dashboard: React.FC = () => {
   const [renameMachineId, setRenameMachineId] = useState<string | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [showDeleteOwnAccount, setShowDeleteOwnAccount] = useState(false);
+  const [reassignClientId, setReassignClientId] = useState<string | null>(null);
+  const [isManagementLocked, setIsManagementLocked] = useState(true);
   
   const handleRefresh = () => {
     window.location.reload();
@@ -62,9 +65,14 @@ const Dashboard: React.FC = () => {
     setDeleteUserId(userId);
   };
 
+  const handleReassignClient = (userId: string) => {
+    setReassignClientId(userId);
+  };
+
   const selectedMachineForOwnerChange = machines.find(m => m.id === changeOwnerMachineId);
   const selectedMachineForRename = machines.find(m => m.id === renameMachineId);
   const selectedUserForDeletion = users.find(u => u.id === deleteUserId);
+  const selectedUserForReassignment = users.find(u => u.id === reassignClientId);
 
   // Get admins (for super admin view)
   const admins = useMemo(() => users.filter(u => u.role === 'admin'), [users]);
@@ -128,6 +136,18 @@ const Dashboard: React.FC = () => {
                   Add Machine
                 </Button>
               </>
+            )}
+            {(user.role === 'admin' || user.role === 'super_admin') && (
+              <Button 
+                variant="outline" 
+                onClick={() => setIsManagementLocked(!isManagementLocked)}
+              >
+                {isManagementLocked ? (
+                  <><Lock className="mr-2 h-4 w-4" />Locked</>
+                ) : (
+                  <><Unlock className="mr-2 h-4 w-4" />Unlocked</>
+                )}
+              </Button>
             )}
             <Button variant="outline" onClick={() => setShowDeleteOwnAccount(true)}>
               <Settings className="mr-2 h-4 w-4" />
@@ -255,7 +275,9 @@ const Dashboard: React.FC = () => {
                   onDeleteMachine={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
                   onRename={handleRename}
-                  onDeleteUser={handleDeleteUser}
+                  onDeleteUser={isManagementLocked ? undefined : handleDeleteUser}
+                  onReassignClient={isManagementLocked ? undefined : handleReassignClient}
+                  isManagementLocked={isManagementLocked}
                 />
               </>
             ) : (
@@ -605,6 +627,18 @@ const Dashboard: React.FC = () => {
         open={showDeleteOwnAccount}
         onOpenChange={setShowDeleteOwnAccount}
       />
+
+      {/* Reassign Client Dialog */}
+      {reassignClientId && selectedUserForReassignment && (
+        <ReassignClientDialog
+          open={!!reassignClientId}
+          onOpenChange={(open) => !open && setReassignClientId(null)}
+          clientId={reassignClientId}
+          clientName={selectedUserForReassignment.name}
+          currentAdminId={selectedUserForReassignment.parentId || ''}
+          onReassigned={handleRefresh}
+        />
+      )}
 
       {/* Rename Machine Dialog */}
       {renameMachineId && selectedMachineForRename && (

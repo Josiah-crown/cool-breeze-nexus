@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { UserHierarchy } from '@/hooks/useMachineData';
 import { MachineStatus } from '@/types/machine';
 import MachineCard from './MachineCard';
-import { Building2, User, Trash2 } from 'lucide-react';
+import { Building2, User, Trash2, UserCog } from 'lucide-react';
 
 interface UserHierarchyViewProps {
   users: UserHierarchy[];
@@ -14,9 +14,11 @@ interface UserHierarchyViewProps {
   onChangeOwner?: (machineId: string) => void;
   onRename?: (machineId: string) => void;
   onDeleteUser?: (userId: string) => void;
+  onReassignClient?: (userId: string) => void;
+  isManagementLocked?: boolean;
 }
 
-const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onDeleteUser }) => {
+const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onDeleteUser, onReassignClient, isManagementLocked = true }) => {
   const admins = users.filter(u => u.role === 'admin');
 
   // Check if admin or any of their clients have failing machines
@@ -63,7 +65,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     {adminMachines.length} machines • {clients.length} clients
                   </p>
                 </div>
-                {onDeleteUser && (
+                {!isManagementLocked && onDeleteUser && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -134,7 +136,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                       }`}
                     >
                           <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                            <div className="flex items-center gap-2 flex-1">
+                               <div className="flex items-center gap-2 flex-1">
                               <User className="h-4 w-4 text-accent" />
                               <div className="text-left flex-1">
                                 <span className="font-medium text-foreground">{client.name}</span>
@@ -142,18 +144,35 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                   ({clientMachines.length} machines)
                                 </span>
                               </div>
-                              {onDeleteUser && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteUser(client.id);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                              {!isManagementLocked && (
+                                <div className="flex gap-1">
+                                  {onReassignClient && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onReassignClient(client.id);
+                                      }}
+                                    >
+                                      <UserCog className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {onDeleteUser && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteUser(client.id);
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </AccordionTrigger>
