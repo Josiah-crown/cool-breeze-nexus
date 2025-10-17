@@ -97,11 +97,12 @@ export const useMachineData = (userId: string, userRole: string) => {
             .single();
 
           if (selfProfile && selfRole) {
+            const mappedRole = selfRole.role === 'admin' ? 'installer' : selfRole.role;
             availableUsers.push({
               id: selfProfile.id,
               name: selfProfile.name,
               email: selfProfile.email,
-              role: selfRole.role,
+              role: mappedRole as 'super_admin' | 'company' | 'installer' | 'client',
             });
           }
 
@@ -160,11 +161,13 @@ export const useMachineData = (userId: string, userRole: string) => {
               (clientProfiles || []).forEach((profile: any) => {
                 const roleData = clientRoles?.find((r: any) => r.user_id === profile.id);
                 const assignment = clientAssignments.find((a: any) => a.client_id === profile.id);
+                const role = roleData?.role || 'client';
+                const mappedRole = role === 'admin' ? 'installer' : role;
                 availableUsers.push({
                   id: profile.id,
                   name: profile.name,
                   email: profile.email,
-                  role: roleData?.role || 'client',
+                  role: mappedRole as 'super_admin' | 'company' | 'installer' | 'client',
                   parentId: assignment?.admin_id,
                 });
               });
@@ -185,11 +188,12 @@ export const useMachineData = (userId: string, userRole: string) => {
             .single();
 
           if (selfProfile && selfRole) {
+            const mappedRole = selfRole.role === 'admin' ? 'installer' : selfRole.role;
             availableUsers.push({
               id: selfProfile.id,
               name: selfProfile.name,
               email: selfProfile.email,
-              role: selfRole.role,
+              role: mappedRole as 'super_admin' | 'company' | 'installer' | 'client',
             });
           }
 
@@ -214,11 +218,13 @@ export const useMachineData = (userId: string, userRole: string) => {
 
             (clientProfiles || []).forEach((profile: any) => {
               const roleData = clientRoles?.find((r: any) => r.user_id === profile.id);
+              const role = roleData?.role || 'client';
+              const mappedRole = role === 'admin' ? 'installer' : role;
               availableUsers.push({
                 id: profile.id,
                 name: profile.name,
                 email: profile.email,
-                role: roleData?.role || 'client',
+                role: mappedRole as 'super_admin' | 'company' | 'installer' | 'client',
                 parentId: userId,
               });
             });
@@ -238,11 +244,12 @@ export const useMachineData = (userId: string, userRole: string) => {
             .single();
 
           if (profile && role) {
+            const mappedRole = role.role === 'admin' ? 'installer' : role.role;
             availableUsers.push({
               id: profile.id,
               name: profile.name,
               email: profile.email,
-              role: role.role,
+              role: mappedRole as 'super_admin' | 'company' | 'installer' | 'client',
             });
           }
         }
