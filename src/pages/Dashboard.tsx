@@ -131,21 +131,21 @@ const Dashboard: React.FC = () => {
           <div className="flex gap-2">
             {(user.role === 'installer' || user.role === 'company' || user.role === 'super_admin') && (
               <>
-                <Button variant="outline" onClick={() => setShowAddUserDialog(true)}>
+                <Button className="btn-nav" onClick={() => setShowAddUserDialog(true)}>
                   <UserPlus className="mr-2 h-4 w-4" />
                   {user.role === 'company' ? 'Add Installer' : 'Add Client'}
                 </Button>
-                <Button variant="outline" onClick={() => setShowAddMachineDialog(true)}>
+                <Button className="btn-nav" onClick={() => setShowAddMachineDialog(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Machine
                 </Button>
               </>
             )}
-            <Button variant="outline" onClick={() => setShowDeleteOwnAccount(true)}>
+            <Button className="btn-nav" onClick={() => setShowDeleteOwnAccount(true)}>
               <Settings className="mr-2 h-4 w-4" />
               Account
             </Button>
-            <Button variant="outline" onClick={logout}>
+            <Button className="btn-nav" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
