@@ -86,14 +86,72 @@
 }
 
 @layer components {
-  /* Professional Button Variants */
+  /* Futuristic HUD Clip Paths */
+  .hud-panel {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 20px) 0,
+      100% 20px,
+      100% 100%,
+      20px 100%,
+      0 calc(100% - 20px)
+    );
+  }
+  
+  .hud-card {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 15px) 0,
+      100% 15px,
+      100% calc(100% - 15px),
+      calc(100% - 15px) 100%,
+      15px 100%,
+      0 calc(100% - 15px)
+    );
+  }
+  
+  .hud-header {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 30px) 0,
+      100% 30px,
+      100% 100%,
+      0 100%
+    );
+  }
+
+  .hud-button {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 8px) 0,
+      100% 8px,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      8px 100%,
+      0 calc(100% - 8px)
+    );
+  }
+
+  /* Professional Button Variants with HUD styling */
   .btn-control {
-    @apply bg-gradient-to-br from-[hsl(var(--control-bg))] to-[hsl(var(--secondary))] 
+    @apply hud-button bg-gradient-to-br from-[hsl(var(--control-bg))] to-[hsl(var(--secondary))] 
            text-foreground border-2 border-[hsl(var(--control-border))] 
-           rounded-xl px-4 py-3 font-semibold text-sm uppercase tracking-wide
+           px-4 py-3 font-semibold text-sm uppercase tracking-wide
            transition-all duration-300 hover:shadow-lg hover:scale-105
            hover:border-primary hover:text-primary-foreground
-           active:scale-95 backdrop-blur-sm;
+           active:scale-95 backdrop-blur-sm relative;
+  }
+  
+  .btn-control::before {
+    content: '';
+    @apply absolute inset-0 hud-button border-2 border-transparent;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .btn-control:hover::before {
+    opacity: 1;
   }
   
   .btn-control.active {
@@ -102,9 +160,9 @@
   }
   
   .btn-nav {
-    @apply bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))]
+    @apply hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))]
            text-foreground border border-[hsl(var(--border))]
-           rounded-lg px-4 py-2 font-medium text-sm
+           px-4 py-2 font-medium text-sm
            transition-all duration-300 hover:shadow-md hover:scale-105
            hover:border-primary hover:text-primary backdrop-blur-sm;
   }
@@ -130,11 +188,22 @@
            shadow-[0_0_20px_hsl(var(--destructive)_/_0.3)];
   }
   
-  /* Professional Panels */
+  /* Professional Panels with HUD styling */
   .panel {
-    @apply bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))]
-           border border-[hsl(var(--border))] rounded-2xl p-6
-           shadow-xl backdrop-blur-sm;
+    @apply hud-panel bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))]
+           border-2 border-[hsl(var(--border))] p-6
+           shadow-xl backdrop-blur-sm relative;
+  }
+  
+  .panel::before {
+    content: '';
+    @apply absolute hud-panel;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border: 1px solid hsl(var(--primary) / 0.2);
+    pointer-events: none;
   }
   
   .panel-header {
