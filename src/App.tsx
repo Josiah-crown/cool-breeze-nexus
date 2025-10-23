@@ -29,6 +29,10 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        {/* Background frame */}
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <div className="absolute inset-4 border-4 border-primary/30 hud-panel" />
+        </div>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />

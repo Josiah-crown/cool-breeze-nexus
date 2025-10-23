@@ -9,8 +9,8 @@ interface NavigationHeaderProps {
 const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onHome, onBack }) => {
   return (
     <header className="relative hud-header bg-gradient-to-r from-panel-bg to-card border-b-2 border-primary/20 backdrop-blur-sm">
-      {/* Accent line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+      {/* Accent line - 8x thicker */}
+      <div className="absolute top-0 left-0 right-0 h-[16px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
       
       {/* Navigation Buttons */}
       <div className="absolute top-4 left-6 flex gap-3 z-10">

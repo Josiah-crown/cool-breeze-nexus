@@ -160,14 +160,16 @@ const Dashboard: React.FC = () => {
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-4 gap-2 mb-6">
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Machines</p>
                   <p className="text-xl font-bold text-foreground mt-1">{machines.length}</p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">On</p>
@@ -178,7 +180,8 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected</p>
@@ -189,7 +192,8 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
@@ -306,14 +310,16 @@ const Dashboard: React.FC = () => {
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-4 gap-2 mb-6">
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Machines</p>
                   <p className="text-xl font-bold text-foreground mt-1">{machines.length}</p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">On</p>
@@ -324,7 +330,8 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected</p>
@@ -335,7 +342,8 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
@@ -483,14 +491,16 @@ const Dashboard: React.FC = () => {
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-4 gap-2 mb-6">
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Machines</p>
                   <p className="text-xl font-bold text-foreground mt-1">{machines.length}</p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">On</p>
@@ -501,7 +511,8 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected</p>
@@ -512,7 +523,8 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border border-[hsl(var(--control-border))] rounded-lg p-3 shadow-md relative overflow-hidden">
+              <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none"></div>
                 <div className="relative text-center">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
