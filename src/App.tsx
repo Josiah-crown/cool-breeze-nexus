@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import EmailConfirmation from "./pages/EmailConfirmation";
+import SetupDemo from "./pages/SetupDemo";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/email-confirmation" element={<EmailConfirmation />} />
+            <Route path="/setup-demo" element={<SetupDemo />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Dashboard />
