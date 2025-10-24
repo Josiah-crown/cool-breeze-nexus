@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
     // 1. Create Super Admin
     const { data: superAdmin } = await adminClient.auth.admin.createUser({
-      email: 'headoffice@crowntechnologies.com',
+      email: 'headoffice@crowntechnologies.co.za',
       password,
       email_confirm: true,
       user_metadata: { name: 'Crowntechnologies head office' },
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     await adminClient.from('profiles').insert({
       id: userIds.superAdmin,
       name: 'Crowntechnologies head office',
-      email: 'headoffice@crowntechnologies.com',
+      email: 'headoffice@crowntechnologies.co.za',
       cell_number: '+27000000000',
       country: 'South Africa',
       state: 'Gauteng',
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
     // 2. Create Company
     const { data: company } = await adminClient.auth.admin.createUser({
-      email: 'company@crowntechnologies.com',
+      email: 'company@crowntechnologies.co.za',
       password,
       email_confirm: true,
       user_metadata: { name: 'Crowntechnologies' },
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     await adminClient.from('profiles').insert({
       id: userIds.company,
       name: 'Crowntechnologies',
-      email: 'company@crowntechnologies.com',
+      email: 'company@crowntechnologies.co.za',
       cell_number: '+27111111111',
       country: 'South Africa',
       state: 'Gauteng',
@@ -107,9 +107,9 @@ Deno.serve(async (req) => {
 
     // 3. Create Installers
     const installers = [
-      { name: 'Blessing', email: 'blessing@crowntechnologies.com', cell: '+27222222222' },
-      { name: 'Thami', email: 'thami@crowntechnologies.com', cell: '+27333333333' },
-      { name: 'Mark', email: 'mark@crowntechnologies.com', cell: '+27444444444' },
+      { name: 'Blessing', email: 'blessing@crowntechnologies.co.za', cell: '+27222222222' },
+      { name: 'Thami', email: 'thami@crowntechnologies.co.za', cell: '+27333333333' },
+      { name: 'Mark', email: 'mark@crowntechnologies.co.za', cell: '+27444444444' },
     ];
 
     for (const installer of installers) {
@@ -149,9 +149,9 @@ Deno.serve(async (req) => {
 
     // 4. Create Clients
     const clients = [
-      { name: 'Afrihost', email: 'afrihost@crowntechnologies.com', cell: '+27555555555', installer: 'Blessing' },
-      { name: 'Neil Britz', email: 'neil@crowntechnologies.com', cell: '+27666666666', installer: 'Thami' },
-      { name: 'Sean Prohn', email: 'sean@crowntechnologies.com', cell: '+27777777777', installer: 'Mark' },
+      { name: 'Afrihost', email: 'afrihost@crowntechnologies.co.za', cell: '+27555555555', installer: 'Blessing' },
+      { name: 'Neil Britz', email: 'neil@crowntechnologies.co.za', cell: '+27666666666', installer: 'Thami' },
+      { name: 'Sean Prohn', email: 'sean@crowntechnologies.co.za', cell: '+27777777777', installer: 'Mark' },
     ];
 
     for (const client of clients) {
@@ -237,17 +237,17 @@ Deno.serve(async (req) => {
         success: true, 
         message: 'Demo data created successfully',
         accounts: {
-          super_admin: { email: 'headoffice@crowntechnologies.com', password },
-          company: { email: 'company@crowntechnologies.com', password },
+          super_admin: { email: 'headoffice@crowntechnologies.co.za', password },
+          company: { email: 'company@crowntechnologies.co.za', password },
           installers: [
-            { name: 'Blessing', email: 'blessing@crowntechnologies.com', password },
-            { name: 'Thami', email: 'thami@crowntechnologies.com', password },
-            { name: 'Mark', email: 'mark@crowntechnologies.com', password },
+            { name: 'Blessing', email: 'blessing@crowntechnologies.co.za', password },
+            { name: 'Thami', email: 'thami@crowntechnologies.co.za', password },
+            { name: 'Mark', email: 'mark@crowntechnologies.co.za', password },
           ],
           clients: [
-            { name: 'Afrihost', email: 'afrihost@crowntechnologies.com', password, installer: 'Blessing' },
-            { name: 'Neil Britz', email: 'neil@crowntechnologies.com', password, installer: 'Thami' },
-            { name: 'Sean Prohn', email: 'sean@crowntechnologies.com', password, installer: 'Mark' },
+            { name: 'Afrihost', email: 'afrihost@crowntechnologies.co.za', password, installer: 'Blessing' },
+            { name: 'Neil Britz', email: 'neil@crowntechnologies.co.za', password, installer: 'Thami' },
+            { name: 'Sean Prohn', email: 'sean@crowntechnologies.co.za', password, installer: 'Mark' },
           ],
         },
         machines: '27 machines created (9 fans, 9 heatpumps, 9 airconditioners)',

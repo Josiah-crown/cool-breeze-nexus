@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!roleData) {
         const { error: insertRoleError} = await supabase
           .from('user_roles')
-          .insert({ user_id: supabaseUser.id, role: 'installer' });
+          .insert({ user_id: supabaseUser.id, role: 'client' });
         if (insertRoleError) throw insertRoleError;
       }
 
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser({
         id: supabaseUser.id,
         email: supabaseUser.email || '',
-        role: 'installer',
+        role: 'client',
         name: supabaseUser.email?.split('@')[0] || 'User',
       });
     } finally {

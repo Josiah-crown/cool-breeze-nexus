@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("hud-card bg-card text-card-foreground shadow-sm relative border-[15px] border-accent/70", className)} {...props}>
-    <div className="absolute inset-[15px] hud-card border-[10px] border-accent/70 pointer-events-none z-0" />
+    <div className="absolute inset-[3px] hud-card border-[10px] border-accent/70 pointer-events-none -z-10" />
     {props.children}
   </div>
 ));
