@@ -117,7 +117,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
             {/* Right: Historical Charts & API Keys */}
             <div className="lg:col-span-2 space-y-6">
               {/* API Key Management */}
-              <ApiKeyManager machineId={machine.id} showInDetailView={true} />
+              <ApiKeyManager machineId={machine.id} mode="assign" />
               {/* Power Usage Chart */}
               {machine.isOn && (
                 <Card className="bg-white border-[15px] border-accent/70">

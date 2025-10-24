@@ -23,7 +23,7 @@ export type Database = {
           is_active: boolean
           key: string
           last_used_at: string | null
-          machine_id: string
+          machine_id: string | null
         }
         Insert: {
           created_at?: string
@@ -33,7 +33,7 @@ export type Database = {
           is_active?: boolean
           key: string
           last_used_at?: string | null
-          machine_id: string
+          machine_id?: string | null
         }
         Update: {
           created_at?: string
@@ -43,7 +43,7 @@ export type Database = {
           is_active?: boolean
           key?: string
           last_used_at?: string | null
-          machine_id?: string
+          machine_id?: string | null
         }
         Relationships: [
           {

@@ -11,8 +11,10 @@ import { RenameMachineDialog } from '@/components/RenameMachineDialog';
 import { ReassignClientDialog } from '@/components/ReassignClientDialog';
 import { DeleteUserDialog } from '@/components/DeleteUserDialog';
 import { DeleteOwnAccountDialog } from '@/components/DeleteOwnAccountDialog';
+import ApiKeyManager from '@/components/ApiKeyManager';
 import { MachineStatus } from '@/types/machine';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { LogOut, Users, UserPlus, Plus, Settings, Lock, Unlock } from 'lucide-react';
@@ -204,6 +206,19 @@ const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* API Key Management for Super Admin */}
+            <div className="mb-6">
+              <Card className="bg-card border-border">
+                <CardHeader className="border-b border-border">
+                  <CardTitle className="text-lg text-foreground">ESP32 API Key Management</CardTitle>
+                  <p className="text-sm text-muted-foreground">Generate API keys that installers can assign to machines</p>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <ApiKeyManager mode="admin" />
+                </CardContent>
+              </Card>
             </div>
 
             <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
