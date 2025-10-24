@@ -111,12 +111,9 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-[hsl(var(--card))]">
+      <Card className="w-full max-w-md border-primary">
         <CardHeader className="text-center hud-header bg-[hsl(var(--card))] border-b-2 border-primary/20 pb-6 relative z-0">
-          <CardTitle 
-            className="text-3xl font-bold text-accent"
-            style={{ WebkitTextStroke: '2px white', paintOrder: 'stroke fill' }}
-          >
+          <CardTitle className="text-3xl font-bold text-primary">
             Machine Monitor
           </CardTitle>
           <CardDescription>
@@ -140,26 +137,34 @@ const Login: React.FC = () => {
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <div className="relative hud-card border-[8px] border-primary/70 bg-white">
+                <div className="absolute inset-[2px] hud-card border-[5px] border-primary/70 pointer-events-none" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="border-0 bg-transparent relative z-10"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
+              <div className="relative hud-card border-[8px] border-primary/70 bg-white">
+                <div className="absolute inset-[2px] hud-card border-[5px] border-primary/70 pointer-events-none" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="border-0 bg-transparent relative z-10"
+                />
+              </div>
             </div>
             {isSignup && (
               <div className="flex justify-center">
@@ -170,13 +175,16 @@ const Login: React.FC = () => {
                 />
               </div>
             )}
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading || (isSignup && !recaptchaToken)}
-            >
-              {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
-            </Button>
+            <div className="relative hud-card border-[8px] border-primary/70 bg-primary">
+              <div className="absolute inset-[2px] hud-card border-[5px] border-primary/70 pointer-events-none" />
+              <Button 
+                type="submit" 
+                className="w-full border-0 relative z-10" 
+                disabled={isLoading || (isSignup && !recaptchaToken)}
+              >
+                {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
+              </Button>
+            </div>
             <Button
               type="button"
               variant="ghost"
