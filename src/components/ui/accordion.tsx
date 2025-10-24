@@ -10,7 +10,7 @@ const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item ref={ref} className={cn("border-b-2 border-primary/20", className)} {...props} />
+  <AccordionPrimitive.Item ref={ref} className={cn("border-b-[30px] border-accent/70", className)} {...props} />
 ));
 AccordionItem.displayName = "AccordionItem";
 
@@ -27,7 +27,7 @@ const AccordionTrigger = React.forwardRef<
       )}
       {...props}
     >
-      <div className="absolute inset-0 hud-button border border-primary/10 pointer-events-none" style={{ margin: '2px' }} />
+      <div className="absolute inset-0 hud-button border-[10px] border-accent/70 pointer-events-none" style={{ margin: '2px' }} />
       {children}
       <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:rotate-180" />
     </AccordionPrimitive.Trigger>

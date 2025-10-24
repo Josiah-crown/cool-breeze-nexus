@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          key: string
+          last_used_at: string | null
+          machine_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          last_used_at?: string | null
+          machine_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          last_used_at?: string | null
+          machine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_admin_assignments: {
         Row: {
           admin_id: string
@@ -214,18 +255,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      count_super_admins: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      get_user_admin: {
-        Args: { _user_id: string }
-        Returns: string
-      }
-      get_user_company: {
-        Args: { _user_id: string }
-        Returns: string
-      }
+      count_super_admins: { Args: never; Returns: number }
+      get_user_admin: { Args: { _user_id: string }; Returns: string }
+      get_user_company: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

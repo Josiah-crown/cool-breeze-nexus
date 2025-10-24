@@ -5,6 +5,7 @@ import StatusLight from './StatusLight';
 import FanComponent from './FanComponent';
 import HeatPumpComponent from './HeatPumpComponent';
 import AirConditionerComponent from './AirConditionerComponent';
+import ApiKeyManager from './ApiKeyManager';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { X } from 'lucide-react';
 import { Button } from './ui/button';
@@ -41,15 +42,15 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-panel-bg to-card border-primary/30">
-        <CardHeader className="flex flex-row items-center justify-between border-b-2 border-primary/20 hud-header bg-gradient-to-r from-panel-bg to-card">
-          <CardTitle className="text-2xl text-foreground">{machine.name}</CardTitle>
+      <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-white border-[15px] border-accent/70">
+        <CardHeader className="flex flex-row items-center justify-between border-b-[15px] border-accent/70 hud-header bg-white">
+          <CardTitle className="text-2xl text-accent">{machine.name}</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-6 w-6" />
+            <X className="h-6 w-6 text-accent" />
           </Button>
         </CardHeader>
         
-        <CardContent className="p-6">
+        <CardContent className="p-6 bg-white">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left: Machine Visual & Status */}
             <div className="space-y-6">
@@ -57,9 +58,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 {getMachineComponent()}
               </div>
               
-              <Card className="bg-control-bg border-primary/20">
-                <CardHeader className="border-b border-primary/10">
-                  <CardTitle className="text-lg">System Status</CardTitle>
+              <Card className="bg-white border-[15px] border-accent/70">
+                <CardHeader className="border-b-[15px] border-accent/70">
+                  <CardTitle className="text-lg text-accent">System Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <StatusLight status={machine.isOn ? 'active' : 'inactive'} label="Power" />
@@ -76,9 +77,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 </CardContent>
               </Card>
 
-              <Card className="bg-control-bg border-primary/20">
-                <CardHeader className="border-b border-primary/10">
-                  <CardTitle className="text-lg">Current Readings</CardTitle>
+              <Card className="bg-white border-[15px] border-accent/70">
+                <CardHeader className="border-b-[15px] border-accent/70">
+                  <CardTitle className="text-lg text-accent">Current Readings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="flex justify-between">
@@ -113,13 +114,15 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               </Card>
             </div>
 
-            {/* Right: Historical Charts */}
+            {/* Right: Historical Charts & API Keys */}
             <div className="lg:col-span-2 space-y-6">
+              {/* API Key Management */}
+              <ApiKeyManager machineId={machine.id} showInDetailView={true} />
               {/* Power Usage Chart */}
               {machine.isOn && (
-                <Card className="bg-control-bg border-primary/20">
-                  <CardHeader className="border-b border-primary/10">
-                    <CardTitle className="text-lg">Electrical Usage History</CardTitle>
+                <Card className="bg-white border-[15px] border-accent/70">
+                  <CardHeader className="border-b-[15px] border-accent/70">
+                    <CardTitle className="text-lg text-accent">Electrical Usage History</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={200}>
@@ -149,9 +152,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
               {/* Delta T Chart */}
               {machine.isCooling && (
-                <Card className="bg-control-bg border-primary/20">
-                  <CardHeader className="border-b border-primary/10">
-                    <CardTitle className="text-lg">Delta T Efficiency History</CardTitle>
+                <Card className="bg-white border-[15px] border-accent/70">
+                  <CardHeader className="border-b-[15px] border-accent/70">
+                    <CardTitle className="text-lg text-accent">Delta T Efficiency History</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={200}>
@@ -180,9 +183,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               )}
 
               {/* Motor Temperature Chart */}
-              <Card className="bg-control-bg border-primary/20">
-                <CardHeader className="border-b border-primary/10">
-                  <CardTitle className="text-lg">Motor Temperature History</CardTitle>
+              <Card className="bg-white border-[15px] border-accent/70">
+                <CardHeader className="border-b-[15px] border-accent/70">
+                  <CardTitle className="text-lg text-accent">Motor Temperature History</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
