@@ -185,11 +185,11 @@ const Login: React.FC = () => {
                 {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
               </Button>
             </div>
-            <div className="relative hud-card border-[8px] border-primary/70 bg-accent/15 hover:bg-accent transition-all group">
+            <div className="relative hud-card border-[8px] border-primary/70 bg-accent/15 hover:bg-accent transition-all group opacity-15 hover:opacity-100">
               <div className="absolute inset-[2px] hud-card border-[5px] border-primary/70 pointer-events-none z-20" />
               <Button
                 type="button"
-                className="w-full border-0 relative z-10 bg-transparent text-foreground hover:bg-transparent hover:scale-[1.02] transition-all"
+                className="w-full border-0 relative z-10 bg-transparent text-black hover:bg-transparent hover:scale-[1.02] transition-all"
                 onClick={() => {
                   setIsSignup(!isSignup);
                   setName('');
