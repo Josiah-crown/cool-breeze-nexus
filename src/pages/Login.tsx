@@ -179,7 +179,7 @@ const Login: React.FC = () => {
               <div className="absolute inset-[2px] hud-card border-[5px] border-primary/70 pointer-events-none z-20" />
               <Button 
                 type="submit" 
-                className="w-full border-0 relative z-10 bg-transparent text-black hover:scale-[1.02] transition-all" 
+                className="w-full border-0 relative z-10 bg-transparent text-black hover:bg-transparent hover:scale-[1.02] transition-all" 
                 disabled={isLoading || (isSignup && !recaptchaToken)}
               >
                 {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
