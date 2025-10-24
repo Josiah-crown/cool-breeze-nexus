@@ -4,15 +4,15 @@ import { cn } from "@/lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("hud-card bg-white text-[hsl(var(--background))] shadow-sm relative border-[15px] border-accent/70", className)} {...props}>
-    <div className="absolute inset-[3px] hud-card border-[10px] border-accent/70 pointer-events-none z-20" />
-    {props.children}
+    <div className="absolute inset-[3px] hud-card border-[10px] border-accent/70 pointer-events-none z-10" />
+    <div className="relative z-20">{props.children}</div>
   </div>
 ));
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6 relative mt-[16px]", className)} {...props} />
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6 relative z-20 mt-[3px]", className)} {...props} />
   ),
 );
 CardHeader.displayName = "CardHeader";
@@ -32,13 +32,13 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttribu
 CardDescription.displayName = "CardDescription";
 
 const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-6 pt-0 relative", className)} {...props} />,
+  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-6 pt-0 relative z-20", className)} {...props} />,
 );
 CardContent.displayName = "CardContent";
 
 const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex items-center p-6 pt-0", className)} {...props} />
+    <div ref={ref} className={cn("flex items-center p-6 pt-0 relative z-20", className)} {...props} />
   ),
 );
 CardFooter.displayName = "CardFooter";
