@@ -53,7 +53,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
         <CardContent className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left: Machine Visual & Status */}
-            <div className="space-y-6">
+            <div className="space-y-6 lg:col-span-2">
               <div className="flex justify-center">
                 {getMachineComponent()}
               </div>
@@ -115,7 +115,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
             </div>
 
             {/* Right: Historical Charts & API Keys */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6">
               {/* API Key Management */}
               <ApiKeyManager machineId={machine.id} mode="assign" />
               {/* Power Usage Chart */}
