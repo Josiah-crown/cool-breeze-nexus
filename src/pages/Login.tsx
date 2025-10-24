@@ -110,8 +110,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-primary bg-gray-400">
+    <div className="min-h-screen bg-gray-400 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md border-primary bg-gray-200">
         <CardHeader className="text-center hud-header bg-[hsl(var(--card))] border-b-2 border-primary/20 pb-6 relative z-0">
           <CardTitle className="text-3xl font-bold text-primary">
             Machine Monitor
