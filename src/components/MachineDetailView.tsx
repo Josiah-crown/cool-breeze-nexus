@@ -42,15 +42,15 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-white border-[15px] border-accent/70">
-        <CardHeader className="flex flex-row items-center justify-between border-b-[15px] border-accent/70 hud-header bg-white">
+      <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-card">
+        <CardHeader className="flex flex-row items-center justify-between border-b-[10px] border-accent/70 hud-header">
           <CardTitle className="text-2xl text-accent">{machine.name}</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-6 w-6 text-accent" />
           </Button>
         </CardHeader>
         
-        <CardContent className="p-6 bg-white">
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left: Machine Visual & Status */}
             <div className="space-y-6">
@@ -58,8 +58,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 {getMachineComponent()}
               </div>
               
-              <Card className="bg-white border-[15px] border-accent/70">
-                <CardHeader className="border-b-[15px] border-accent/70">
+              <Card className="bg-card">
+                <CardHeader className="border-b-[10px] border-accent/70">
                   <CardTitle className="text-lg text-accent">System Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -77,8 +77,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border-[15px] border-accent/70">
-                <CardHeader className="border-b-[15px] border-accent/70">
+              <Card className="bg-card">
+                <CardHeader className="border-b-[10px] border-accent/70">
                   <CardTitle className="text-lg text-accent">Current Readings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -120,8 +120,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               <ApiKeyManager machineId={machine.id} mode="assign" />
               {/* Power Usage Chart */}
               {machine.isOn && (
-                <Card className="bg-white border-[15px] border-accent/70">
-                  <CardHeader className="border-b-[15px] border-accent/70">
+                <Card className="bg-card">
+                  <CardHeader className="border-b-[10px] border-accent/70">
                     <CardTitle className="text-lg text-accent">Electrical Usage History</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -152,8 +152,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
               {/* Delta T Chart */}
               {machine.isCooling && (
-                <Card className="bg-white border-[15px] border-accent/70">
-                  <CardHeader className="border-b-[15px] border-accent/70">
+                <Card className="bg-card">
+                  <CardHeader className="border-b-[10px] border-accent/70">
                     <CardTitle className="text-lg text-accent">Delta T Efficiency History</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -183,8 +183,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               )}
 
               {/* Motor Temperature Chart */}
-              <Card className="bg-white border-[15px] border-accent/70">
-                <CardHeader className="border-b-[15px] border-accent/70">
+              <Card className="bg-card">
+                <CardHeader className="border-b-[10px] border-accent/70">
                   <CardTitle className="text-lg text-accent">Motor Temperature History</CardTitle>
                 </CardHeader>
                 <CardContent>

@@ -3,8 +3,8 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("hud-card border-2 bg-card text-card-foreground shadow-sm relative", className)} {...props}>
-    <div className="absolute inset-0 hud-card border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
+  <div ref={ref} className={cn("hud-card bg-card text-card-foreground shadow-sm relative border-[15px] border-accent/70", className)} {...props}>
+    <div className="absolute inset-[15px] hud-card border-[10px] border-accent/70 pointer-events-none z-0" />
     {props.children}
   </div>
 ));
@@ -12,7 +12,7 @@ Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6 relative z-10", className)} {...props} />
   ),
 );
 CardHeader.displayName = "CardHeader";
@@ -32,7 +32,7 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttribu
 CardDescription.displayName = "CardDescription";
 
 const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />,
+  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-6 pt-0 relative z-10", className)} {...props} />,
 );
 CardContent.displayName = "CardContent";
 

@@ -89,9 +89,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
       <Card
         className={cn(
           'p-4 cursor-pointer transition-all hover:scale-105 hover:shadow-xl relative',
-          'bg-gradient-to-br from-card to-panel-bg border-2',
-          getStatusColor(),
-          'before:absolute before:inset-0 before:hud-card before:border before:border-primary/10 before:pointer-events-none before:m-[3px]'
+          'bg-gradient-to-br from-card to-panel-bg',
+          getStatusColor()
         )}
         onClick={onClick}
       >
