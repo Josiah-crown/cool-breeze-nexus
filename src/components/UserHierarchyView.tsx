@@ -126,7 +126,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-4 pb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                         {companyMachines.map(machine => (
                           <MachineCard
                             key={machine.id}
@@ -216,7 +216,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                           {installerMachines.length > 0 && (
                             <div>
                               <h4 className="text-sm font-medium text-muted-foreground mb-2">{installer.name}'s Machines</h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {installerMachines.map(machine => (
                                   <MachineCard
                                     key={machine.id}
@@ -290,7 +290,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                 </div>
                                 
                                 {clientMachines.length > 0 ? (
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  <div className="grid grid-cols-1 gap-2">
                                     {clientMachines.map(machine => (
                                       <MachineCard
                                         key={machine.id}
