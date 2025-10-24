@@ -111,7 +111,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-primary bg-gray-200">
+      <Card className="w-full max-w-md border-primary bg-gray-400">
         <CardHeader className="text-center hud-header bg-[hsl(var(--card))] border-b-2 border-primary/20 pb-6 relative z-0">
           <CardTitle className="text-3xl font-bold text-primary">
             Machine Monitor
@@ -179,7 +179,7 @@ const Login: React.FC = () => {
               <div className="absolute inset-[2px] hud-card border-[5px] border-primary/70 pointer-events-none" />
               <Button 
                 type="submit" 
-                className="w-full border-0 relative z-10 bg-accent text-black hover:bg-accent/80 hover:scale-[1.02] transition-all" 
+                className="w-full border-0 relative z-10 bg-accent/60 text-black hover:bg-accent hover:scale-[1.02] transition-all" 
                 disabled={isLoading || (isSignup && !recaptchaToken)}
               >
                 {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}
