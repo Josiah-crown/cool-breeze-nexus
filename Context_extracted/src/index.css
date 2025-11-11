@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional IoT Design System - Industrial Dark Theme */
+@layer base {
+  :root {
+    /* Core Industrial Colors */
+    --background: 80 9% 89%;
+    --foreground: 210 11% 15%;
+    
+    --card: 80 9% 89%;
+    --card-foreground: 210 11% 15%;
+    
+    --popover: 80 9% 89%;
+    --popover-foreground: 210 11% 15%;
+    
+    /* Green-Blue Palette inspired by MagicPie UI */
+    --primary: 195 100% 45%;
+    --primary-foreground: 213 31% 91%;
+    --primary-glow: 195 100% 55%;
+    
+    --secondary: 215 25% 27%;
+    --secondary-foreground: 80 9% 89%;
+    
+    --muted: 215 25% 27%;
+    --muted-foreground: 210 11% 15%;
+    
+    --accent: 142 76% 45%;
+    --accent-foreground: 210 11% 15%;
+    --accent-glow: 142 76% 55%;
+    
+    /* Electric Green for active states */
+    --electric-green: 85 100% 50%;
+    --electric-green-foreground: 210 11% 15%;
+    
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 213 31% 91%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 210 11% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 213 31% 91%;
+    
+    /* UI Elements */
+    --border: 215 25% 27%;
+    --input: 215 25% 27%;
+    --ring: 217 91% 60%;
+    
+    /* Industrial Specific */
+    --panel-bg: 80 9% 89%;
+    --control-bg: 80 9% 89%;
+    --control-border: 215 25% 35%;
+    --status-bg: 80 9% 89%;
+    --navbar-bg: 240 1% 44%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
+    --gradient-panel: linear-gradient(145deg, hsl(80 9% 89%), hsl(80 9% 87%));
+    --gradient-control: linear-gradient(145deg, hsl(80 9% 89%), hsl(80 9% 85%));
+    
+    /* Shadows & Glows */
+    --shadow-sm: 0 1px 2px 0 hsl(217 19% 9% / 0.05);
+    --shadow: 0 4px 6px -1px hsl(217 19% 9% / 0.1), 0 2px 4px -2px hsl(217 19% 9% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(217 19% 9% / 0.1), 0 4px 6px -4px hsl(217 19% 9% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(217 19% 9% / 0.1), 0 8px 10px -6px hsl(217 19% 9% / 0.1);
+    --glow-primary: 0 0 20px hsl(217 91% 60% / 0.3);
+    --glow-accent: 0 0 20px hsl(142 76% 36% / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+}
+
+@layer components {
+  /* Rounded Design System */
+  .hud-panel {
+    @apply rounded-xl;
+  }
+  
+  .hud-card {
+    @apply rounded-lg;
+  }
+  
+  .hud-header {
+    @apply rounded-t-lg;
+  }
+
+  .hud-button {
+    @apply rounded-md;
+  }
+
+  /* Professional Button Variants with rounded styling */
+  .btn-control {
+    @apply hud-button bg-gradient-to-br from-[hsl(var(--control-bg))] to-[hsl(var(--secondary))] 
+           text-foreground border-2 border-[hsl(var(--control-border))] 
+           px-4 py-3 font-semibold text-sm uppercase tracking-wide
+           transition-all duration-300 hover:shadow-lg hover:scale-105
+           hover:border-primary hover:text-primary-foreground
+           active:scale-95 backdrop-blur-sm relative;
+  }
+  
+  .btn-control::before {
+    content: '';
+    @apply absolute inset-0 rounded-md border-2 border-transparent;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .btn-control:hover::before {
+    opacity: 1;
+  }
+  
+  .btn-control.active {
+    @apply bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))]
+           border-primary text-primary-foreground shadow-[var(--glow-primary)];
+  }
+  
+  .btn-nav {
+    @apply hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))]
+           text-foreground border border-[hsl(var(--border))]
+           px-4 py-2 font-medium text-sm
+           transition-all duration-300 hover:shadow-md hover:scale-105
+           hover:border-primary hover:text-primary backdrop-blur-sm;
+  }
+  
+  /* Status Indicators */
+  .status-light {
+    @apply w-4 h-4 rounded-full border-2 border-[hsl(var(--border))]
+           transition-all duration-300 shadow-inner;
+  }
+  
+  .status-light.active {
+    @apply border-accent bg-gradient-to-br from-accent to-[hsl(var(--accent-glow))]
+           shadow-[var(--glow-accent)] animate-pulse;
+  }
+  
+  .status-light.warning {
+    @apply border-warning bg-gradient-to-br from-warning to-[hsl(var(--warning))]
+           shadow-[0_0_20px_hsl(var(--warning)_/_0.3)];
+  }
+  
+  .status-light.error {
+    @apply border-destructive bg-gradient-to-br from-destructive to-[hsl(var(--destructive))]
+           shadow-[0_0_20px_hsl(var(--destructive)_/_0.3)];
+  }
+  
+  /* Professional Panels with rounded styling */
+  .panel {
+    @apply hud-panel bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))]
+           border-2 border-[hsl(var(--border))] p-6
+           shadow-xl backdrop-blur-sm relative overflow-hidden
+           before:absolute before:inset-0 before:bg-gradient-to-b 
+           before:from-white/40 before:via-white/10 before:to-transparent 
+           before:pointer-events-none;
+  }
+  
+  .panel::before {
+    content: '';
+    @apply absolute rounded-xl;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border: 1px solid hsl(var(--primary) / 0.2);
+    pointer-events: none;
+  }
+  
+  .panel-header {
+    @apply flex items-center gap-3 mb-4 pb-3 border-b border-[hsl(var(--border))];
+  }
+  
+  .panel-title {
+    @apply text-lg font-semibold text-foreground;
+  }
+  
+  /* Fan Animation Keyframes */
+  .fan-spinning {
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% { 
+      box-shadow: var(--glow-primary);
+      filter: brightness(1);
+    }
+    50% { 
+      box-shadow: var(--glow-primary), 0 0 40px hsl(var(--primary) / 0.4);
+      filter: brightness(1.1);
+    }
+  }
+  
+  /* Responsive Grid */
+  .control-grid {
+    @apply grid grid-cols-2 gap-3 w-full;
+  }
+  
+  @media (max-width: 768px) {
+    .control-grid {
+      @apply grid-cols-1 gap-2;
+    }
+  }
+}
