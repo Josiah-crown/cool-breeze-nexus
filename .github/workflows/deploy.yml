@@ -18,12 +18,13 @@
          - run: npm ci
          - run: npm run build
 
-         - name: Upload dist/ to cPanel
-           uses: SamKirkland/FTP-Deploy-Action@v4
-           with:
-             server: ${{ secrets.CPANEL_HOST }}
-             username: ${{ secrets.CPANEL_USER }}
-             password: ${{ secrets.CPANEL_PASS }}
-             protocol: ftp            # change to sftp if required
-             local-dir: dist
-             server-dir: /public_html
+   - name: Upload dist/ to cPanel
+     uses: SamKirkland/FTP-Deploy-Action@v4
+     with:
+       server: ${{ secrets.CPANEL_HOST }}
+       username: ${{ secrets.CPANEL_USER }}
+       password: ${{ secrets.CPANEL_PASS }}
+       protocol: ftps         # <-- use FTPS on port 21
+       port: 21
+       local-dir: dist
+       server-dir: /public_html
