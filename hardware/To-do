@@ -1,0 +1,39 @@
+# Cool Breeze Nexus – Provisioning & Data Pipeline Checklist
+
+## Phase 1 – Stabilise Ingestion
+- [ ] Deploy `esp32-data-receiver` edge function and require machine API key
+- [ ] Re-enable RLS on `readings_raw` with server-side derivations (overall_status, is_cooling, etc.)
+- [ ] Confirm edge function monitoring/alerts and document redeploy steps
+- [ ] Bench-test 6-sample (~10 s) cadence vs 30 s baseline (ADC noise, WiFi timing, safety cutoff)
+- [ ] Prototype SPIFFS/NVS buffering (queue size, replay logic, flash-wear guardrails)
+- [ ] Document data flow (raw readings → machines snapshot → alerts)
+- [ ] Validate BOOT/RESET WiFi-clear procedure or design GPIO/firmware alternative
+
+## Phase 2 – Device Provisioning via SQL RPC
+- [ ] Add device metadata columns (firmware_version, provisioned_by, assigned_company_id?, notes, shipping_status, sensor_config JSON)
+- [ ] Create per-year sequence/trigger for `DEV-YYYY-NNNN` serials
+- [ ] Implement `create_provisioned_device` SQL function (UUID, API key, numeric suffix WiFi name/pass, insert + return payload)
+- [ ] Lock RPC/RLS to super-admins only
+- [ ] Update `DeviceProvisioning.tsx` to use `@/integrations/supabase/client` and call RPC
+- [ ] Embed full production firmware template with injected credentials; ensure `.ino` download works
+- [ ] Display provisioning metadata (serial, API key, WiFi AP, firmware version) and refresh device list
+- [ ] Draft provisioning SOP for admins (generate → download → flash → verify)
+- [ ] Test sequential device creation, WiFi AP uniqueness, and flashing workflow end-to-end
+
+## Phase 3 – Firmware & Installer Experience
+- [ ] Sync provisioning template with latest ESP32 firmware and version constant
+- [ ] Confirm firmware auto-loads provisioned UUID/API key and allows overrides
+- [ ] Update installer docs with new provisioning flow and WiFi naming
+- [ ] Finalise WiFi reset mechanism and documentation (BOOT/RESET or GPIO alternative)
+
+## Phase 4 – Website & Ops Polish
+- [ ] Close remaining dashboard/UI tasks (alerts, provisioning access, status cards)
+- [ ] Audit auth/role gates and RLS for devices/machines
+- [ ] Add monitoring for provisioning RPC failures and ingestion health
+- [ ] Record schema migrations and update deployment guide/backup checklists
+
+## Phase 5 – Future Enhancements (Backlog)
+- [ ] Batch provisioning tooling
+- [ ] Inventory & shipping status views
+- [ ] Automated firmware build or OTA pathway
+- [ ] QR/Barcode labeling workflow

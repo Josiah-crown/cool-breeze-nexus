@@ -276,7 +276,7 @@ bool sendToSupabase(float tMotor, float tExterior, float tInterior,
 3. Right sidebar → "ESP32 API Key Management"
 4. Click "Generate New API Key"
 5. **COPY IT IMMEDIATELY** (can't view again!)
-6. Example: `sk_live_placeholder_only_do_not_use`
+6. Example: `machine_api_key_example_1234`
 
 ### **Step 2: Get Machine UUID (Dashboard)**
 1. In dashboard, create new machine
