@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast as sonnerToast } from 'sonner';
+import { fetchHistoricalData } from '@/lib/historicalData';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,17 +42,51 @@ type Period = '24h' | '7d' | '30d' | '1y';
 
 const MachineDetailView: React.FC<MachineDetailViewProps> = ({ 
   machine, 
-  historicalData,
+  historicalData: initialHistoricalData,
   onClose 
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('24h');
+  const [historicalData, setHistoricalData] = useState<MachineHistoricalData>(initialHistoricalData);
+  const [loadingHistoricalData, setLoadingHistoricalData] = useState(false);
   const [editingSetpoint, setEditingSetpoint] = useState(false);
   const [newSetpoint, setNewSetpoint] = useState(machine.temperatureSetpoint?.toString() || '55');
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [newLocation, setNewLocation] = useState(machine.location || '');
   const [locationFallback, setLocationFallback] = useState<string | null>(null);
+
+  // Load historical data when period changes
+  useEffect(() => {
+    let ignore = false;
+    const loadHistoricalData = async () => {
+      setLoadingHistoricalData(true);
+      try {
+        const data = await fetchHistoricalData(machine.id, selectedPeriod);
+        if (!ignore) {
+          setHistoricalData(data);
+        }
+      } catch (error) {
+        console.error('Error loading historical data:', error);
+        if (!ignore) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load historical data',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingHistoricalData(false);
+        }
+      }
+    };
+
+    loadHistoricalData();
+    return () => {
+      ignore = true;
+    };
+  }, [machine.id, selectedPeriod, toast]);
 
   useEffect(() => {
     let ignore = false;
@@ -120,23 +155,67 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     const isCoolingData = historicalData.isCooling || [];
     const hasWaterData = historicalData.hasWater || [];
     
-    // Combine all datasets with matching timestamps
-    const combinedData = motorTempData.map((tempPoint, index) => {
-      const date = new Date(tempPoint.timestamp);
+    // Collect all unique timestamps from all datasets
+    const allTimestamps = new Set<number>();
+    [motorTempData, currentData, outsideTempData, insideTempData, deltaTData, fanActiveData, isCoolingData, hasWaterData].forEach(dataset => {
+      dataset.forEach(point => allTimestamps.add(point.timestamp));
+    });
+    
+    // Convert to sorted array
+    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+    
+    // Create maps for quick lookup by timestamp
+    const motorTempMap = new Map(motorTempData.map(p => [p.timestamp, p.value]));
+    const currentMap = new Map(currentData.map(p => [p.timestamp, p.value]));
+    const outsideTempMap = new Map(outsideTempData.map(p => [p.timestamp, p.value]));
+    const insideTempMap = new Map(insideTempData.map(p => [p.timestamp, p.value]));
+    const deltaTMap = new Map(deltaTData.map(p => [p.timestamp, p.value]));
+    const fanActiveMap = new Map(fanActiveData.map(p => [p.timestamp, p.value]));
+    const isCoolingMap = new Map(isCoolingData.map(p => [p.timestamp, p.value]));
+    const hasWaterMap = new Map(hasWaterData.map(p => [p.timestamp, p.value]));
+    
+    // Format time based on selected period
+    const formatTime = (timestamp: number): string => {
+      const date = new Date(timestamp);
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
       
-      const fanOn = fanActiveData[index]?.value || 0;
-      const coolOn = isCoolingData[index]?.value || 0;
-      const waterOn = hasWaterData[index]?.value || 0;
+      if (selectedPeriod === '24h') {
+        return `${hours}:${minutes}`;
+      } else if (selectedPeriod === '7d') {
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${month}/${day} ${hours}:${minutes}`;
+      } else if (selectedPeriod === '30d') {
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${month}/${day}`;
+      } else { // 1y
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const year = date.getFullYear().toString().slice(-2);
+        return `${month}/${day}/${year}`;
+      }
+    };
+    
+    // Combine all datasets by timestamp
+    const combinedData = sortedTimestamps.map(timestamp => {
+      const motorTemp = motorTempMap.get(timestamp);
+      const current = currentMap.get(timestamp);
+      const outsideTemp = outsideTempMap.get(timestamp);
+      const insideTemp = insideTempMap.get(timestamp);
+      const deltaT = deltaTMap.get(timestamp);
+      const fanOn = fanActiveMap.get(timestamp) || 0;
+      const coolOn = isCoolingMap.get(timestamp) || 0;
+      const waterOn = hasWaterMap.get(timestamp) || 0;
       
       return {
-        time: `${hours}:${minutes}`,
-        motorTemp: parseFloat(tempPoint.value.toFixed(1)),
-        current: currentData[index] ? parseFloat(currentData[index].value.toFixed(1)) : 0,
-        outsideTemp: outsideTempData[index] ? parseFloat(outsideTempData[index].value.toFixed(1)) : 0,
-        insideTemp: insideTempData[index] ? parseFloat(insideTempData[index].value.toFixed(1)) : 0,
-        deltaT: deltaTData[index] ? parseFloat(deltaTData[index].value.toFixed(1)) : 0,
+        time: formatTime(timestamp),
+        motorTemp: motorTemp != null ? parseFloat(motorTemp.toFixed(1)) : null,
+        current: current != null ? parseFloat(current.toFixed(1)) : null,
+        outsideTemp: outsideTemp != null ? parseFloat(outsideTemp.toFixed(1)) : null,
+        insideTemp: insideTemp != null ? parseFloat(insideTemp.toFixed(1)) : null,
+        deltaT: deltaT != null ? parseFloat(deltaT.toFixed(1)) : null,
         fanActive: fanOn > 0 ? 30 : null,
         isCooling: coolOn > 0 ? 30 : null,
         fanAndCool: (fanOn > 0 && coolOn > 0) ? 30 : null,
@@ -309,7 +388,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   <CardTitle className="text-lg text-accent">System Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
-                  <StatusLight status={machine.isOn ? 'active' : 'inactive'} label="Power" />
+                  <StatusLight status={machine.isConnected ? 'active' : 'inactive'} label="Connected" />
                   
                   {machine.type === 'evaporative' && (
                     <>
@@ -335,8 +414,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   
                   <StatusLight
                     status={
-                      machine.motorTemp < 70 ? 'active' :
-                      machine.motorTemp < 80 ? 'warning' : 'error'
+                      machine.motorStatus === 'critical' || machine.motorStatus === 'warning' ? 'error' : 'active'
                     }
                     label={machine.type === 'heatpump' ? 'Compressor Status' : 'Motor Status'}
                   />
@@ -418,6 +496,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       size="sm"
                       variant={selectedPeriod === period ? 'default' : 'outline'}
                       onClick={() => setSelectedPeriod(period)}
+                      disabled={loadingHistoricalData}
                       className={`min-w-[60px] border-[3px] ${
                         selectedPeriod === period 
                           ? 'border-accent bg-accent text-accent-foreground' 
@@ -430,8 +509,17 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 </div>
               </CardHeader>
               <CardContent className="pt-4">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={formatChartData()}>
+                {loadingHistoricalData ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-muted-foreground">Loading historical data...</p>
+                  </div>
+                ) : formatChartData().length === 0 ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-muted-foreground">No historical data available for the selected period</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={formatChartData()}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" />
                     <YAxis 
@@ -542,6 +630,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                     )}
                   </LineChart>
                 </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
 

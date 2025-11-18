@@ -69,8 +69,11 @@ const unsigned long DATA_SEND_INTERVAL = 60000;       // 60 seconds (1 minute)
 const unsigned long WIFI_CONNECT_TIMEOUT = 30000;     // 30 seconds
 const unsigned long HTTP_POST_TIMEOUT = 8000;         // 8 seconds (before watchdog)
 const unsigned long MAX_WIFI_ON_TIME = 120000;        // 2 minutes (safety net)
-const unsigned long DAILY_RESET_INTERVAL = 86400000;  // 24 hours
+const unsigned long AUTO_RESET_INTERVAL = 21600000;   // 6 hours (improved from 24h for better reliability)
 const unsigned long SIX_MONTH_RESET = 15552000000ULL; // 180 days in milliseconds
+const unsigned long BOOT_BUTTON_HOLD_TIME = 5000;     // 5 seconds to enter config mode
+const unsigned long WATCHDOG_TIMEOUT = 60;            // 60 seconds watchdog timeout
+const unsigned long WIFI_STUCK_TIMEOUT = 120000;      // 2 minutes - if WiFi stuck, force reset
 
 // ============================================
 // Pin Definitions
@@ -84,10 +87,7 @@ const int GPIO_YELLOW_EXHAUST = 34;
 const int GPIO_GREEN_FAN = 35;
 const int GPIO_BROWN_PUMP = 32;
 const int GPIO_BLACK_DRAIN = 33;
-
-// Reset Button (optional - for forcing config portal)
-const int RESET_BUTTON_PIN = 0;  // GPIO 0 (BOOT button on most ESP32 boards)
-const unsigned long RESET_HOLD_TIME = 3000;  // Hold for 3 seconds to reset
+const int BOOT_BUTTON_PIN = 0;  // ESP32 Dev Module boot button (GPIO 0)
 
 // ============================================
 // Temperature Sensor Setup
@@ -233,14 +233,22 @@ RTC_DATA_ATTR bool rtcInitialized = false;
 // ============================================
 unsigned long lastSensorRead = 0;
 unsigned long lastDataSend = 0;
-unsigned long lastDailyReset = 0;
+unsigned long lastAutoReset = 0;
 unsigned long bootTime = 0;
+unsigned long bootButtonPressTime = 0;
+bool bootButtonPressed = false;
+unsigned long lastWatchdogFeed = 0;
+unsigned long wifiStuckStartTime = 0;
+bool wifiStuckDetected = false;
 
 // ============================================
 // Function Prototypes
 // ============================================
 void launchConfigPortal();
 void saveConfigCallback();
+void checkBootButton(unsigned long currentMillis);
+void checkWiFiStuck(unsigned long currentMillis);
+void performAutoReset();
 
 // ============================================
 // State Machine
@@ -279,49 +287,14 @@ void setup() {
   }
   
   bootTime = millis();
-  lastDailyReset = bootTime;
+  lastAutoReset = bootTime;
+  lastWatchdogFeed = bootTime;
   
-  // Check for reset button press (hold BOOT button for 3 seconds on startup)
-  pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
-  if(digitalRead(RESET_BUTTON_PIN) == LOW) {
-    Serial.println("\n⚠ Reset button detected - Hold for 3 seconds to clear all settings...");
-    unsigned long pressStart = millis();
-    bool stillPressed = true;
-    
-    while(millis() - pressStart < RESET_HOLD_TIME) {
-      if(digitalRead(RESET_BUTTON_PIN) == HIGH) {
-        stillPressed = false;
-        Serial.println("Button released - Reset cancelled");
-        break;
-      }
-      if((millis() - pressStart) % 1000 == 0) {
-        Serial.print(".");
-      }
-      delay(100);
-    }
-    
-    if(stillPressed) {
-      Serial.println("\n✓ Reset button held - CLEARING ALL SETTINGS!");
-      Serial.println("  - WiFi credentials");
-      Serial.println("  - Supabase config");
-      Serial.println("  - Machine UUID & API Key");
-      delay(500);
-      
-      // Clear WiFi
-      WiFi.disconnect(true);
-      WiFi.mode(WIFI_OFF);
-      
-      // Clear preferences
-      preferences.begin("iot-nexus", false);
-      preferences.clear();
-      preferences.end();
-      
-      Serial.println("\n✅ All settings cleared! Rebooting...");
-      Serial.println("Connect to 'ESP32_HVAC_Setup' WiFi after reboot\n");
-      delay(2000);
-      ESP.restart();
-    }
-  }
+  // Initialize boot button (GPIO 0, pulled HIGH, LOW when pressed)
+  pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
+  
+  // Boot button will be checked in main loop (5 second hold to enter config mode)
+  // Old reset method (hold boot + press reset) has been removed - use boot button hold instead
   
   // Check if 6-month reset is needed
   unsigned long uptimeMillis = totalUptimeSeconds * 1000ULL;
@@ -406,12 +379,12 @@ void setup() {
   // Initialize hardware
   initializeHardware();
   
-  // Initialize watchdog timer (10 seconds)
+  // Initialize watchdog timer (60 seconds - improved from 10s)
   // Compatible with both ESP32 core 2.x and 3.x
   #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
     // ESP32 core 3.x - new API with config struct
     esp_task_wdt_config_t twdt_config = {
-      .timeout_ms = 10000,  // 10 seconds
+      .timeout_ms = WATCHDOG_TIMEOUT * 1000,  // 60 seconds
       .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
       .trigger_panic = true
     };
@@ -419,7 +392,7 @@ void setup() {
     esp_task_wdt_add(NULL);
   #else
     // ESP32 core 2.x - old API
-    esp_task_wdt_init(10, true);
+    esp_task_wdt_init(WATCHDOG_TIMEOUT, true);
     esp_task_wdt_add(NULL);
   #endif
   
@@ -427,8 +400,10 @@ void setup() {
   Serial.println("OPERATION MODE:");
   Serial.println("  - Sensor readings: Every 1 second (WiFi OFF)");
   Serial.println("  - Data transmission: Every 60 seconds (WiFi ON briefly)");
-  Serial.println("  - Daily reset: Every 24 hours");
+  Serial.println("  - Auto reset: Every 6 hours (improved reliability)");
   Serial.println("  - Full reset: Every 6 months");
+  Serial.println("  - Watchdog: 60 seconds (prevents stalls)");
+  Serial.println("  - Hold BOOT button for 5 seconds to enter config mode");
   
   #if DEBUG_MODE
     Serial.println("\n⚠ DEBUG MODE ENABLED ⚠");
@@ -485,13 +460,22 @@ void initializeHardware() {
 void loop() {
   unsigned long currentMillis = millis();
   
-  // Feed watchdog
-  esp_task_wdt_reset();
-  
-  // Check for daily reset (24 hours)
-  if(currentMillis - lastDailyReset >= DAILY_RESET_INTERVAL) {
-    performDailyReset();
+  // Feed watchdog timer
+  if(currentMillis - lastWatchdogFeed >= 1000) {
+    esp_task_wdt_reset();
+    lastWatchdogFeed = currentMillis;
   }
+  
+  // Check boot button for config mode entry
+  checkBootButton(currentMillis);
+  
+  // Check for auto reset (6 hours)
+  if(currentMillis - lastAutoReset >= AUTO_RESET_INTERVAL) {
+    performAutoReset();
+  }
+  
+  // Check for WiFi stuck condition
+  checkWiFiStuck(currentMillis);
   
   // Update RTC uptime counter every second
   static unsigned long lastUptimeUpdate = 0;
@@ -692,12 +676,13 @@ void stateWiFiConnect(unsigned long currentMillis) {
   unsigned long connectStart = millis();
   bool connected = false;
   
-  // First, try autoConnect (uses saved credentials)
+  // Try to connect using saved credentials
   Serial.println("Attempting to connect to saved WiFi network...");
   
   WiFi.mode(WIFI_STA);
   WiFi.begin(); // Use saved credentials
   
+  int connectAttempts = 0;
   while(millis() - connectStart < WIFI_CONNECT_TIMEOUT) {
     if(WiFi.status() == WL_CONNECTED) {
       connected = true;
@@ -705,7 +690,18 @@ void stateWiFiConnect(unsigned long currentMillis) {
     }
     Serial.print(".");
     delay(500);
-    esp_task_wdt_reset(); // Feed watchdog during connection
+    connectAttempts++;
+    
+    // Feed watchdog during connection attempt
+    if(connectAttempts % 4 == 0) {  // Every 2 seconds
+      esp_task_wdt_reset();
+    }
+    
+    // Check if we're stuck (shouldn't happen with timeout, but safety check)
+    if(millis() - connectStart > WIFI_CONNECT_TIMEOUT) {
+      Serial.println("\n⚠️ WiFi connection timeout exceeded!");
+      break;
+    }
   }
   
   Serial.println();
@@ -721,10 +717,12 @@ void stateWiFiConnect(unsigned long currentMillis) {
     // Sync time with NTP
     configTime(0, 0, "pool.ntp.org");
     
+    wifiStuckDetected = false;  // Reset stuck detection
     currentState = STATE_DATA_SEND;
   } else {
     Serial.println("✗ WiFi connection failed (timeout)");
     Serial.println("  Discarding accumulated data to prevent overflow");
+    Serial.println("  (Hold BOOT button for 5 seconds to enter config mode if WiFi changed)");
     
     // CRITICAL: Discard data during long outages
     accumulator.reset();
@@ -1015,76 +1013,89 @@ bool sendToSupabase(float tMotor, float tExterior, float tInterior,
   }
   
   HTTPClient http;
-  http.setTimeout(HTTP_POST_TIMEOUT);
+  WiFiClientSecure client;
   
-  // Direct REST API endpoint (temporary - will move to Edge Function later)
-  // (old) String endpoint = supabaseUrl + "/rest/v1/readings_raw";
+  // Set client timeout to prevent hanging
+  client.setTimeout(HTTP_POST_TIMEOUT / 1000);  // Convert to seconds
+  http.setTimeout(HTTP_POST_TIMEOUT);
+  http.setConnectTimeout(5000);  // 5 second connection timeout
+  
+  // Direct to Edge Function endpoint (secure - validates machine API key)
   String endpoint = supabaseUrl + "/functions/v1/esp32-data-receiver";
-  // Build JSON payload - DASHBOARD COMPATIBLE SCHEMA
-  StaticJsonDocument<1024> doc;
+  
+  // Build JSON payload - RAW SENSOR DATA ONLY
+  StaticJsonDocument<768> doc;
   
   // ========================================
-  // REQUIRED FIELDS (Dashboard schema)
+  // RAW SENSOR READINGS
   // ========================================
   doc["machine_id"] = machineUUID;
-  doc["motor_temp"] = tMotor;
-  doc["outside_temp"] = tExterior;
-  doc["inside_temp"] = tInterior;
-  doc["current"] = ctCurrent;
-  doc["voltage"] = LINE_VOLTAGE;  // 230V constant
-  doc["power"] = appPower;
-  doc["delta_t"] = abs(tExterior - tInterior);
-  doc["is_on"] = (bStatus == "ON");  // Pump running = cooler ON
-  doc["fan_active"] = (gStatus == "ON");
-  doc["is_connected"] = true;
   
-  // Determine overall status based on sensor readings
-  doc["overall_status"] = determineOverallStatus(tMotor, ctCurrent, tankFull, 
-                                                  yStatus, gStatus, bStatus);
+  // Temperatures (°C)
+  doc["motor_temp"] = tMotor;           // Temp 1
+  doc["outside_temp"] = tExterior;      // Temp 2
+  doc["inside_temp"] = tInterior;       // Temp 3
   
-  // ========================================
-  // EVAPORATIVE COOLER SPECIFIC FIELDS
-  // ========================================
-  // Cooling cycle: Dump valve drains → Pump fills → Fan blows
-  // If either pump OR dump valve is active = cooling cycle is happening
-  doc["is_cooling"] = (bStatus == "ON" || blStatus == "ON");  // Pump OR Dump valve
-  doc["has_water"] = tankFull;
+  // Current & Power
+  doc["current"] = ctCurrent;           // Amps
+  doc["voltage"] = LINE_VOLTAGE;        // 230V constant
+  doc["power"] = appPower;              // Watts (V × I)
   
-  // Control states (from pickups)
-  doc["exhaust_active"] = (yStatus == "ON");
-  doc["pump_active"] = (bStatus == "ON");
-  doc["drain_active"] = (blStatus == "ON");
-  doc["fan_speed"] = fanSpeed;  // 0-100%
+  // Tank Status
+  doc["has_water"] = tankFull;          // Water full/empty (bool)
   
   // ========================================
-  // DIAGNOSTIC VOLTAGES (for debugging)
+  // RAW PICKUP VOLTAGES (for server-side logic)
   // ========================================
-  doc["exhaust_voltage"] = yVolt;
-  doc["fan_voltage"] = gVolt;
-  doc["pump_voltage"] = bVolt;
-  doc["drain_voltage"] = blVolt;
+  doc["exhaust_voltage"] = yVolt;       // Voltage 1 (Yellow wire)
+  doc["fan_voltage"] = gVolt;           // Voltage 2 (Green wire)
+  doc["pump_voltage"] = bVolt;          // Voltage 3 (Brown wire)
+  doc["drain_voltage"] = blVolt;        // Voltage 4 (Black wire)
   
   String jsonString;
   serializeJson(doc, jsonString);
   
-  Serial.println("\nPOST to Supabase:");
+  Serial.println("\nPOST to Supabase (RAW DATA):");
   Serial.println("  URL: " + endpoint);
   Serial.println("  Machine ID: " + machineUUID);
-  Serial.println("  Status: " + String((const char*)doc["overall_status"]));
+  Serial.print("  Temps: Motor=");
+  Serial.print(tMotor);
+  Serial.print("°C, Out=");
+  Serial.print(tExterior);
+  Serial.print("°C, In=");
+  Serial.print(tInterior);
+  Serial.println("°C");
+  Serial.print("  Current: ");
+  Serial.print(ctCurrent);
+  Serial.println(" A");
   
   #if DEBUG_MODE
-    Serial.println("  Payload: " + jsonString);
+    Serial.println("  Full Payload: " + jsonString);
   #endif
   
-  // Send HTTP POST (using anon key for demo - will use Edge Function for production)
-  http.begin(endpoint);
+  // Send HTTP POST to Edge Function (validates machine API key)
+  // Feed watchdog before potentially long operation
+  esp_task_wdt_reset();
+  
+  unsigned long postStart = millis();
+  http.begin(client, endpoint);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", supabaseAnonKey);  // Still needed for Supabase routing
   http.addHeader("Authorization", "Bearer " + machineAPIKey);  // Use machine's key
   
-  unsigned long postStart = millis();
   int httpCode = http.POST(jsonString);
   unsigned long postDuration = millis() - postStart;
+  
+  // Feed watchdog after operation
+  esp_task_wdt_reset();
+  
+  // Check if operation took too long (stalled)
+  if(postDuration > HTTP_POST_TIMEOUT) {
+    Serial.println("⚠️ WARNING: HTTP POST took longer than timeout!");
+    Serial.print("Duration: ");
+    Serial.print(postDuration);
+    Serial.println("ms");
+  }
   
   Serial.print("  HTTP Code: ");
   Serial.print(httpCode);
@@ -1113,11 +1124,6 @@ bool sendToSupabase(float tMotor, float tExterior, float tInterior,
   
   http.end();
   
-  // Safety check: Disconnect if POST took too long
-  if(postDuration > HTTP_POST_TIMEOUT) {
-    Serial.println("⚠ POST took longer than expected - forcing disconnect");
-  }
-  
   return success;
 }
 
@@ -1133,12 +1139,15 @@ void launchConfigPortal() {
   Serial.println("Navigate to: 192.168.4.1");
   Serial.println("========================================\n");
   
-  // Start config portal
+  // Start config portal (will timeout after 3 minutes)
   wifiManager.startConfigPortal("ESP32_HVAC_Setup");
   
   // After config is saved
   if(WiFi.status() == WL_CONNECTED) {
     Serial.println("✓ WiFi configured and connected!");
+  } else {
+    Serial.println("⚠ Config portal timed out - will retry on next boot");
+    // Don't restart - let device continue (user can try again later)
   }
 }
 
@@ -1163,11 +1172,81 @@ void saveConfigCallback() {
 }
 
 // ============================================
-// Perform Daily Reset (Soft Reset)
+// Check Boot Button (5 second hold to enter config)
 // ============================================
-void performDailyReset() {
+void checkBootButton(unsigned long currentMillis) {
+  bool buttonState = digitalRead(BOOT_BUTTON_PIN) == LOW;  // LOW when pressed
+  
+  if(buttonState && !bootButtonPressed) {
+    // Button just pressed
+    bootButtonPressTime = currentMillis;
+    bootButtonPressed = true;
+    Serial.println("Boot button pressed - hold for 5 seconds to enter config mode...");
+  } else if(buttonState && bootButtonPressed) {
+    // Button still held
+    unsigned long holdTime = currentMillis - bootButtonPressTime;
+    if(holdTime >= BOOT_BUTTON_HOLD_TIME) {
+      // Button held for 5 seconds - enter config mode
+      Serial.println("\n============================================");
+      Serial.println("BOOT BUTTON HELD - Entering WiFi Config Mode");
+      Serial.println("============================================");
+      Serial.println("Clearing WiFi settings...");
+      
+      // Clear WiFi credentials
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_OFF);
+      
+      // Clear preferences
+      preferences.begin("iot-nexus", false);
+      preferences.clear();
+      preferences.end();
+      
+      // Clear WiFiManager settings
+      wifiManager.resetSettings();
+      
+      Serial.println("WiFi settings cleared. Restarting...");
+      delay(2000);
+      ESP.restart();
+    }
+  } else if(!buttonState && bootButtonPressed) {
+    // Button released
+    bootButtonPressed = false;
+    unsigned long holdTime = currentMillis - bootButtonPressTime;
+    if(holdTime < BOOT_BUTTON_HOLD_TIME) {
+      Serial.println("Boot button released (not held long enough)");
+    }
+  }
+}
+
+// ============================================
+// Check for WiFi Stuck Condition
+// ============================================
+void checkWiFiStuck(unsigned long currentMillis) {
+  // Detect if WiFi has been trying to connect for too long
+  if(wifiEnabled && WiFi.status() != WL_CONNECTED) {
+    if(!wifiStuckDetected) {
+      wifiStuckStartTime = currentMillis;
+      wifiStuckDetected = true;
+    } else {
+      // WiFi stuck trying to connect
+      if(currentMillis - wifiStuckStartTime > WIFI_STUCK_TIMEOUT) {
+        Serial.println("⚠️ WiFi stuck - forcing reset!");
+        Serial.println("WiFi has been trying to connect for more than 2 minutes");
+        delay(1000);
+        ESP.restart();
+      }
+    }
+  } else {
+    wifiStuckDetected = false;
+  }
+}
+
+// ============================================
+// Perform Auto Reset (Soft Reset - 6 hours)
+// ============================================
+void performAutoReset() {
   Serial.println("\n========================================");
-  Serial.println("  DAILY RESET (24 HOURS ELAPSED)");
+  Serial.println("  AUTO RESET (6 HOURS ELAPSED)");
   Serial.println("========================================");
   Serial.println("Performing soft reset to clear RAM...");
   

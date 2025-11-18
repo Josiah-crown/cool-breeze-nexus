@@ -1,4 +1,5 @@
 /*
+
  * CLEAR ESP32 MEMORY
  * 
  * Upload this sketch to completely erase WiFi and Supabase credentials

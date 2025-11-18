@@ -1,0 +1,15 @@
+PLANNING PHASE:
+
+FRONT END:
+Different account types with access to defined features (accountant/owner, management, installers, etc.).
+Machine type creation button (sets up supabase table to manage and culculate data streams per unique device type)
+
+
+
+
+DATABASE:
+1) define (as much as possible) our requirements to replace servecraft
+2) VPS (Virtual private server)
+3) Set up our database using the opensource SUPABASE system on the VPS 
+4) Define our requirements to replace/integate xero.
+

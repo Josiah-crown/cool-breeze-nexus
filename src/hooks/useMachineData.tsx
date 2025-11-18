@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { MachineStatus } from '@/types/machine';
+import { MachineStatus, MachineHistoricalData } from '@/types/machine';
+import { fetchHistoricalDataForMachines } from '@/lib/historicalData';
 
 export interface UserHierarchy {
   id: string;
@@ -11,17 +12,10 @@ export interface UserHierarchy {
   companyId?: string;
 }
 
-export interface MachineHistoricalData {
-  timestamp: string;
-  deltaT: number;
-  outsideTemp: number;
-  insideTemp: number;
-}
-
 const useMachineData = (userId: string, userRole: string) => {
   const [machines, setMachines] = useState<MachineStatus[]>([]);
   const [users, setUsers] = useState<UserHierarchy[]>([]);
-  const [historicalData, setHistoricalData] = useState<{ [key: string]: MachineHistoricalData[] }>({});
+  const [historicalData, setHistoricalData] = useState<{ [key: string]: MachineHistoricalData }>({});
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -40,6 +34,7 @@ const useMachineData = (userId: string, userRole: string) => {
           id: m.id,
           name: m.name,
           type: m.type,
+          manufacturer: m.manufacturer ?? null,
           isOn: m.is_on ?? false,
           isCooling: m.is_cooling ?? false,
           fanActive: m.fan_active ?? false,
@@ -182,35 +177,17 @@ const useMachineData = (userId: string, userRole: string) => {
           .map((m: any) => mapMachine(m, notifPrefsMap));
       }
 
-      // Generate mock historical data for each machine
-      const mockHistoricalData: { [key: string]: MachineHistoricalData[] } = {};
-      visibleMachines.forEach(machine => {
-        const data: MachineHistoricalData[] = [];
-        const now = new Date();
-        
-        for (let i = 24; i >= 0; i--) {
-          const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
-          const hour = timestamp.getHours();
-          const baseOutside = 15 + Math.sin(hour / 24 * Math.PI * 2) * 10;
-          const randomVariation = (Math.random() - 0.5) * 3;
-          
-          data.push({
-            timestamp: timestamp.toISOString(),
-            outsideTemp: Math.round((baseOutside + randomVariation) * 10) / 10,
-            insideTemp: Math.round((baseOutside + randomVariation - (machine.isCooling ? 5 : 0)) * 10) / 10,
-            deltaT: Math.round((machine.isCooling ? 5 : Math.abs(randomVariation)) * 10) / 10,
-          });
-        }
-        
-        mockHistoricalData[machine.id] = data;
-      });
+      // Fetch real historical data for each machine (24h period by default)
+      const machineIds = visibleMachines.map(m => m.id);
+      const realHistoricalData = await fetchHistoricalDataForMachines(machineIds, '24h');
 
       console.log('✅ Final transformedUsers:', transformedUsers.length);
       console.log('✅ Final visibleMachines:', visibleMachines.length);
+      console.log('✅ Historical data fetched for machines:', Object.keys(realHistoricalData).length);
       
       setMachines(visibleMachines);
       setUsers(transformedUsers);
-      setHistoricalData(mockHistoricalData);
+      setHistoricalData(realHistoricalData);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);

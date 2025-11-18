@@ -8,6 +8,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MachineType } from '@/types/machine';
+import { 
+  getAvailableManufacturers, 
+  isManufacturerRequired,
+  type Manufacturer 
+} from '@/lib/machineConfig';
 
 interface AddMachineDialogProps {
   open: boolean;
@@ -22,9 +27,16 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
   const [loading, setLoading] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState<Array<{ id: string; name: string; role: string }>>([]);
   const [assignmentType, setAssignmentType] = useState<'self' | 'other'>('self');
+  // Initialize with auto-selected manufacturer if only one option
+  const getInitialManufacturer = (type: MachineType): string => {
+    const manufacturers = getAvailableManufacturers(type);
+    return manufacturers.length === 1 ? manufacturers[0] : '';
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     type: 'evaporative' as MachineType,
+    manufacturer: getInitialManufacturer('evaporative') as 'Cirrus' | 'CoolBreeze' | '',
     apiEndpoint: '',
     assignedUserId: '',
   });
@@ -108,6 +120,20 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
         throw new Error(`Please select ${userRole === 'super_admin' ? 'an admin' : 'a client'}`);
       }
 
+      // Get available manufacturers and ensure one is selected
+      const availableManufacturers = getAvailableManufacturers(formData.type);
+      let finalManufacturer = formData.manufacturer;
+      
+      // If only one manufacturer available, use it
+      if (availableManufacturers.length === 1) {
+        finalManufacturer = availableManufacturers[0];
+      }
+      
+      // If multiple manufacturers available, require selection
+      if (availableManufacturers.length > 1 && !finalManufacturer) {
+        throw new Error('Please select a manufacturer');
+      }
+
       let defaultLocation: string | null = null;
       try {
         const { data: profile, error: profileError } = await supabase
@@ -129,6 +155,7 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
         .insert({
           name: formData.name,
           type: formData.type,
+          manufacturer: finalManufacturer || null,
           owner_id: finalOwnerId,
           api_endpoint: formData.apiEndpoint || null,
           location: defaultLocation,
@@ -152,9 +179,15 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
       onMachineAdded();
       onOpenChange(false);
       
+      // Reset form with auto-selected manufacturer for default type
+      const defaultType: MachineType = 'evaporative';
+      const defaultManufacturers = getAvailableManufacturers(defaultType);
+      const defaultManufacturer = defaultManufacturers.length === 1 ? defaultManufacturers[0] : '';
+      
       setFormData({
         name: '',
-        type: 'evaporative',
+        type: defaultType,
+        manufacturer: defaultManufacturer,
         apiEndpoint: '',
         assignedUserId: '',
       });
@@ -232,7 +265,12 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
 
           <div className="space-y-2">
             <Label htmlFor="type">Machine Type *</Label>
-            <Select value={formData.type} onValueChange={(value: MachineType) => setFormData({ ...formData, type: value })}>
+            <Select value={formData.type} onValueChange={(value: MachineType) => {
+              const availableManufacturers = getAvailableManufacturers(value);
+              // Auto-select manufacturer if only one option
+              const autoManufacturer = availableManufacturers.length === 1 ? availableManufacturers[0] : '';
+              setFormData({ ...formData, type: value, manufacturer: autoManufacturer });
+            }}>
               <SelectTrigger className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-green-500 focus:bg-accent/20 transition-all">
                 <SelectValue />
               </SelectTrigger>
@@ -243,6 +281,30 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
               </SelectContent>
             </Select>
           </div>
+
+          {getAvailableManufacturers(formData.type).length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="manufacturer">
+                Manufacturer *
+              </Label>
+              <Select 
+                value={formData.manufacturer} 
+                onValueChange={(value: Manufacturer | '') => setFormData({ ...formData, manufacturer: value || '' })}
+                required
+              >
+                <SelectTrigger className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-green-500 focus:bg-accent/20 transition-all">
+                  <SelectValue placeholder="Select manufacturer" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-2 border-border">
+                  {getAvailableManufacturers(formData.type).map((manufacturer) => (
+                    <SelectItem key={manufacturer} value={manufacturer}>
+                      {manufacturer}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="apiEndpoint">API Endpoint (Optional)</Label>

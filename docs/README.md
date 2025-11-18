@@ -1,299 +1,143 @@
-# 📚 IOT Nexus Documentation
+# 📚 Documentation Index
 
-**Complete documentation for the IoT Nexus HVAC Monitoring Platform**
-
----
-
-## 📖 **Documentation Overview**
-
-This folder contains all documentation needed to manage, maintain, and develop the IoT Nexus system.
+Welcome to the CoolBreeze Nexus documentation! This folder is organized by category for easy navigation.
 
 ---
 
-## 🗂️ **Document Index**
+## 📁 Folder Structure
 
-### **🔐 Security & Access** (Most Important!)
+### **🔧 [hardware/](./hardware/)**
+Documentation for ESP32 hardware, firmware, and sensor-related topics.
 
-#### **[SYSTEM_ACCESS_AND_BACKUP.md](SYSTEM_ACCESS_AND_BACKUP.md)**
-**Complete credentials and backup guide**
-- All usernames and passwords (fill these in!)
-- Hosting, database, and service access
-- Backup procedures (website, database, code)
-- Disaster recovery procedures
-- Password rotation schedule
-- **⚠️ KEEP THIS SECURE - DO NOT COMMIT WITH REAL PASSWORDS!**
+**Key Topics:**
+- ESP32 firmware files and comparisons
+- Temperature sensor troubleshooting
+- Hardware interference fixes
+- ESP32 improvements and changes
 
-#### **[QUICK_REFERENCE_CARD.md](QUICK_REFERENCE_CARD.md)**
-**Print-friendly one-page cheat sheet**
-- Essential logins
-- Quick update process
-- Emergency recovery steps
-- **💡 Tip: Print this and keep in a safe place!**
+### **🗄️ [supabase/](./supabase/)**
+Database setup, migrations, data processing, and Supabase configuration.
 
-#### **[BACKUP_SCHEDULE.md](BACKUP_SCHEDULE.md)**
-**Detailed backup calendar and procedures**
-- Daily, weekly, monthly, quarterly schedules
-- Step-by-step backup instructions
-- Printable checklists
-- Calendar reminders to set
-- Backup rotation policies
+**Key Topics:**
+- CIRRUS table setup and processing
+- Raw data implementation
+- Data flow architecture
+- Migration guides and checklists
 
----
+### **💻 [frontend/](./frontend/)**
+Website, UI components, and frontend-specific documentation.
 
-### **🚀 Deployment & Setup**
+**Key Topics:**
+- Historical data setup
+- Machine subcategory configuration
+- Adding new subcategories
 
-#### **[DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)**
-**Comprehensive deployment documentation**
-- Build and deployment instructions
-- Multiple hosting platform options
-- Environment variable configuration
-- Troubleshooting guide
-- Post-deployment checklist
+### **📋 [general/](./general/)**
+General setup guides, troubleshooting, and system-wide documentation.
 
-#### **[DEPLOY_NOW.md](../DEPLOY_NOW.md)**
-**Quick-start deployment guide**
-- Ready-to-upload instructions
-- Fast deployment path (Netlify, Vercel, cPanel)
-- Environment setup
-- Testing procedures
+**Key Topics:**
+- Complete setup guides
+- System access and backup
+- Quick reference cards
+- Troubleshooting guides
+
+### **⚙️ [machine_parameters/](./machine_parameters/)**
+Default parameters and configuration for different machine types.
 
 ---
 
-### **🔧 Development & Integration**
+## 🚀 Quick Start
 
-#### **[ESP32_INTEGRATION_GUIDE.md](../ESP32_INTEGRATION_GUIDE.md)** (if exists)
-**Hardware integration documentation**
-- ESP32 setup and configuration
-- API key usage
-- Code examples
-- Testing procedures
+### **New to the project?**
+1. Start with [general/COMPLETE_SETUP_GUIDE.md](./general/COMPLETE_SETUP_GUIDE.md)
+2. Review [supabase/DATA_FLOW_ARCHITECTURE.md](./supabase/DATA_FLOW_ARCHITECTURE.md)
+3. Check [hardware/ESP32_IMPROVEMENTS_SUMMARY.md](./hardware/ESP32_IMPROVEMENTS_SUMMARY.md)
 
-#### **[ANALYSIS_REPORT.md](../ANALYSIS_REPORT.md)**
-**Project structure and technical analysis**
-- Codebase overview
-- Component architecture
-- Database schema
-- Future roadmap
+### **Setting up a new machine?**
+1. [supabase/CIRRUS_SETUP_GUIDE.md](./supabase/CIRRUS_SETUP_GUIDE.md) - Database setup
+2. [hardware/ESP32_VERIFICATION.md](./hardware/ESP32_VERIFICATION.md) - Firmware verification
+3. [frontend/MACHINE_SUBCATEGORY_SETUP.md](./frontend/MACHINE_SUBCATEGORY_SETUP.md) - UI setup
 
----
-
-### **📊 Progress Tracking**
-
-#### **[progress/](progress/)**
-**Daily/weekly progress updates**
-- Session summaries
-- Code changes
-- Issues resolved
-- Next steps
-- **Latest:** `progress/2025-11-05-progress.md`
+### **Troubleshooting?**
+1. [general/TROUBLESHOOTING_NEW_CODE.md](./general/TROUBLESHOOTING_NEW_CODE.md)
+2. [hardware/TEMPERATURE_INTERFERENCE_TROUBLESHOOTING.md](./hardware/TEMPERATURE_INTERFERENCE_TROUBLESHOOTING.md)
+3. [supabase/MIGRATION_CHECKLIST.md](./supabase/MIGRATION_CHECKLIST.md)
 
 ---
 
-## 🎯 **Quick Access Guide**
+## 📖 Documentation by Category
 
-### **I need to...**
+### **Hardware**
+- [ESP32 Files Comparison](./hardware/ESP32_FILES_COMPARISON.md)
+- [ESP32 Verification](./hardware/ESP32_VERIFICATION.md)
+- [ESP32 Improvements Summary](./hardware/ESP32_IMPROVEMENTS_SUMMARY.md)
+- [Temperature Interference Troubleshooting](./hardware/TEMPERATURE_INTERFERENCE_TROUBLESHOOTING.md)
+- [Hardware Interference Fixes](./hardware/HARDWARE_INTERFERENCE_FIXES.md)
+- [Temperature Bugs Checklist](./hardware/TEMPERATURE_BUGS_CHECKLIST.md)
+- [Temperature Fix Summary](./hardware/TEMPERATURE_FIX_SUMMARY.md)
 
-| Task | Document to Use |
-|------|----------------|
-| **Find a password** | SYSTEM_ACCESS_AND_BACKUP.md |
-| **Backup the website** | BACKUP_SCHEDULE.md |
-| **Update the site** | QUICK_REFERENCE_CARD.md |
-| **Deploy from scratch** | DEPLOYMENT_GUIDE.md |
-| **Recover from disaster** | SYSTEM_ACCESS_AND_BACKUP.md → Disaster Recovery |
-| **Connect ESP32** | ESP32_INTEGRATION_GUIDE.md |
-| **Understand the code** | ANALYSIS_REPORT.md |
-| **See what changed** | progress/ folder |
+### **Supabase**
+- [CIRRUS Setup Guide](./supabase/CIRRUS_SETUP_GUIDE.md)
+- [Data Flow Architecture](./supabase/DATA_FLOW_ARCHITECTURE.md)
+- [Raw Data Migration Guide](./supabase/RAW_DATA_MIGRATION_GUIDE.md)
+- [Migration Checklist](./supabase/MIGRATION_CHECKLIST.md)
+- [Quick Start Raw Data](./supabase/QUICK_START_RAW_DATA.md)
+- [CIRRUS Data Processing](./supabase/CIRRUS_DATA_PROCESSING.md)
+- [CIRRUS Setup Summary](./supabase/CIRRUS_SETUP_SUMMARY.md)
 
----
+### **Frontend**
+- [Historical Data Setup](./frontend/HISTORICAL_DATA_SETUP.md)
+- [Machine Subcategory Setup](./frontend/MACHINE_SUBCATEGORY_SETUP.md)
+- [Adding New Subcategories](./frontend/ADDING_NEW_SUBCATEGORIES.md)
 
-## ⚠️ **IMPORTANT SECURITY NOTES**
-
-### **DO NOT commit these with real data:**
-- ❌ **SYSTEM_ACCESS_AND_BACKUP.md** (after filling in passwords)
-- ❌ **QUICK_REFERENCE_CARD.md** (after filling in credentials)
-- ❌ **`.env` file** (already in .gitignore)
-
-### **Safe to commit:**
-- ✅ **BACKUP_SCHEDULE.md** (no sensitive data)
-- ✅ **DEPLOYMENT_GUIDE.md** (public info)
-- ✅ **DEPLOY_NOW.md** (public info)
-- ✅ **ANALYSIS_REPORT.md** (public info)
-- ✅ **progress/** folder (no passwords)
-
-### **How to keep credentials safe:**
-1. Fill in passwords in the security docs
-2. Save copies to:
-   - 🔐 Password manager (encrypted)
-   - 💾 USB drive (keep in safe place)
-   - 💻 `C:\Backups\IOTNexus\` (local only)
-3. **DO NOT** push to GitHub with real credentials
-4. Add these files to `.gitignore` if filled in:
-   ```
-   docs/SYSTEM_ACCESS_AND_BACKUP.md
-   docs/QUICK_REFERENCE_CARD.md
-   ```
+### **General**
+- [Complete Setup Guide](./general/COMPLETE_SETUP_GUIDE.md)
+- [Final Setup Summary](./general/FINAL_SETUP_SUMMARY.md)
+- [Quick Reference Card](./general/QUICK_REFERENCE_CARD.md)
+- [System Access and Backup](./general/SYSTEM_ACCESS_AND_BACKUP.md)
+- [Backup Schedule](./general/BACKUP_SCHEDULE.md)
+- [Troubleshooting New Code](./general/TROUBLESHOOTING_NEW_CODE.md)
 
 ---
 
-## 📋 **First-Time Setup Checklist**
+## 🔍 Finding Documentation
 
-If you're setting up documentation for the first time:
+### **By Topic:**
 
-### **Step 1: Fill in Credentials** (30 mins)
-- [ ] Open `SYSTEM_ACCESS_AND_BACKUP.md`
-- [ ] Fill in all username/password fields
-- [ ] Save to password manager
-- [ ] Create backup copy on USB drive
-- [ ] Add to `.gitignore` if using Git
+**ESP32/Firmware:**
+- See [hardware/](./hardware/) folder
 
-### **Step 2: Set Up Backup System** (20 mins)
-- [ ] Create folder: `C:\Backups\IOTNexus\`
-- [ ] Create subfolders: Website, Database, SourceCode, Documentation
-- [ ] Read `BACKUP_SCHEDULE.md`
-- [ ] Set calendar reminders (weekly, monthly, quarterly)
-- [ ] Do first test backup
+**Database/Migrations:**
+- See [supabase/](./supabase/) folder
 
-### **Step 3: Print Reference Materials** (10 mins)
-- [ ] Print `QUICK_REFERENCE_CARD.md`
-- [ ] Print weekly/monthly checklists from `BACKUP_SCHEDULE.md`
-- [ ] Store printed copies in safe location
+**Website/UI:**
+- See [frontend/](./frontend/) folder
 
-### **Step 4: Test Recovery** (30 mins)
-- [ ] Read disaster recovery section
-- [ ] Test one backup restoration
-- [ ] Verify you can access all accounts
-- [ ] Confirm you have all needed credentials
+**Setup/Configuration:**
+- See [general/](./general/) folder
 
-**Total Setup Time:** ~90 minutes
-**Result:** Fully documented and protected system!
+**Machine Parameters:**
+- See [machine_parameters/](./machine_parameters/) folder
 
 ---
 
-## 🔄 **Keeping Documentation Updated**
+## 📝 Contributing
 
-### **Update When:**
-- ✏️ Passwords change → Update security docs
-- 🚀 Major deployment → Add progress report
-- 🔧 New features → Update analysis report
-- 📱 ESP32 changes → Update integration guide
-- 💾 Backup procedures change → Update backup schedule
-
-### **Review Schedule:**
-- **Monthly:** Check credentials are still current
-- **Quarterly:** Review and update all docs
-- **After major changes:** Update relevant documentation
+When adding new documentation:
+1. Place files in the appropriate category folder
+2. Update this README with a link to the new file
+3. Follow the existing naming conventions
 
 ---
 
-## 📞 **Support Resources**
+## 🗺️ Roadmap
 
-### **If Documentation is Unclear:**
-1. 🔍 Check all related documents
-2. 📚 Review progress reports for context
-3. 🌐 Check official documentation:
-   - React: https://react.dev
-   - Supabase: https://supabase.com/docs
-   - Vite: https://vitejs.dev
-
-### **If Something Goes Wrong:**
-1. 🆘 Check disaster recovery procedures
-2. 💾 Use latest backups
-3. 📝 Document the issue and solution
-4. 🔄 Update docs to prevent future issues
+See [UPDATE_ROAD/ROADMAP](./UPDATE_ROAD/ROADMAP) for project roadmap and future plans.
 
 ---
 
-## 📊 **Documentation Statistics**
+## 📞 Need Help?
 
-**Created:** November 5, 2025  
-**Last Updated:** November 5, 2025  
-**Total Documents:** 7+  
-**Status:** ✅ Complete and Ready to Use
-
----
-
-## ✅ **Documentation Checklist**
-
-### **Essential Documents** (Must Have)
-- [x] SYSTEM_ACCESS_AND_BACKUP.md
-- [x] QUICK_REFERENCE_CARD.md
-- [x] BACKUP_SCHEDULE.md
-- [x] DEPLOYMENT_GUIDE.md
-- [x] DEPLOY_NOW.md
-- [x] This README.md
-
-### **Recommended Documents** (Should Have)
-- [x] ANALYSIS_REPORT.md
-- [x] Progress reports (in progress/)
-- [ ] ESP32_INTEGRATION_GUIDE.md (create when needed)
-- [ ] API_DOCUMENTATION.md (create when needed)
-- [ ] USER_MANUAL.md (create when needed)
-
-### **Optional Documents** (Nice to Have)
-- [ ] TROUBLESHOOTING.md
-- [ ] FAQ.md
-- [ ] DEVELOPMENT_SETUP.md
-- [ ] CONTRIBUTING.md (if open source)
-
----
-
-## 🎓 **Document Templates**
-
-When creating new documentation, follow this structure:
-
-```markdown
-# Document Title
-
-**Purpose:** Brief description
-**Last Updated:** YYYY-MM-DD
-**Status:** Draft/Complete/In Review
-
----
-
-## Section 1
-Content...
-
-## Section 2
-Content...
-
----
-
-**Last Updated:** YYYY-MM-DD
-**Next Review:** YYYY-MM-DD
-**Document Version:** X.Y
-```
-
----
-
-## 🔐 **Security Best Practices**
-
-### **What to Document:**
-- ✅ Procedures and processes
-- ✅ System architecture
-- ✅ Recovery steps
-- ✅ Placeholders for credentials
-
-### **What NOT to Document:**
-- ❌ Actual passwords
-- ❌ API keys (except placeholders)
-- ❌ Private keys
-- ❌ Security vulnerabilities
-
-### **Where to Store Secrets:**
-- 🔐 Password managers (LastPass, 1Password, Bitwarden)
-- 💾 Encrypted USB drives
-- 🔒 Secure local files (not in Git)
-
----
-
-**Welcome to the IOT Nexus documentation! Keep it updated, keep it secure, keep it accessible.**
-
-**Questions?** Check the documentation, then update it with the answer! 📝
-
----
-
-**Maintained by:** Josiah Pettit  
-**Contact:** (Add your email/contact info here if needed)  
-**License:** (Add project license here if applicable)
-
-
+1. Check the troubleshooting guides in [general/](./general/)
+2. Review the relevant category folder
+3. Check the quick reference card: [general/QUICK_REFERENCE_CARD.md](./general/QUICK_REFERENCE_CARD.md)

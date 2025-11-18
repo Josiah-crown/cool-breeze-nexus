@@ -14,12 +14,13 @@ interface UserHierarchyViewProps {
   onDeleteMachine?: (machineId: string) => void;
   onChangeOwner?: (machineId: string) => void;
   onRename?: (machineId: string) => void;
+  onChangeManufacturer?: (machineId: string) => void;
   onDeleteUser?: (userId: string) => void;
   onReassignClient?: (userId: string) => void;
   onNotificationChange?: () => void;
 }
 
-const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onDeleteUser, onReassignClient, onNotificationChange }) => {
+const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onChangeManufacturer, onDeleteUser, onReassignClient, onNotificationChange }) => {
   console.log('👥 UserHierarchyView: Total users:', users.length);
   console.log('🏭 UserHierarchyView: Total machines:', machines.length);
   console.log('👥 UserHierarchyView: User roles:', users.map(u => ({ name: u.name, role: u.role })));
@@ -199,6 +200,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                             onDelete={onDeleteMachine}
                             onChangeOwner={onChangeOwner}
                             onRename={onRename}
+                            onChangeManufacturer={onChangeManufacturer}
                             showManagement={true}
                             onNotificationChange={onNotificationChange}
                           />
@@ -615,6 +617,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                             onDelete={onDeleteMachine}
                             onChangeOwner={onChangeOwner}
                             onRename={onRename}
+                            onChangeManufacturer={onChangeManufacturer}
                             showManagement={true}
                             onNotificationChange={onNotificationChange}
                           />

@@ -3,9 +3,11 @@ import { StatusLight } from './StatusLight';
 
 interface StatusData {
   isOn: boolean;
+  isConnected: boolean;
   hasWater: boolean;
   isCooling: boolean;
   motorTemp: number;
+  motorStatus: 'normal' | 'warning' | 'critical';
   deltaT: number;
   outsideTemp: number;
   insideTemp: number;
@@ -20,8 +22,9 @@ interface StatusPanelProps {
 
 const StatusPanel: React.FC<StatusPanelProps> = ({ data }) => {
   const getMotorStatus = () => {
-    if (data.motorTemp > 80) return 'error';
-    if (data.motorTemp > 60) return 'warning';
+    // Use motor_status from database (calculated from thresholds)
+    // Red for both 'warning' and 'critical' (as per requirements)
+    if (data.motorStatus === 'critical' || data.motorStatus === 'warning') return 'error';
     return 'active';
   };
 
@@ -42,8 +45,8 @@ const StatusPanel: React.FC<StatusPanelProps> = ({ data }) => {
         
         <div className="grid grid-cols-2 gap-4">
           <StatusLight 
-            status={data.isOn ? 'active' : 'inactive'} 
-            label="Power" 
+            status={data.isConnected ? 'active' : 'inactive'} 
+            label="Connected" 
           />
           <StatusLight 
             status={data.hasWater ? 'active' : 'error'} 

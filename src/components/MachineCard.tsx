@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { MoreVertical, Trash2, UserCog, Edit } from 'lucide-react';
+import { MoreVertical, Trash2, UserCog, Edit, Settings } from 'lucide-react';
 import { MachineStatus } from '@/types/machine';
 import { StatusLight } from './StatusLight';
 import { FanComponent } from './FanComponent';
@@ -21,6 +21,7 @@ interface MachineCardProps {
   onDelete?: (machineId: string) => void;
   onChangeOwner?: (machineId: string) => void;
   onRename?: (machineId: string) => void;
+  onChangeManufacturer?: (machineId: string) => void;
   showManagement?: boolean;
   onNotificationChange?: () => void;
 }
@@ -32,11 +33,32 @@ const MachineCard: React.FC<MachineCardProps> = ({
   onDelete,
   onChangeOwner,
   onRename,
+  onChangeManufacturer,
   showManagement = false,
   onNotificationChange
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { user } = useAuth();
+
+  // Debug: Log props when component renders
+  useEffect(() => {
+    if (showManagement) {
+      console.log('MachineCard DEBUG:', {
+        machineId: machine.id,
+        machineName: machine.name,
+        hasOnChangeManufacturer: !!onChangeManufacturer,
+        onChangeManufacturerType: typeof onChangeManufacturer,
+        onChangeManufacturerValue: onChangeManufacturer,
+        showManagement,
+        allProps: {
+          hasOnRename: !!onRename,
+          hasOnChangeOwner: !!onChangeOwner,
+          hasOnDelete: !!onDelete,
+          hasOnChangeManufacturer: !!onChangeManufacturer
+        }
+      });
+    }
+  }, [machine.id, onChangeManufacturer, showManagement, onRename, onChangeOwner, onDelete]);
 
   const getMachineComponent = () => {
     const size = 'w-32 h-32';
@@ -98,6 +120,22 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   }}>
                     <UserCog className="mr-2 h-4 w-4" />
                     Change Owner
+                  </DropdownMenuItem>
+                )}
+                {showManagement && (
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onChangeManufacturer) {
+                        onChangeManufacturer(machine.id);
+                      } else {
+                        console.warn('onChangeManufacturer prop not provided to MachineCard');
+                        toast.error('Change Manufacturer feature not available');
+                      }
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Change Manufacturer
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
@@ -188,6 +226,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
               </Tooltip>
             </TooltipProvider>
           </div>
+
           </>
         )}
 
@@ -202,8 +241,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
             {machine.type === 'evaporative' && (
               <>
                 <StatusLight
-                  status={machine.isOn ? 'active' : 'inactive'}
-                  label="Power"
+                  status={machine.isConnected ? 'active' : 'inactive'}
+                  label="Connected"
                   size="sm"
                 />
                 <StatusLight
@@ -227,8 +266,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
             {machine.type === 'airconditioner' && (
               <>
                 <StatusLight
-                  status={machine.isOn ? 'active' : 'inactive'}
-                  label="Power"
+                  status={machine.isConnected ? 'active' : 'inactive'}
+                  label="Connected"
                   size="sm"
                 />
                 <StatusLight
@@ -247,8 +286,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
             {machine.type === 'heatpump' && (
               <>
                 <StatusLight
-                  status={machine.isOn ? 'active' : 'inactive'}
-                  label="Power"
+                  status={machine.isConnected ? 'active' : 'inactive'}
+                  label="Connected"
                   size="sm"
                 />
                 <StatusLight
@@ -275,12 +314,12 @@ const MachineCard: React.FC<MachineCardProps> = ({
         {/* Machine Info Section - Consistent spacing and alignment */}
         <div className="flex flex-col items-center px-3 justify-between flex-1 py-2">
           {/* Top Section: Name and metadata */}
-          <div className="flex flex-col items-center gap-0.5 w-full">
-            <h3 className="text-base font-semibold text-center text-foreground leading-tight mb-0.5">
+          <div className="flex flex-col items-center gap-1 w-full">
+            <h3 className="text-base font-semibold text-center text-foreground leading-tight">
               {machine.name}
             </h3>
             {!machine.apiKey && (
-              <span className="text-[10px] font-medium px-2 py-0.5 bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 rounded-full mb-1">
+              <span className="text-[10px] font-medium px-2 py-0.5 bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 rounded-full">
                 No API Key
               </span>
             )}
@@ -296,6 +335,13 @@ const MachineCard: React.FC<MachineCardProps> = ({
             {ownerName && (
               <p className="text-xs text-muted-foreground text-center">
                 Owner: {ownerName}
+              </p>
+            )}
+            
+            {/* Manufacturer */}
+            {machine.manufacturer && (
+              <p className="text-[13px] text-muted-foreground text-center leading-none">
+                {machine.manufacturer}
               </p>
             )}
           </div>

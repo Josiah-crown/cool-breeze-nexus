@@ -1,0 +1,35 @@
+{
+  "machine_type": "evaporative",
+  "manufacturer": "Cirrus",
+  "description": "Default parameters for Cirrus evaporative coolers",
+  
+  "voltage_config": {
+    "voltage_input_1_function": "fan",
+    "voltage_input_2_function": "pump",
+    "voltage_input_3_function": "drain",
+    "voltage_input_4_function": "exhaust",
+    "voltage_active_threshold": 6.0
+  },
+  
+  "alert_thresholds": {
+    "motor_temp_warning": 60.0,
+    "motor_temp_critical": 70.0,
+    "motor_amps_warning": 15.0,
+    "delta_t_min_cooling": 2.0,
+    "duration_motor_temp_critical": 15,
+    "duration_cooling_ineffective": 30,
+    "duration_fan_failure": 10,
+    "duration_motor_overcurrent": 5,
+    "duration_low_water": 15,
+    "duration_dump_valve": 30,
+    "duration_pump_failure": 30
+  },
+  
+  "operational_parameters": {
+    "connection_timeout_minutes": 10,
+    "data_retention_days": 365,
+    "update_interval_seconds": 120
+  }
+}
+
+

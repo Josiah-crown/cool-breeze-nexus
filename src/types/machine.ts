@@ -4,6 +4,7 @@ export interface MachineStatus {
   id: string;
   name: string;
   type: MachineType;
+  manufacturer?: string | null;
   ownerId: string;
   location?: string;
   isOn: boolean;

@@ -8,6 +8,7 @@ import { AddUserDialog } from '@/components/AddUserDialog';
 import { AddMachineDialog } from '@/components/AddMachineDialog';
 import { ChangeOwnerDialog } from '@/components/ChangeOwnerDialog';
 import { RenameMachineDialog } from '@/components/RenameMachineDialog';
+import { ChangeManufacturerDialog } from '@/components/ChangeManufacturerDialog';
 import { ReassignClientDialog } from '@/components/ReassignClientDialog';
 import { DeleteUserDialog } from '@/components/DeleteUserDialog';
 import { DeleteOwnAccountDialog } from '@/components/DeleteOwnAccountDialog';
@@ -30,6 +31,7 @@ const Dashboard: React.FC = () => {
   const [showAddMachineDialog, setShowAddMachineDialog] = useState(false);
   const [changeOwnerMachineId, setChangeOwnerMachineId] = useState<string | null>(null);
   const [renameMachineId, setRenameMachineId] = useState<string | null>(null);
+  const [changeManufacturerMachineId, setChangeManufacturerMachineId] = useState<string | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [showDeleteOwnAccount, setShowDeleteOwnAccount] = useState(false);
   const [reassignClientId, setReassignClientId] = useState<string | null>(null);
@@ -62,6 +64,11 @@ const Dashboard: React.FC = () => {
     setRenameMachineId(machineId);
   };
 
+  const handleChangeManufacturer = (machineId: string) => {
+    console.log('handleChangeManufacturer called with machineId:', machineId);
+    setChangeManufacturerMachineId(machineId);
+  };
+
   const handleDeleteUser = (userId: string) => {
     setDeleteUserId(userId);
   };
@@ -72,6 +79,7 @@ const Dashboard: React.FC = () => {
 
   const selectedMachineForOwnerChange = machines.find(m => m.id === changeOwnerMachineId);
   const selectedMachineForRename = machines.find(m => m.id === renameMachineId);
+  const selectedMachineForManufacturerChange = machines.find(m => m.id === changeManufacturerMachineId);
   const selectedUserForDeletion = users.find(u => u.id === deleteUserId);
   const selectedUserForReassignment = users.find(u => u.id === reassignClientId);
 
@@ -261,6 +269,7 @@ const Dashboard: React.FC = () => {
                             onDelete={handleDeleteMachine}
                             onChangeOwner={handleChangeOwner}
                             onRename={handleRename}
+                            onChangeManufacturer={handleChangeManufacturer}
                             showManagement={true}
                             onNotificationChange={refetch}
                           />
@@ -278,6 +287,7 @@ const Dashboard: React.FC = () => {
                   onDeleteMachine={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
                   onRename={handleRename}
+                  onChangeManufacturer={handleChangeManufacturer}
                   onDeleteUser={handleDeleteUser}
                   onReassignClient={handleReassignClient}
                   onNotificationChange={refetch}
@@ -297,6 +307,7 @@ const Dashboard: React.FC = () => {
                         onDelete={handleDeleteMachine}
                         onChangeOwner={handleChangeOwner}
                         onRename={handleRename}
+                        onChangeManufacturer={handleChangeManufacturer}
                         showManagement={true}
                         onNotificationChange={refetch}
                       />
@@ -420,6 +431,7 @@ const Dashboard: React.FC = () => {
                           onDelete={handleDeleteMachine}
                           onChangeOwner={handleChangeOwner}
                           onRename={handleRename}
+                          onChangeManufacturer={handleChangeManufacturer}
                           showManagement={true}
                         />
                       ))}
@@ -443,6 +455,7 @@ const Dashboard: React.FC = () => {
                   onDeleteMachine={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
                   onRename={handleRename}
+                  onChangeManufacturer={handleChangeManufacturer}
                   onDeleteUser={handleDeleteUser}
                   onReassignClient={handleReassignClient}
                   onNotificationChange={refetch}
@@ -566,6 +579,7 @@ const Dashboard: React.FC = () => {
                           onDelete={handleDeleteMachine}
                           onChangeOwner={handleChangeOwner}
                           onRename={handleRename}
+                          onChangeManufacturer={handleChangeManufacturer}
                           showManagement={true}
                         />
                       ))}
@@ -581,6 +595,7 @@ const Dashboard: React.FC = () => {
                   onDeleteMachine={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
                   onRename={handleRename}
+                  onChangeManufacturer={handleChangeManufacturer}
                   onDeleteUser={handleDeleteUser}
                   onReassignClient={handleReassignClient}
                   onNotificationChange={refetch}
@@ -679,7 +694,9 @@ const Dashboard: React.FC = () => {
                   onClick={() => setSelectedMachine(machine)}
                   onDelete={handleDeleteMachine}
                   onChangeOwner={handleChangeOwner}
-                  showManagement={false}
+                  onRename={handleRename}
+                  onChangeManufacturer={handleChangeManufacturer}
+                  showManagement={true}
                 />
               ))}
             </div>
@@ -737,6 +754,19 @@ const Dashboard: React.FC = () => {
           onOwnerChanged={handleRefresh}
           currentUserRole={user.role === 'company' || user.role === 'installer' ? 'admin' : user.role}
           currentUserId={user.id}
+        />
+      )}
+
+      {/* Change Manufacturer Dialog */}
+      {changeManufacturerMachineId && selectedMachineForManufacturerChange && (
+        <ChangeManufacturerDialog
+          open={!!changeManufacturerMachineId}
+          onOpenChange={(open) => !open && setChangeManufacturerMachineId(null)}
+          machineId={changeManufacturerMachineId}
+          machineName={selectedMachineForManufacturerChange.name}
+          machineType={selectedMachineForManufacturerChange.type}
+          currentManufacturer={selectedMachineForManufacturerChange.manufacturer || null}
+          onSuccess={handleRefresh}
         />
       )}
 
