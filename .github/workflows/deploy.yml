@@ -19,7 +19,7 @@ jobs:
       - run: npm run build
 
       - name: Upload dist/ to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@v4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ftp.iotnexus.site
           username: ${{ secrets.CPANEL_USER }}
