@@ -194,10 +194,61 @@ We tried multiple approaches before finding the root cause:
 
 ## 🎯 Next Steps
 
-1. ✅ Upload new website online
-2. ✅ Create daily log (this file)
-3. ⏳ Move completed files from TODAY folder to proper locations
-4. ⏳ Create DATA_MANAGEMENT.md with organization system
+1. ✅ Create daily log (this file)
+2. ✅ Move completed files from TODAY folder to proper locations
+3. ✅ Create DATA_MANAGEMENT.md with organization system
+4. ⏳ **Fix GitHub Actions deployment** - FTP authentication failing
+5. ⏳ **Manually upload website** - Use cPanel File Manager as temporary solution
+6. ⏳ **Verify website works** - Test historical data and manufacturer features on live site
+
+---
+
+## 🚀 Deployment Attempts
+
+### GitHub Actions Deployment
+**Status:** ⏳ **IN PROGRESS** - FTP authentication issues
+
+**Attempts Made:**
+1. ✅ Fixed workflow file indentation
+2. ✅ Fixed FTP action version (`v4` → `v4.3.4`)
+3. ✅ Fixed `local-dir` path (added trailing slash: `dist/`)
+4. ✅ Fixed `server-dir` path (added trailing slash: `/public_html/`)
+5. ❌ **FTP Authentication Failed** - `530 Login authentication failed`
+
+**Current Issue:**
+- GitHub Secrets (`CPANEL_USER`, `CPANEL_PASS`) may be incorrect
+- Or server only supports SFTP instead of FTPS
+- Need to verify credentials or switch to SFTP
+
+**Temporary Solution:**
+- Manual upload via cPanel File Manager (see below)
+
+### Manual Upload Process
+**For immediate deployment:**
+
+1. **Build locally:**
+   ```bash
+   npm run build
+   ```
+
+2. **Login to cPanel:**
+   - Go to your cPanel dashboard
+   - Navigate to **File Manager**
+
+3. **Upload files:**
+   - Go to `/public_html` directory
+   - Delete old files (or backup first)
+   - Upload ALL contents from `dist/` folder
+   - Make sure `index.html` is in the root of `/public_html`
+
+4. **Set permissions:**
+   - Files: 644
+   - Folders: 755
+
+5. **Test website:**
+   - Visit `https://iotnexus.site`
+   - Hard refresh: Ctrl+Shift+R
+   - Test new features
 
 ---
 
@@ -205,14 +256,73 @@ We tried multiple approaches before finding the root cause:
 
 - **SQL Files Created:** 25+
 - **Diagnostic Queries:** 5
-- **Documentation Files:** 4
+- **Documentation Files:** 6
 - **Issues Resolved:** 5
+- **Deployment Attempts:** 4
 - **Time to Resolution:** Full day debugging session
 - **Root Cause:** Missing table-level GRANT permissions
 
 ---
 
-## 💡 Key Takeaway
+## ⏳ Remaining Tasks
 
-**Always check table-level permissions (GRANTs) before debugging RLS policies.** In Supabase, both are required for proper access control. The `authenticated` role needs explicit `GRANT SELECT` permission on tables, even when RLS is enabled.
+### High Priority
+1. **Fix GitHub Actions Deployment**
+   - Verify GitHub Secrets (`CPANEL_USER`, `CPANEL_PASS`)
+   - Test FTP connection manually with FileZilla
+   - Determine if server supports FTPS or SFTP
+   - Update workflow file if SFTP is needed
+   - Or update credentials in GitHub Secrets
+
+2. **Verify Live Website**
+   - Test historical data display
+   - Test manufacturer features
+   - Verify all new functionality works on production
+
+### Medium Priority
+3. **Update Supabase Authentication URLs**
+   - Add production URL to Supabase dashboard
+   - Update Site URL: `https://iotnexus.site`
+   - Update Redirect URLs: `https://iotnexus.site/**`
+
+4. **Environment Variables on Server**
+   - Verify `VITE_SUPABASE_URL` is set
+   - Verify `VITE_SUPABASE_PUBLISHABLE_KEY` is set
+   - Check if they're in the build or need to be set on server
+
+### Low Priority
+5. **Documentation Updates**
+   - Update deployment guide with manual upload process
+   - Document GitHub Actions troubleshooting
+   - Create quick reference for manual deployments
+
+6. **Build Optimization (Performance)**
+   - **Issue:** Build shows warnings about chunk size (1,050.76 kB JS file)
+   - **Warning:** "Some chunks are larger than 500 kB after minification"
+   - **Impact:** Slower initial page load, especially on mobile/slow connections
+   - **Solutions to consider:**
+     - Use dynamic `import()` for code-splitting
+     - Configure `build.rollupOptions.output.manualChunks` for better chunking
+     - Split large components into separate chunks
+     - Lazy load routes/components that aren't immediately needed
+   - **Priority:** Low - site works, but optimization would improve performance
+   - **Note:** Build completed successfully, these are optimization suggestions only
+
+---
+
+## 💡 Key Takeaways
+
+1. **Always check table-level permissions (GRANTs) before debugging RLS policies.** In Supabase, both are required for proper access control. The `authenticated` role needs explicit `GRANT SELECT` permission on tables, even when RLS is enabled.
+
+2. **GitHub Actions workflow files are sensitive to:**
+   - Action version numbers (must be specific, not just `v4`)
+   - Path formatting (must end with `/` for folders)
+   - YAML indentation (must be exact)
+
+3. **FTP deployment requires:**
+   - Correct credentials in GitHub Secrets
+   - Correct protocol (FTPS vs SFTP)
+   - Correct path formatting (trailing slashes)
+
+4. **Manual deployment is always a backup option** when automated deployment fails.
 

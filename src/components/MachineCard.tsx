@@ -88,8 +88,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
     <>
       <Card
         className={cn(
-          "relative p-4 cursor-pointer hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm border",
-          machine.overallStatus === 'error' ? 'border-destructive' : 'border-border'
+          "relative p-4 cursor-pointer hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm border-2",
+          machine.overallStatus === 'error' ? 'border-destructive' : 'border-[#8FB83D]'
         )}
         onClick={onClick}
       >
@@ -163,7 +163,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                     className={cn(
                       "flex items-center gap-2 bg-card/95 backdrop-blur-sm border-2 rounded-lg px-3 py-2 shadow-lg transition-all duration-200 cursor-pointer",
                       machine.notificationsEnabled 
-                        ? "border-green-500/50 hover:border-green-500" 
+                        ? "border-[#8FB83D]/50 hover:border-[#8FB83D]" 
                         : "border-red-500/50 hover:border-red-500"
                     )}
                     onClick={async (e) => {
@@ -202,7 +202,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   >
                     {/* Bell Icon */}
                     {machine.notificationsEnabled ? (
-                      <svg className="w-4 h-4 text-green-600 pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-[#8FB83D] pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
                       </svg>
                     ) : (
@@ -302,7 +302,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 />
                 <div className="text-center p-1.5 bg-panel-bg rounded-md">
                   <div className="text-xs text-muted-foreground">Setpoint</div>
-                  <div className="text-sm font-semibold text-accent">
+                  <div className="text-sm font-semibold" style={{ color: '#8FB83D' }}>
                     {machine.temperatureSetpoint?.toFixed(0) || 55}°C
                   </div>
                 </div>
@@ -348,7 +348,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
 
           {/* Bottom Section: Delta T */}
           <div className="text-center mt-2">
-            <div className="text-2xl font-bold text-accent leading-tight">
+            <div className="text-2xl font-bold leading-tight" style={{ color: '#8FB83D' }}>
               {Math.abs(machine.deltaT).toFixed(1)}°C
             </div>
             <div className="text-xs text-muted-foreground">Delta T</div>
@@ -360,7 +360,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-card border-2 border-border">
           <AlertDialogHeader className="border-b border-border pb-4">
-            <AlertDialogTitle className="text-2xl font-bold text-primary">Delete Machine?</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-bold" style={{ color: '#8FB83D' }}>Delete Machine?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
               Are you sure you want to delete "{machine.name}"? This action cannot be undone.
             </AlertDialogDescription>

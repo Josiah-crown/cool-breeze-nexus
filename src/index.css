@@ -136,7 +136,12 @@
            text-foreground border border-[hsl(var(--border))]
            px-4 py-2 font-medium text-sm
            transition-all duration-300 hover:shadow-md hover:scale-105
-           hover:border-primary hover:text-primary backdrop-blur-sm;
+           backdrop-blur-sm;
+  }
+  
+  .btn-nav:hover {
+    border-color: #8FB83D;
+    color: #8FB83D;
   }
   
   /* Status Indicators */

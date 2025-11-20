@@ -38,7 +38,7 @@ const NavigationHeader: React.FC<NavigationHeaderProps> = ({ onHome, onBack }) =
           {/* Logo Area */}
           <div className="mb-6">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-primary to-primary-glow hud-button shadow-xl mb-4 border-2 border-primary/40">
-              <span className="text-3xl">🌀</span>
+              <img src="/3.png" alt="IOTnexus Logo" className="w-20 h-20 object-contain" />
             </div>
           </div>
           

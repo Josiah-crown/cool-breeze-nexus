@@ -176,9 +176,12 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     </div>
                   )}
                   
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                  <AccordionTrigger 
+                    className="px-6 py-4 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                    style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                  >
                     <div className="flex items-center gap-3 flex-1 pr-12">
-                      <User className="h-5 w-5 text-primary group-data-[state=open]:text-black" />
+                      <User className="h-5 w-5 text-[#8FB83D] group-data-[state=open]:text-black" />
                       <div className="text-left flex-1">
                         <h3 className="text-lg font-semibold text-foreground group-data-[state=open]:text-black">{client.name}</h3>
                         <p className="text-sm text-muted-foreground group-data-[state=open]:text-black/70">
@@ -307,9 +310,12 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     </div>
                   )}
                   
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                  <AccordionTrigger 
+                    className="px-6 py-4 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                    style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                  >
                     <div className="flex items-center gap-3 flex-1 pr-12">
-                      <User className="h-5 w-5 text-primary group-data-[state=open]:text-black" />
+                      <User className="h-5 w-5 text-[#8FB83D] group-data-[state=open]:text-black" />
                       <div className="text-left flex-1">
                         <h3 className="text-lg font-semibold text-foreground group-data-[state=open]:text-black">{installer.name}</h3>
                         <p className="text-sm text-muted-foreground group-data-[state=open]:text-black/70">
@@ -328,9 +334,12 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                             value={`${installer.id}-machines`}
                             className="border border-border rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg mx-[3px] group"
                           >
-                            <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                            <AccordionTrigger 
+                              className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                              style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                            >
                               <div className="flex items-center gap-2 pr-12">
-                                <User className="h-4 w-4 transition-colors text-primary group-data-[state=open]:text-black" />
+                                <User className="h-4 w-4 transition-colors text-[#8FB83D] group-data-[state=open]:text-black" />
                                 <div className="text-left">
                                   <span className="font-medium text-foreground transition-colors group-data-[state=open]:text-black">Uncategorized</span>
                                   <span className="text-sm text-muted-foreground ml-2 group-data-[state=open]:text-black/70">
@@ -437,7 +446,10 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                     </div>
                                   )}
                                   
-                                  <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                                  <AccordionTrigger 
+                              className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                              style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                            >
                                     <div className="flex items-center gap-2 pr-12">
                                       <User className="h-4 w-4 transition-colors text-muted-foreground group-data-[state=open]:text-black" />
                                       <div className="text-left">
@@ -575,9 +587,12 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                 </DropdownMenu>
               </div>
             )}
-            <AccordionTrigger className="px-6 py-4 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+            <AccordionTrigger 
+              className="px-6 py-4 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+              style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+            >
               <div className="flex items-center gap-3 flex-1 pr-12">
-                <Building2 className="h-5 w-5 text-primary group-data-[state=open]:text-black" />
+                <Building2 className="h-5 w-5 text-[#8FB83D] group-data-[state=open]:text-black" />
                 <div className="text-left flex-1">
                   <h3 className="text-lg font-semibold text-foreground group-data-[state=open]:text-black">{company.name}</h3>
                   <p className="text-sm text-muted-foreground group-data-[state=open]:text-black/70">
@@ -595,9 +610,12 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                     value={`${company.id}-machines`}
                     className="border border-border rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg mx-[3px] group"
                   >
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                                  <AccordionTrigger 
+                              className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                              style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                            >
                       <div className="flex items-center gap-2 pr-12">
-                        <Building2 className="h-4 w-4 transition-colors text-primary group-data-[state=open]:text-black" />
+                        <Building2 className="h-4 w-4 transition-colors text-[#8FB83D] group-data-[state=open]:text-black" />
                         <div className="text-left">
                           <span className="font-medium text-foreground transition-colors group-data-[state=open]:text-black">{company.name}'s Machines</span>
                           <span className="text-sm text-muted-foreground ml-2 group-data-[state=open]:text-black/70">
@@ -711,7 +729,10 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                         </div>
                       )}
                       
-                      <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                                  <AccordionTrigger 
+                              className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                              style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                            >
                         <div className="flex items-center gap-2 flex-1 pr-12">
                           <User className="h-4 w-4 transition-colors text-accent group-data-[state=open]:text-black" />
                           <div className="text-left flex-1">
@@ -732,7 +753,10 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                 value={`${installer.id}-machines`}
                                 className="border border-border rounded-xl bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] shadow-lg mx-[2px] group"
                               >
-                                <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                                <AccordionTrigger 
+                              className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                              style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                            >
                                   <div className="flex items-center gap-2 pr-12">
                                     <User className="h-4 w-4 transition-colors text-muted-foreground group-data-[state=open]:text-black" />
                                     <div className="text-left">
@@ -841,7 +865,10 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                     </div>
                                   )}
                                   
-                                  <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md hover:border-primary hover:text-primary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:[&>svg]:text-black border border-transparent rounded-md">
+                                  <AccordionTrigger 
+                              className="px-4 py-3 hover:no-underline [&>svg]:absolute [&>svg]:left-[75%] [&>svg]:text-foreground transition-all duration-300 hover:shadow-md rounded-md [&[data-state=open]]:bg-[#8FB83D] [&[data-state=open]]:text-white" 
+                              style={{ color: '#8FB83D', borderColor: '#8FB83D' }}
+                            >
                                     <div className="flex items-center gap-2 pr-12">
                                       <User className="h-4 w-4 transition-colors text-muted-foreground group-data-[state=open]:text-black" />
                                       <div className="text-left">

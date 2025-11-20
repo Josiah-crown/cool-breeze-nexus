@@ -2,7 +2,7 @@
 // IOT NEXUS - CREATE ALL 34 DEMO USERS
 // ========================================
 // Node.js script using Supabase Admin SDK
-// This is how Lovable creates users!
+// Creates demo users for testing the platform
 // ========================================
 
 import { createClient } from '@supabase/supabase-js'

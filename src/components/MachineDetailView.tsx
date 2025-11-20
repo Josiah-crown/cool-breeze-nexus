@@ -233,8 +233,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-card border-2 border-accent p-3 rounded-lg shadow-lg">
-          <p className="text-accent font-semibold mb-2">{data.time}</p>
+        <div className="bg-card border-2 border-[#8FB83D] p-3 rounded-lg shadow-lg">
+          <p className="font-semibold mb-2" style={{ color: '#8FB83D' }}>{data.time}</p>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Delta T:</span>
@@ -267,7 +267,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Water:</span>
-                <span className={`font-semibold ${data.waterStatus === 'FULL' ? 'text-green-500' : 'text-muted-foreground'}`}>{data.waterStatus}</span>
+                <span className={`font-semibold ${data.waterStatus === 'FULL' ? 'text-[#8FB83D]' : 'text-muted-foreground'}`}>{data.waterStatus}</span>
               </div>
             </div>
           </div>
@@ -340,15 +340,15 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
         variant="ghost" 
         size="icon"
         onClick={onClose}
-        className="fixed top-4 right-4 z-[60] w-14 h-14 rounded-full bg-white hover:bg-green-50 text-green-500 border-2 border-green-500 shadow-lg hover:scale-110 transition-all"
+        className="fixed top-4 right-4 z-[60] w-14 h-14 rounded-full bg-white hover:bg-[#8FB83D]/10 text-[#8FB83D] border-2 border-[#8FB83D] shadow-lg hover:scale-110 transition-all"
       >
         <X className="h-8 w-8" />
       </Button>
       
-      <Card className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-card border-[3px] border-accent">
-        <CardHeader className="flex flex-row items-center justify-between border-b-[3px] border-accent hud-header">
+      <Card className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-card border-[3px] border-[#8FB83D]">
+        <CardHeader className="flex flex-row items-center justify-between border-b-[3px] border-[#8FB83D] hud-header">
           <div>
-            <CardTitle className="text-2xl text-accent">{machine.name}</CardTitle>
+            <CardTitle className="text-2xl" style={{ color: '#8FB83D' }}>{machine.name}</CardTitle>
               {(machine.location || locationFallback) && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {machine.location || locationFallback}
@@ -362,6 +362,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 setShowLocationDialog(true);
               }}
               className="p-0 h-auto text-xs"
+              style={{ color: '#8FB83D' }}
             >
               Change Location
             </Button>
@@ -383,9 +384,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
             {/* System Status & Current Readings - Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* System Status */}
-              <Card className="bg-card h-full border-[3px] border-accent">
-                <CardHeader className="border-b-[3px] border-accent">
-                  <CardTitle className="text-lg text-accent">System Status</CardTitle>
+              <Card className="bg-card h-full border-[3px] border-[#8FB83D]">
+                <CardHeader className="border-b-[3px] border-[#8FB83D]">
+                  <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>System Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
                   <StatusLight status={machine.isConnected ? 'active' : 'inactive'} label="Connected" />
@@ -422,9 +423,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               </Card>
 
               {/* Current Readings */}
-              <Card className="bg-card h-full border-[3px] border-accent">
-                <CardHeader className="border-b-[3px] border-accent">
-                  <CardTitle className="text-lg text-accent">Current Readings</CardTitle>
+              <Card className="bg-card h-full border-[3px] border-[#8FB83D]">
+                <CardHeader className="border-b-[3px] border-[#8FB83D]">
+                  <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>Current Readings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 pt-4">
                   <div className="flex justify-between">
@@ -441,7 +442,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delta T:</span>
-                    <span className="font-semibold text-accent">{machine.deltaT.toFixed(1)}°C</span>
+                    <span className="font-semibold" style={{ color: '#8FB83D' }}>{machine.deltaT.toFixed(1)}°C</span>
                   </div>
                   
                   {machine.type === 'heatpump' && (
@@ -486,9 +487,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
             </div>
 
             {/* Historical Graph */}
-            <Card className="bg-card border-[3px] border-accent">
-              <CardHeader className="border-b-[3px] border-accent flex flex-row items-center justify-between">
-                <CardTitle className="text-lg text-accent">Historical Data</CardTitle>
+            <Card className="bg-card border-[3px] border-[#8FB83D]">
+              <CardHeader className="border-b-[3px] border-[#8FB83D] flex flex-row items-center justify-between">
+                <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>Historical Data</CardTitle>
                 <div className="flex gap-2">
                   {(['24h', '7d', '30d', '1y'] as Period[]).map(period => (
                     <Button
@@ -499,9 +500,10 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       disabled={loadingHistoricalData}
                       className={`min-w-[60px] border-[3px] ${
                         selectedPeriod === period 
-                          ? 'border-accent bg-accent text-accent-foreground' 
-                          : 'border-accent bg-background text-accent hover:bg-accent/10'
+                          ? 'border-[#8FB83D] bg-[#8FB83D] text-white' 
+                          : 'border-[#8FB83D] bg-background hover:bg-[#8FB83D]/10'
                       }`}
+                      style={{ color: selectedPeriod === period ? 'white' : '#8FB83D' }}
                     >
                       {period}
                     </Button>
@@ -651,15 +653,15 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
       {/* Location Change Confirmation Dialog */}
       <AlertDialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
-        <AlertDialogContent className="bg-card border-[3px] border-accent">
-          <AlertDialogHeader className="border-b-[3px] border-accent pb-4">
-            <AlertDialogTitle className="text-xl text-accent">Change Machine Location</AlertDialogTitle>
+        <AlertDialogContent className="bg-card border-[3px] border-[#8FB83D]">
+          <AlertDialogHeader className="border-b-[3px] border-[#8FB83D] pb-4">
+            <AlertDialogTitle className="text-xl" style={{ color: '#8FB83D' }}>Change Machine Location</AlertDialogTitle>
             <AlertDialogDescription className="text-foreground">
               Are you sure you want to change the location information for this machine?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4 space-y-2">
-            <Label htmlFor="location" className="text-accent font-semibold">New Location</Label>
+            <Label htmlFor="location" className="font-semibold" style={{ color: '#8FB83D' }}>New Location</Label>
             <Input
               id="location"
               value={newLocation}
@@ -668,11 +670,14 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-green-500 focus:bg-accent/20 transition-all text-foreground"
             />
           </div>
-          <AlertDialogFooter className="border-t-[3px] border-accent pt-4">
-            <AlertDialogCancel className="border-[3px] border-accent">Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="border-t-[3px] border-[#8FB83D] pt-4">
+            <AlertDialogCancel className="border-[3px] border-[#8FB83D]">Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleLocationUpdate}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground border-[3px] border-accent"
+              className="text-white border-[3px] border-[#8FB83D]"
+              style={{ backgroundColor: '#8FB83D' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7aa332'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8FB83D'}
             >
               Update Location
             </AlertDialogAction>

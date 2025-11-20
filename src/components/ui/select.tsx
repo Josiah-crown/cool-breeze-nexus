@@ -17,7 +17,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] text-foreground border border-[hsl(var(--border))] px-4 py-2 font-medium text-sm transition-all duration-300 hover:shadow-md hover:scale-105 hover:border-primary hover:text-primary backdrop-blur-sm flex h-10 w-full items-center justify-between placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/40 before:via-white/10 before:to-transparent before:pointer-events-none",
+      "hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] text-foreground border border-[hsl(var(--border))] px-4 py-2 font-medium text-sm transition-all duration-300 hover:shadow-md hover:scale-105 hover:border-[#8FB83D] hover:text-[#8FB83D] backdrop-blur-sm flex h-10 w-full items-center justify-between placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/40 before:via-white/10 before:to-transparent before:pointer-events-none",
       className,
     )}
     {...props}
@@ -105,7 +105,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-primary data-[highlighted]:text-primary data-[highlighted]:shadow-md data-[highlighted]:scale-105",
+      "relative flex w-full cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-[#8FB83D] data-[highlighted]:text-[#8FB83D] data-[highlighted]:shadow-md data-[highlighted]:scale-105",
       className,
     )}
     {...props}

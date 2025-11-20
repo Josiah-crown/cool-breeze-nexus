@@ -22,13 +22,16 @@ const useMachineData = (userId: string, userRole: string) => {
     try {
       setLoading(true);
 
-      const mapMachine = (m: any, notifPrefsMap: Map<string, boolean>): MachineStatus => {
+      const mapMachine = (m: any, notifPrefsMap: Map<string, boolean>, latestTimestamps: Map<string, Date>): MachineStatus => {
         const motorTemp = m.motor_temp ?? 0;
         const outsideTemp = m.outside_temp ?? 0;
         const insideTemp = m.inside_temp ?? 0;
         const current = m.current ?? 0;
         const voltage = m.voltage ?? 0;
         const power = m.power ?? 0;
+
+        // Calculate connection status from latest reading timestamp (15 minute rule)
+        const isConnected = calculateConnectionStatus(m.id, latestTimestamps);
 
         return {
           id: m.id,
@@ -41,7 +44,7 @@ const useMachineData = (userId: string, userRole: string) => {
           hasWater: m.has_water ?? false,
           hasPump: m.has_pump ?? false,
           hasHeat: m.has_heat ?? false,
-          isConnected: m.is_connected ?? false,
+          isConnected, // Calculated from latest reading timestamp
           motorTemp,
           outsideTemp,
           insideTemp,
@@ -94,6 +97,65 @@ const useMachineData = (userId: string, userRole: string) => {
       console.log('🔍 DEBUG: Total machines fetched:', allMachines?.length);
       console.log('🔍 DEBUG: User role:', userRole);
 
+      // Fetch latest reading timestamps for connection status calculation
+      const machineIds = (allMachines || []).map(m => m.id);
+      const latestTimestamps = new Map<string, Date>();
+      
+      if (machineIds.length > 0) {
+        // Check readings_raw table for latest timestamps
+        const { data: latestReadingsRaw } = await supabase
+          .from('readings_raw')
+          .select('machine_id, created_at')
+          .in('machine_id', machineIds)
+          .order('created_at', { ascending: false });
+        
+        // Check cirrus table for latest timestamps
+        const { data: latestCirrus } = await supabase
+          .from('cirrus')
+          .select('machine_id, timestamp')
+          .in('machine_id', machineIds)
+          .order('timestamp', { ascending: false });
+        
+        // Build map of latest timestamps (take most recent from either table)
+        // Group by machine_id and take the most recent timestamp for each
+        const readingsByMachine = new Map<string, Date>();
+        
+        (latestReadingsRaw || []).forEach((reading: any) => {
+          const existing = readingsByMachine.get(reading.machine_id);
+          const readingTime = new Date(reading.created_at);
+          if (!existing || readingTime > existing) {
+            readingsByMachine.set(reading.machine_id, readingTime);
+          }
+        });
+        
+        (latestCirrus || []).forEach((reading: any) => {
+          const existing = readingsByMachine.get(reading.machine_id);
+          const readingTime = new Date(reading.timestamp);
+          if (!existing || readingTime > existing) {
+            readingsByMachine.set(reading.machine_id, readingTime);
+          }
+        });
+        
+        // Copy to latestTimestamps map
+        readingsByMachine.forEach((timestamp, machineId) => {
+          latestTimestamps.set(machineId, timestamp);
+        });
+      }
+
+      // Helper function to calculate connection status from latest timestamp
+      const calculateConnectionStatus = (machineId: string, latestTimestamps: Map<string, Date>): boolean => {
+        const latestTimestamp = latestTimestamps.get(machineId);
+        if (!latestTimestamp) {
+          return false; // No readings = disconnected
+        }
+        
+        const now = new Date();
+        const minutesSinceLastReading = (now.getTime() - latestTimestamp.getTime()) / (1000 * 60);
+        
+        // Connected if last reading was within 15 minutes
+        return minutesSinceLastReading <= 15;
+      };
+
       // Transform profiles into UserHierarchy, joining with roles and assignments
       const transformedUsers: UserHierarchy[] = (profiles || []).map((p: any) => {
         const roleRecord = (allRoles || []).find((r: any) => r.user_id === p.id);
@@ -141,7 +203,7 @@ const useMachineData = (userId: string, userRole: string) => {
       if (userRole === 'super_admin') {
         // Super admin sees all machines
         console.log('✅ Super admin mode: showing ALL machines');
-        visibleMachines = (allMachines || []).map((m: any) => mapMachine(m, notifPrefsMap));
+        visibleMachines = (allMachines || []).map((m: any) => mapMachine(m, notifPrefsMap, latestTimestamps));
         console.log('✅ Super admin visible machines:', visibleMachines.length);
       } else if (userRole === 'company') {
         // Company sees their machines and all installer/client machines under them
@@ -161,7 +223,7 @@ const useMachineData = (userId: string, userRole: string) => {
         );
         console.log('🏢 Company filtered machines:', filteredMachines.length, 'of', allMachines?.length);
 
-        visibleMachines = filteredMachines.map((m: any) => mapMachine(m, notifPrefsMap));
+        visibleMachines = filteredMachines.map((m: any) => mapMachine(m, notifPrefsMap, latestTimestamps));
       } else if (userRole === 'installer') {
         // Installer sees their machines and client machines
         const clients = transformedUsers.filter(u => u.role === 'client' && u.parentId === userId);
@@ -169,17 +231,17 @@ const useMachineData = (userId: string, userRole: string) => {
 
         visibleMachines = (allMachines || [])
           .filter(m => m.owner_id === userId || clientIds.includes(m.owner_id))
-          .map((m: any) => mapMachine(m, notifPrefsMap));
+          .map((m: any) => mapMachine(m, notifPrefsMap, latestTimestamps));
       } else {
         // Client sees only their machines
         visibleMachines = (allMachines || [])
           .filter(m => m.owner_id === userId)
-          .map((m: any) => mapMachine(m, notifPrefsMap));
+          .map((m: any) => mapMachine(m, notifPrefsMap, latestTimestamps));
       }
 
       // Fetch real historical data for each machine (24h period by default)
-      const machineIds = visibleMachines.map(m => m.id);
-      const realHistoricalData = await fetchHistoricalDataForMachines(machineIds, '24h');
+      const visibleMachineIds = visibleMachines.map(m => m.id);
+      const realHistoricalData = await fetchHistoricalDataForMachines(visibleMachineIds, '24h');
 
       console.log('✅ Final transformedUsers:', transformedUsers.length);
       console.log('✅ Final visibleMachines:', visibleMachines.length);

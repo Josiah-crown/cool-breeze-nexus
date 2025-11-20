@@ -205,7 +205,7 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
       case 'company':
         return <Building2 className="h-4 w-4 text-blue-500" />;
       case 'installer':
-        return <Users className="h-4 w-4 text-green-500" />;
+        return <Users className="h-4 w-4 text-[#8FB83D]" />;
       case 'client':
         return <User className="h-4 w-4 text-orange-500" />;
       default:
@@ -220,7 +220,7 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
       case 'company':
         return 'bg-blue-500/10 text-blue-600 border-blue-500/30';
       case 'installer':
-        return 'bg-green-500/10 text-green-600 border-green-500/30';
+        return 'bg-[#8FB83D]/10 text-[#8FB83D] border-[#8FB83D]/30';
       case 'client':
         return 'bg-orange-500/10 text-orange-600 border-orange-500/30';
       default:
@@ -234,9 +234,9 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
 
   if (loading) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-[3px] border-[#8FB83D]">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
             <Bell className="h-5 w-5" />
             Notification Recipients
           </CardTitle>
@@ -250,9 +250,9 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
 
   if (recipients.length === 0) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="bg-card border-[3px] border-[#8FB83D]">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
             <Bell className="h-5 w-5" />
             Notification Recipients
           </CardTitle>
@@ -267,9 +267,9 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
   }
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-card border-[3px] border-[#8FB83D]">
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
           <Bell className="h-5 w-5" />
           Notification Recipients
         </CardTitle>
@@ -285,7 +285,7 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
               className={cn(
                 "flex items-center justify-between p-3 rounded-lg border transition-all",
                 recipient.enabled
-                  ? "bg-green-500/5 border-green-500/20"
+                  ? "bg-[#8FB83D]/5 border-[#8FB83D]/20"
                   : "bg-red-500/5 border-red-500/20"
               )}
             >
@@ -314,7 +314,7 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-2">
                       {recipient.enabled ? (
-                        <Bell className="h-4 w-4 text-green-600" />
+                        <Bell className="h-4 w-4 text-[#8FB83D]" />
                       ) : (
                         <BellOff className="h-4 w-4 text-red-600" />
                       )}

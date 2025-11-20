@@ -25,7 +25,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-all bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-[hsl(var(--border))] data-[highlighted]:bg-gradient-to-br data-[highlighted]:from-[hsl(var(--panel-bg))] data-[highlighted]:to-[hsl(var(--control-bg))] data-[highlighted]:border-primary data-[highlighted]:text-primary data-[highlighted]:shadow-md data-[highlighted]:scale-105 data-[state=open]:bg-gradient-to-br data-[state=open]:from-[hsl(var(--panel-bg))] data-[state=open]:to-[hsl(var(--control-bg))] data-[state=open]:border-primary data-[state=open]:text-primary",
+      "flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-all bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-[hsl(var(--border))] data-[highlighted]:bg-gradient-to-br data-[highlighted]:from-[hsl(var(--panel-bg))] data-[highlighted]:to-[hsl(var(--control-bg))] data-[highlighted]:border-[#8FB83D] data-[highlighted]:text-[#8FB83D] data-[highlighted]:shadow-md data-[highlighted]:scale-105 data-[state=open]:bg-gradient-to-br data-[state=open]:from-[hsl(var(--panel-bg))] data-[state=open]:to-[hsl(var(--control-bg))] data-[state=open]:border-[#8FB83D] data-[state=open]:text-[#8FB83D]",
       inset && "pl-8",
       className,
     )}
@@ -79,7 +79,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-primary data-[highlighted]:text-primary data-[highlighted]:shadow-md data-[highlighted]:scale-105",
+      "relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-[#8FB83D] data-[highlighted]:text-[#8FB83D] data-[highlighted]:shadow-md data-[highlighted]:scale-105",
       inset && "pl-8",
       className,
     )}
@@ -95,7 +95,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-primary data-[highlighted]:text-primary data-[highlighted]:shadow-md data-[highlighted]:scale-105",
+      "relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-[#8FB83D] data-[highlighted]:text-[#8FB83D] data-[highlighted]:shadow-md data-[highlighted]:scale-105",
       className,
     )}
     checked={checked}
@@ -118,7 +118,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-primary data-[highlighted]:text-primary data-[highlighted]:shadow-md data-[highlighted]:scale-105",
+      "relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--control-bg))] border border-transparent data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:border-[#8FB83D] data-[highlighted]:text-[#8FB83D] data-[highlighted]:shadow-md data-[highlighted]:scale-105",
       className,
     )}
     {...props}

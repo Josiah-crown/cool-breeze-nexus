@@ -21,7 +21,7 @@ jobs:
       - name: Upload dist/ to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: ftp.iotnexus.site
+          server: ${{ secrets.CPANEL_HOST }}
           username: ${{ secrets.CPANEL_USER }}
           password: ${{ secrets.CPANEL_PASS }}
           protocol: ftps

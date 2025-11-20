@@ -110,17 +110,21 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-card border-2 border-border">
-        <CardHeader className="text-center space-y-2 border-b border-border pb-6">
-          <CardTitle className="text-3xl font-bold text-primary">
+    <div className="min-h-screen bg-background flex flex-col items-center p-4" style={{ justifyContent: 'center' }}>
+      {/* Logo above the card */}
+      <div className="mb-2 flex justify-center">
+        <img src="/6.png" alt="IOTnexus Logo" className="h-48 w-auto object-contain" />
+      </div>
+      <Card className="w-full max-w-md bg-card border-2 border-border -mt-12" style={{ marginTop: '-3rem' }}>
+        <CardHeader className="text-center space-y-2 border-b border-border pb-4">
+          <CardTitle className="text-3xl font-bold" style={{ color: '#8fb73d' }}>
             Machine Monitor
           </CardTitle>
           <CardDescription className="text-muted-foreground">
             {isSignup ? 'Create a new account' : 'Sign in to access your dashboard'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignup && (
               <div className="space-y-2">
@@ -172,7 +176,10 @@ const Login: React.FC = () => {
             )}
             <Button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary-glow text-primary-foreground transition-all" 
+              className="w-full text-white transition-all" 
+              style={{ backgroundColor: '#8fb73d' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7aa332'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8fb73d'}
               disabled={isLoading || (isSignup && !recaptchaToken)}
             >
               {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}

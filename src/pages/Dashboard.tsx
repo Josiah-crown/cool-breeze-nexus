@@ -130,43 +130,51 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-accent backdrop-blur-sm relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/40 before:via-white/10 before:to-transparent before:pointer-events-none">
-        <div className="w-full px-[80px] py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-          <div>
-            <h1 className="text-2xl font-bold text-accent-foreground">Machine Monitor Dashboard</h1>
-            <p className="text-sm text-accent-foreground/80">
-              Welcome, {user.name} ({user.role.replace('_', ' ')})
-            </p>
+      <header className="border-b border-border backdrop-blur-sm relative overflow-hidden flex" style={{ backgroundColor: '#8FB83D' }}>
+        {/* Logo section - entire left section #303329 */}
+        <div className="flex items-center flex-shrink-0" style={{ backgroundColor: '#303329', padding: '16px 24px', minWidth: '200px' }}>
+          <img src="/3.png" alt="IOTnexus Logo" className="h-24 w-auto object-contain" />
+        </div>
+        {/* Rest of header content */}
+        <div className="flex-1 px-[80px] py-4 flex items-center justify-between gap-4">
+          {/* Centered heading */}
+          <div className="flex-1 flex justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-accent-foreground">Machine Monitor Dashboard</h1>
+              <p className="text-sm text-accent-foreground/80">
+                Welcome, {user.name} ({user.role.replace('_', ' ')})
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            {(user.role === 'installer' || user.role === 'company' || user.role === 'super_admin') && (
-              <>
-                <Button variant="outline" className="btn-nav" onClick={() => setShowAddUserDialog(true)}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  {user.role === 'company' ? 'Add Installer' : 'Add Client'}
-                </Button>
-                <Button variant="outline" className="btn-nav" onClick={() => setShowAddMachineDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Machine
-                </Button>
-              </>
-            )}
-            <Button variant="outline" className="btn-nav" onClick={() => setShowDeleteOwnAccount(true)}>
-              <Settings className="mr-2 h-4 w-4" />
-              Account
-            </Button>
-            <Button variant="outline" className="btn-nav" onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
+          {/* Buttons on the right */}
+          <div className="flex gap-2 flex-shrink-0">
+          {(user.role === 'installer' || user.role === 'company' || user.role === 'super_admin') && (
+            <>
+              <Button variant="outline" className="btn-nav" onClick={() => setShowAddUserDialog(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                {user.role === 'company' ? 'Add Installer' : 'Add Client'}
+              </Button>
+              <Button variant="outline" className="btn-nav" onClick={() => setShowAddMachineDialog(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Machine
+              </Button>
+            </>
+          )}
+          <Button variant="outline" className="btn-nav" onClick={() => setShowDeleteOwnAccount(true)}>
+            <Settings className="mr-2 h-4 w-4" />
+            Account
+          </Button>
+          <Button variant="outline" className="btn-nav" onClick={logout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
         </div>
       </header>
 
       {/* Machine Grid */}
       <main className="w-full px-[80px] py-8">
         {user.role === 'super_admin' ? (
-          /* Super Admin - Hierarchical View */
           <div>
             {/* Responsive Layout Container */}
             <div className="flex flex-col xl:flex-row gap-6 items-start">
@@ -341,7 +349,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : user.role === 'company' ? (
-          /* Company - Hierarchical View with Installers and Clients */
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6">
@@ -489,7 +496,6 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         ) : user.role === 'installer' ? (
-          /* Installer - Hierarchical View with Clients */
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6">
@@ -629,7 +635,6 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         ) : (
-          /* Client - Simple Grid View */
           <div>
             {/* Analytics Section */}
             <div className="grid grid-cols-4 gap-2 mb-6">

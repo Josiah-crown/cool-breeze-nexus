@@ -237,9 +237,9 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
   if (mode === 'assign') {
     // Machine detail view - paste and assign mode
     return (
-      <Card className="bg-card border-[3px] border-accent">
-        <CardHeader className="border-b-[3px] border-accent">
-          <CardTitle className="text-lg text-accent">ESP32 Connection</CardTitle>
+      <Card className="bg-card border-[3px] border-[#8FB83D]">
+        <CardHeader className="border-b-[3px] border-[#8FB83D]">
+          <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>ESP32 Connection</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="space-y-2">
@@ -247,9 +247,9 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
               placeholder="Paste API Key here"
               value={pasteKey}
               onChange={(e) => setPasteKey(e.target.value)}
-              className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-green-500 focus:bg-accent/20 transition-all text-foreground font-mono text-sm"
+              className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-[#8FB83D] focus:bg-accent/20 transition-all text-foreground font-mono text-sm"
             />
-            <Button onClick={assignApiKey} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Button onClick={assignApiKey} className="w-full text-white" style={{ backgroundColor: '#8FB83D', border: '2px solid #8FB83D' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7aa332'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8FB83D'}>
               Assign API Key to Machine
             </Button>
           </div>
@@ -274,15 +274,15 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
           ) : (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 text-[#8FB83D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-sm font-semibold text-accent">Assigned Key:</p>
+                <p className="text-sm font-semibold" style={{ color: '#8FB83D' }}>Assigned Key:</p>
               </div>
               {apiKeys.map((apiKey) => (
                 <div key={apiKey.id} className="space-y-2">
                   <div className="flex items-center gap-2 p-2 bg-background rounded border border-accent/20">
-                    <code className="flex-1 text-xs font-mono text-accent break-all">
+                    <code className="flex-1 text-xs font-mono break-all" style={{ color: '#8FB83D' }}>
                       {visibleKeys.has(apiKey.id) ? apiKey.key : maskKey(apiKey.key)}
                     </code>
                     <Button
@@ -296,7 +296,10 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
                   </div>
                   <Button
                     onClick={() => copyToClipboard(apiKey.key)}
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                    className="w-full text-white"
+                    style={{ backgroundColor: '#8FB83D', border: '2px solid #8FB83D' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7aa332'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8FB83D'}
                   >
                     <Copy className="mr-2 h-4 w-4" />
                     Copy API Key
@@ -307,13 +310,13 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
               {/* Machine UUID - For ESP32 Configuration */}
               <div className="mt-4 pt-4 border-t border-accent/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-[#8FB83D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-sm font-semibold text-accent">Machine UUID:</p>
+                  <p className="text-sm font-semibold" style={{ color: '#8FB83D' }}>Machine UUID:</p>
                 </div>
                 <div className="flex items-center gap-2 p-2 bg-background rounded border border-accent/20">
-                  <code className="flex-1 text-xs font-mono text-accent break-all">
+                  <code className="flex-1 text-xs font-mono break-all" style={{ color: '#8FB83D' }}>
                     {machineId}
                   </code>
                   <Button
@@ -333,7 +336,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
           )}
 
           <div className="text-xs space-y-1 bg-accent/10 border border-accent/20 p-3 rounded">
-            <p className="font-semibold text-accent">ESP32 Implementation:</p>
+            <p className="font-semibold" style={{ color: '#8FB83D' }}>ESP32 Implementation:</p>
             <ul className="list-disc list-inside space-y-1 text-foreground">
               <li>Include API key in HTTP header: <code className="bg-background text-foreground px-1 rounded">X-API-Key: your_key</code></li>
               <li>Send data to: <code className="bg-background text-foreground px-1 rounded">POST /machines/update</code></li>
@@ -354,9 +357,9 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
           placeholder="Description (optional)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-green-500 focus:bg-accent/20 transition-all text-foreground"
+          className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-[#8FB83D] focus:bg-accent/20 transition-all text-foreground"
         />
-        <Button onClick={generateApiKey} className="w-full border-2 border-foreground">
+        <Button onClick={generateApiKey} className="w-full text-white" style={{ backgroundColor: '#8FB83D', border: '2px solid #8FB83D' }}>
           <Plus className="mr-2 h-4 w-4" />
           Generate New API Key
         </Button>

@@ -1,0 +1,6 @@
+// TypeScript - catches errors before runtime
+function calculatePower(voltage: number, current: number): number {
+  return voltage * current;
+}
+
+calculatePower("120", "5"); // ❌ Error: Type 'string' is not assignable to type 'number'
