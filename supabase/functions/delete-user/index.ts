@@ -66,9 +66,11 @@ Deno.serve(async (req) => {
     // Authorization checks
     const isSelfDelete = requestingUser.id === userIdToDelete;
     const isRequestingSuperAdmin = requestingUserRole.role === 'super_admin';
-    const isRequestingAdmin = requestingUserRole.role === 'admin';
+    const isRequestingInstaller = requestingUserRole.role === 'installer';
+    const isRequestingCompany = requestingUserRole.role === 'company';
     const isTargetSuperAdmin = targetUserRole.role === 'super_admin';
     const isTargetClient = targetUserRole.role === 'client';
+    const isTargetInstaller = targetUserRole.role === 'installer';
 
     // Check if this is the last super admin
     if (isTargetSuperAdmin) {
@@ -91,8 +93,48 @@ Deno.serve(async (req) => {
     if (!isSelfDelete) {
       // If not self-delete, check if user has permission
       if (!isRequestingSuperAdmin) {
-        // If not super admin, check if admin deleting their client
-        if (isRequestingAdmin && isTargetClient) {
+        // Company can delete their installers and clients
+        if (isRequestingCompany) {
+          if (isTargetInstaller) {
+            // Check if installer belongs to company
+            const { data: assignment } = await supabaseAdmin
+              .from('installer_company_assignments')
+              .select('id')
+              .eq('company_id', requestingUser.id)
+              .eq('installer_id', userIdToDelete)
+              .single();
+
+            if (!assignment) {
+              throw new Error('Not authorized to delete this user');
+            }
+          } else if (isTargetClient) {
+            // Check if client belongs to company's installer
+            const { data: assignment } = await supabaseAdmin
+              .from('client_admin_assignments')
+              .select('admin_id')
+              .eq('client_id', userIdToDelete)
+              .single();
+
+            if (assignment) {
+              const { data: installerAssignment } = await supabaseAdmin
+                .from('installer_company_assignments')
+                .select('id')
+                .eq('company_id', requestingUser.id)
+                .eq('installer_id', assignment.admin_id)
+                .single();
+
+              if (!installerAssignment) {
+                throw new Error('Not authorized to delete this user');
+              }
+            } else {
+              throw new Error('Not authorized to delete this user');
+            }
+          } else {
+            throw new Error('Not authorized to delete this user');
+          }
+        }
+        // Installer can delete their clients
+        else if (isRequestingInstaller && isTargetClient) {
           const { data: assignment } = await supabaseAdmin
             .from('client_admin_assignments')
             .select('id')

@@ -27,8 +27,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.machine_notification_preferences 
 GRANT SELECT ON public.machine_notification_preferences TO anon;
 
 -- Function to auto-create notification preferences for new machines
+-- SECURITY DEFINER allows the function to bypass RLS when inserting
 CREATE OR REPLACE FUNCTION public.create_machine_notification_preferences()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_owner_id UUID;
   v_owner_role TEXT;
@@ -139,8 +143,12 @@ FOR EACH ROW
 EXECUTE FUNCTION public.create_machine_notification_preferences();
 
 -- Function to handle ownership changes (UPDATE)
+-- SECURITY DEFINER allows the function to bypass RLS when inserting/deleting
 CREATE OR REPLACE FUNCTION public.update_machine_notification_preferences_on_owner_change()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_new_owner_id UUID;
   v_owner_role TEXT;
