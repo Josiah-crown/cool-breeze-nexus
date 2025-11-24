@@ -36,23 +36,39 @@ export const ReassignClientDialog = ({
 
   const fetchAdmins = async () => {
     try {
-      const { data, error } = await supabase
+      // Get installers (replaces old 'admin' role)
+      const { data: installerRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select('user_id, profiles(name)')
-        .eq('role', 'admin');
+        .select('user_id')
+        .eq('role', 'installer');
 
-      if (error) throw error;
+      if (rolesError) throw rolesError;
 
-      const adminList = data
-        .filter(item => item.profiles)
-        .map(item => ({
-          id: item.user_id,
-          name: (item.profiles as any).name,
-        }));
+      const installerIds = (installerRoles || []).map(r => r.user_id);
+      
+      if (installerIds.length === 0) {
+        setAdmins([]);
+        setSelectedAdminId(currentAdminId);
+        return;
+      }
+
+      // Get profiles for installers
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', installerIds);
+
+      if (profilesError) throw profilesError;
+
+      const adminList = (profiles || []).map(p => ({
+        id: p.id,
+        name: p.name,
+      }));
 
       setAdmins(adminList);
       setSelectedAdminId(currentAdminId);
     } catch (error: any) {
+      console.error('Error fetching admins:', error);
       toast({
         title: 'Error',
         description: 'Failed to load admins',
@@ -100,10 +116,10 @@ export const ReassignClientDialog = ({
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="admin">Assign to Admin</Label>
+            <Label htmlFor="admin">Assign to Installer</Label>
             <Select value={selectedAdminId} onValueChange={setSelectedAdminId}>
               <SelectTrigger className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-green-500 focus:bg-accent/20 transition-all">
-                <SelectValue placeholder="Select admin" />
+                <SelectValue placeholder="Select installer" />
               </SelectTrigger>
               <SelectContent className="bg-card border-2 border-border">
                 {admins.map(admin => (

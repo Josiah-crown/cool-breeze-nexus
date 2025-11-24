@@ -13,6 +13,7 @@ import { HeatPumpComponent } from './HeatPumpComponent';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MachineCardProps {
   machine: MachineStatus;
@@ -27,7 +28,7 @@ interface MachineCardProps {
 }
 
 const MachineCard: React.FC<MachineCardProps> = ({ 
-  machine, 
+  machine: initialMachine, 
   onClick, 
   ownerName,
   onDelete,
@@ -38,14 +39,60 @@ const MachineCard: React.FC<MachineCardProps> = ({
   onNotificationChange
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [machine, setMachine] = useState<MachineStatus>(initialMachine);
   const { user } = useAuth();
+  
+  // Fetch latest reading from cirrus table for Cirrus machines (same source as historical graph)
+  useEffect(() => {
+    if (initialMachine.type !== 'evaporative' || initialMachine.manufacturer !== 'Cirrus') {
+      setMachine(initialMachine);
+      return;
+    }
+    
+    const fetchLatestReading = async () => {
+      try {
+        const { data: latestReading, error } = await supabase
+          .from('cirrus')
+          .select('fan_active, is_cooling, is_on, has_water')
+          .eq('machine_id', initialMachine.id)
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (!error && latestReading) {
+          setMachine(prev => ({
+            ...prev,
+            fanActive: latestReading.fan_active ?? prev.fanActive,
+            isCooling: latestReading.is_cooling ?? prev.isCooling,
+            isOn: latestReading.is_on ?? prev.isOn,
+            hasWater: latestReading.has_water ?? prev.hasWater,
+          }));
+        } else {
+          setMachine(initialMachine);
+        }
+      } catch (err) {
+        console.error('Error fetching latest cirrus reading for MachineCard:', err);
+        setMachine(initialMachine);
+      }
+    };
+    
+    fetchLatestReading();
+    
+    // Poll every 10 seconds
+    const pollInterval = setInterval(fetchLatestReading, 10000);
+    
+    return () => clearInterval(pollInterval);
+  }, [initialMachine.id, initialMachine.type, initialMachine.manufacturer]);
 
   // Debug: Log props when component renders
   useEffect(() => {
     if (showManagement) {
       console.log('MachineCard DEBUG:', {
-        machineId: machine.id,
-        machineName: machine.name,
+        machineId: initialMachine.id,
+        machineName: initialMachine.name,
+        manufacturer: initialMachine.manufacturer,
+        location: initialMachine.location,
+        hasLocation: !!initialMachine.location,
         hasOnChangeManufacturer: !!onChangeManufacturer,
         onChangeManufacturerType: typeof onChangeManufacturer,
         onChangeManufacturerValue: onChangeManufacturer,
@@ -58,7 +105,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
         }
       });
     }
-  }, [machine.id, onChangeManufacturer, showManagement, onRename, onChangeOwner, onDelete]);
+  }, [initialMachine.id, initialMachine.manufacturer, initialMachine.location, onChangeManufacturer, showManagement, onRename, onChangeOwner, onDelete]);
 
   const getMachineComponent = () => {
     const size = 'w-32 h-32';
@@ -245,21 +292,43 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   label="Connected"
                   size="sm"
                 />
-                <StatusLight
-                  status={machine.fanActive ? 'active' : 'inactive'}
-                  label="Fan"
-                  size="sm"
-                />
-                <StatusLight
-                  status={machine.isCooling ? 'active' : 'inactive'}
-                  label="Cool"
-                  size="sm"
-                />
-                <StatusLight
-                  status={machine.hasWater ? 'active' : 'error'}
-                  label="Water"
-                  size="sm"
-                />
+                {machine.isConnected ? (
+                  <>
+                    <StatusLight
+                      status={machine.fanActive ? 'active' : 'inactive'}
+                      label="Fan"
+                      size="sm"
+                    />
+                    <StatusLight
+                      status={machine.isCooling ? 'active' : 'inactive'}
+                      label="Cool"
+                      size="sm"
+                    />
+                    <StatusLight
+                      status={machine.hasWater ? 'active' : 'error'}
+                      label="Water"
+                      size="sm"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <StatusLight
+                      status="inactive"
+                      label="Fan"
+                      size="sm"
+                    />
+                    <StatusLight
+                      status="inactive"
+                      label="Cool"
+                      size="sm"
+                    />
+                    <StatusLight
+                      status="inactive"
+                      label="Water"
+                      size="sm"
+                    />
+                  </>
+                )}
               </>
             )}
             

@@ -41,20 +41,133 @@ interface MachineDetailViewProps {
 type Period = '24h' | '7d' | '30d' | '1y';
 
 const MachineDetailView: React.FC<MachineDetailViewProps> = ({ 
-  machine, 
+  machine: initialMachine, 
   historicalData: initialHistoricalData,
   onClose 
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [machine, setMachine] = useState<MachineStatus>(initialMachine);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('24h');
   const [historicalData, setHistoricalData] = useState<MachineHistoricalData>(initialHistoricalData);
   const [loadingHistoricalData, setLoadingHistoricalData] = useState(false);
   const [editingSetpoint, setEditingSetpoint] = useState(false);
-  const [newSetpoint, setNewSetpoint] = useState(machine.temperatureSetpoint?.toString() || '55');
+  const [newSetpoint, setNewSetpoint] = useState(initialMachine.temperatureSetpoint?.toString() || '55');
   const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [newLocation, setNewLocation] = useState(machine.location || '');
+  const [newLocation, setNewLocation] = useState(initialMachine.location || '');
   const [locationFallback, setLocationFallback] = useState<string | null>(null);
+  
+  // Fetch latest reading from cirrus table (same source as historical graph)
+  const fetchLatestReading = async () => {
+    if (machine.type !== 'evaporative' || machine.manufacturer !== 'Cirrus') {
+      return; // Only for Cirrus machines
+    }
+    
+    try {
+      const { data: latestReading, error } = await supabase
+        .from('cirrus')
+        .select('fan_active, is_cooling, is_on, has_water, motor_temp, ambient_temp, duct_temp, current, voltage, power')
+        .eq('machine_id', machine.id)
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error) {
+        console.warn('⚠️ MachineDetailView: Error fetching latest cirrus reading:', error);
+        return;
+      }
+      
+      if (latestReading) {
+        console.log('✅ MachineDetailView: Latest cirrus reading:', {
+          fan_active: latestReading.fan_active,
+          is_cooling: latestReading.is_cooling,
+        });
+        
+        setMachine(prev => ({
+          ...prev,
+          fanActive: latestReading.fan_active ?? prev.fanActive,
+          isCooling: latestReading.is_cooling ?? prev.isCooling,
+          isOn: latestReading.is_on ?? prev.isOn,
+          hasWater: latestReading.has_water ?? prev.hasWater,
+          motorTemp: latestReading.motor_temp ?? prev.motorTemp,
+          outsideTemp: latestReading.ambient_temp ?? prev.outsideTemp,
+          insideTemp: latestReading.duct_temp ?? prev.insideTemp,
+          current: latestReading.current ?? prev.current,
+          voltage: latestReading.voltage ?? prev.voltage,
+          power: latestReading.power ?? prev.power,
+          deltaT: Math.abs((latestReading.ambient_temp ?? prev.outsideTemp) - (latestReading.duct_temp ?? prev.insideTemp)),
+        }));
+      }
+    } catch (err) {
+      console.error('❌ MachineDetailView: Error in fetchLatestReading:', err);
+    }
+  };
+  
+  // Update machine state when prop changes
+  useEffect(() => {
+    console.log('🔄 MachineDetailView: Updating machine data:', {
+      id: initialMachine.id,
+      fanActive: initialMachine.fanActive,
+      isCooling: initialMachine.isCooling,
+    });
+    setMachine(initialMachine);
+    // Also fetch latest from cirrus table
+    fetchLatestReading();
+  }, [initialMachine.id]);
+  
+  // Set up real-time subscription to cirrus table (same source as historical graph)
+  useEffect(() => {
+    if (machine.type !== 'evaporative' || machine.manufacturer !== 'Cirrus') {
+      return; // Only for Cirrus machines
+    }
+    
+    console.log('📡 MachineDetailView: Setting up real-time subscription to cirrus table for machine:', machine.id);
+    
+    // Subscribe to cirrus table updates (same source as historical graph)
+    const channel = supabase
+      .channel(`machine-detail-cirrus-${machine.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'cirrus',
+          filter: `machine_id=eq.${machine.id}`,
+        },
+        (payload) => {
+          console.log('📨 MachineDetailView: New cirrus reading received:', payload.new);
+          const newReading = payload.new as any;
+          setMachine(prev => ({
+            ...prev,
+            fanActive: newReading.fan_active ?? prev.fanActive,
+            isCooling: newReading.is_cooling ?? prev.isCooling,
+            isOn: newReading.is_on ?? prev.isOn,
+            hasWater: newReading.has_water ?? prev.hasWater,
+            motorTemp: newReading.motor_temp ?? prev.motorTemp,
+            outsideTemp: newReading.ambient_temp ?? prev.outsideTemp,
+            insideTemp: newReading.duct_temp ?? prev.insideTemp,
+            current: newReading.current ?? prev.current,
+            voltage: newReading.voltage ?? prev.voltage,
+            power: newReading.power ?? prev.power,
+            deltaT: Math.abs((newReading.ambient_temp ?? prev.outsideTemp) - (newReading.duct_temp ?? prev.insideTemp)),
+          }));
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 MachineDetailView: Cirrus subscription status:', status);
+      });
+    
+    // Also poll every 5 seconds to catch any missed updates
+    const pollInterval = setInterval(() => {
+      fetchLatestReading();
+    }, 5000);
+    
+    return () => {
+      console.log('🧹 MachineDetailView: Cleaning up cirrus subscription and polling');
+      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+    };
+  }, [machine.id, machine.type, machine.manufacturer]);
 
   // Load historical data when period changes
   useEffect(() => {
@@ -393,9 +506,19 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   
                   {machine.type === 'evaporative' && (
                     <>
-                      <StatusLight status={machine.fanActive ? 'active' : 'inactive'} label="Fan" />
-                      <StatusLight status={machine.isCooling ? 'active' : 'inactive'} label="Cooling" />
-                      <StatusLight status={machine.hasWater ? 'active' : 'error'} label="Water Level" />
+                      {machine.isConnected ? (
+                        <>
+                          <StatusLight status={machine.fanActive ? 'active' : 'inactive'} label="Fan" />
+                          <StatusLight status={machine.isCooling ? 'active' : 'inactive'} label="Cooling" />
+                          <StatusLight status={machine.hasWater ? 'active' : 'error'} label="Water Level" />
+                        </>
+                      ) : (
+                        <>
+                          <StatusLight status="inactive" label="Fan" />
+                          <StatusLight status="inactive" label="Cooling" />
+                          <StatusLight status="inactive" label="Water Level" />
+                        </>
+                      )}
                     </>
                   )}
                   
@@ -415,7 +538,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   
                   <StatusLight
                     status={
-                      machine.motorStatus === 'critical' || machine.motorStatus === 'warning' ? 'error' : 'active'
+                      machine.isConnected 
+                        ? (machine.motorStatus === 'critical' || machine.motorStatus === 'warning' ? 'error' : 'active')
+                        : 'inactive'
                     }
                     label={machine.type === 'heatpump' ? 'Compressor Status' : 'Motor Status'}
                   />
@@ -430,19 +555,27 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 <CardContent className="space-y-2 pt-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{labels.outside}:</span>
-                    <span className="font-semibold text-foreground">{machine.outsideTemp.toFixed(1)}°C</span>
+                    <span className="font-semibold text-foreground">
+                      {machine.isConnected ? `${machine.outsideTemp.toFixed(1)}°C` : 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{labels.inside}:</span>
-                    <span className="font-semibold text-foreground">{machine.insideTemp.toFixed(1)}°C</span>
+                    <span className="font-semibold text-foreground">
+                      {machine.isConnected ? `${machine.insideTemp.toFixed(1)}°C` : 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{labels.motor}:</span>
-                    <span className="font-semibold text-foreground">{machine.motorTemp.toFixed(1)}°C</span>
+                    <span className="font-semibold text-foreground">
+                      {machine.isConnected ? `${machine.motorTemp.toFixed(1)}°C` : 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delta T:</span>
-                    <span className="font-semibold" style={{ color: '#8FB83D' }}>{machine.deltaT.toFixed(1)}°C</span>
+                    <span className="font-semibold" style={{ color: '#8FB83D' }}>
+                      {machine.isConnected ? `${machine.deltaT.toFixed(1)}°C` : 'N/A'}
+                    </span>
                   </div>
                   
                   {machine.type === 'heatpump' && (
@@ -472,15 +605,21 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   
                   <div className="flex justify-between border-t border-border pt-2">
                     <span className="text-muted-foreground">Voltage:</span>
-                    <span className="font-semibold text-foreground">{machine.voltage.toFixed(1)}V</span>
+                    <span className="font-semibold text-foreground">
+                      {machine.isConnected ? `${machine.voltage.toFixed(1)}V` : 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{labels.current}:</span>
-                    <span className="font-semibold text-foreground">{machine.current.toFixed(2)}A</span>
+                    <span className="font-semibold text-foreground">
+                      {machine.isConnected ? `${machine.current.toFixed(2)}A` : 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Power:</span>
-                    <span className="font-semibold text-primary">{machine.power.toFixed(1)}W</span>
+                    <span className="font-semibold text-primary">
+                      {machine.isConnected ? `${machine.power.toFixed(1)}W` : 'N/A'}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

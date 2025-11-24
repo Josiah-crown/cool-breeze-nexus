@@ -1,12 +1,102 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import NavigationHeader from '@/components/NavigationHeader';
 import ControlPanel from '@/components/ControlPanel';
 import { FanComponent } from '@/components/FanComponent';
 import { StatusLight } from '@/components/StatusLight';
 import { useSystemState } from '@/hooks/useSystemState';
+import { useAuth } from '@/contexts/AuthContext';
+import { useMachineData } from '@/hooks/useMachineData';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const { state, actions } = useSystemState();
+  const { user } = useAuth();
+  const { machines, refetch } = useMachineData(user?.id || '', user?.role || 'client');
+  const [supabaseFanActive, setSupabaseFanActive] = useState<boolean>(false);
+  const [supabaseIsOn, setSupabaseIsOn] = useState<boolean>(false);
+  const [supabaseIsCooling, setSupabaseIsCooling] = useState<boolean>(false);
+  
+  // Find the first Cirrus machine
+  const cirrusMachine = useMemo(() => {
+    const found = machines.find(m => 
+      (m.type === 'evaporative' && m.manufacturer === 'Cirrus') || 
+      (m.type === 'evaporative' && !m.manufacturer) // Fallback for machines without manufacturer set
+    ) || machines.find(m => m.type === 'evaporative') || machines[0];
+    
+    console.log('🔍 Index: Machines available:', machines.length);
+    console.log('🔍 Index: Found machine:', found ? {
+      id: found.id,
+      name: found.name,
+      type: found.type,
+      manufacturer: found.manufacturer,
+      fanActive: found.fanActive,
+    } : 'NONE');
+    
+    return found;
+  }, [machines]);
+
+  // Sync state with machine data whenever it changes
+  useEffect(() => {
+    if (!cirrusMachine) {
+      console.log('🔍 Index: No Cirrus machine found');
+      return;
+    }
+
+    console.log('🔄 Index: Syncing with machine:', {
+      id: cirrusMachine.id,
+      name: cirrusMachine.name,
+      fanActive: cirrusMachine.fanActive,
+      isOn: cirrusMachine.isOn,
+      isCooling: cirrusMachine.isCooling,
+    });
+
+    // Update state from machine data
+    setSupabaseFanActive(cirrusMachine.fanActive || false);
+    setSupabaseIsOn(cirrusMachine.isOn || false);
+    setSupabaseIsCooling(cirrusMachine.isCooling || false);
+  }, [cirrusMachine?.id, cirrusMachine?.fanActive, cirrusMachine?.isOn, cirrusMachine?.isCooling]);
+
+  // Set up real-time subscription and polling
+  useEffect(() => {
+    if (!cirrusMachine) return;
+
+    console.log('📡 Index: Setting up real-time subscription for machine:', cirrusMachine.id);
+
+    // Set up real-time subscription to machines table
+    const channel = supabase
+      .channel(`machine-${cirrusMachine.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'machines',
+          filter: `id=eq.${cirrusMachine.id}`,
+        },
+        (payload) => {
+          console.log('📨 Index: Real-time update received:', payload.new);
+          const updatedMachine = payload.new as any;
+          setSupabaseFanActive(updatedMachine.fan_active || false);
+          setSupabaseIsOn(updatedMachine.is_on || false);
+          setSupabaseIsCooling(updatedMachine.is_cooling || false);
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Index: Subscription status:', status);
+      });
+
+    // Also poll periodically to catch any missed updates
+    const pollInterval = setInterval(() => {
+      console.log('🔄 Index: Polling for updates...');
+      refetch();
+    }, 5000); // Poll every 5 seconds
+
+    return () => {
+      console.log('🧹 Index: Cleaning up subscription and polling');
+      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+    };
+  }, [cirrusMachine?.id, refetch]);
 
   const handleHome = () => {
     console.log('Navigate to home');
@@ -19,9 +109,13 @@ const Index = () => {
   };
 
   const getFanSpeed = () => {
-    if (!state.isOn || !state.fanMode) return 'slow';
-    if (state.coolMode) return 'fast';
-    if (state.exhaustMode) return 'medium';
+    // Use Supabase data if available, otherwise fall back to local state
+    const isOn = cirrusMachine ? supabaseIsOn : state.isOn;
+    const fanActive = cirrusMachine ? supabaseFanActive : (state.isOn && state.fanMode);
+    const isCooling = cirrusMachine ? supabaseIsCooling : state.isCooling;
+    
+    if (!isOn || !fanActive) return 'slow';
+    if (isCooling) return 'fast';
     return 'medium';
   };
 
@@ -108,12 +202,21 @@ const Index = () => {
               
               <div className="grid lg:grid-cols-2 gap-6">
                 {/* Left - Fan */}
-                <div className="flex items-center justify-center lg:col-span-2">
+                <div className="flex items-center justify-center lg:col-span-2 relative">
                   <FanComponent 
-                    isSpinning={state.isOn && state.fanMode}
+                    isSpinning={cirrusMachine ? supabaseFanActive : (state.isOn && state.fanMode)}
                     speed={getFanSpeed()}
                     size="lg"
                   />
+                  {/* Debug info - remove in production */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="absolute top-2 right-2 text-xs bg-black/50 text-white p-2 rounded z-10">
+                      <div>Machine: {cirrusMachine?.name || 'None'}</div>
+                      <div>fanActive (DB): {cirrusMachine?.fanActive ? 'true' : 'false'}</div>
+                      <div>fanActive (State): {supabaseFanActive ? 'true' : 'false'}</div>
+                      <div>Spinning: {cirrusMachine ? supabaseFanActive : (state.isOn && state.fanMode) ? 'true' : 'false'}</div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bottom Left - System Status */}
@@ -121,19 +224,23 @@ const Index = () => {
                   <h4 className="text-sm font-semibold text-primary mb-3">System Status</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <StatusLight 
-                      status={state.isOn ? 'active' : 'inactive'} 
+                      status={cirrusMachine ? (supabaseIsOn ? 'active' : 'inactive') : (state.isOn ? 'active' : 'inactive')} 
                       label="Power" 
                     />
                     <StatusLight 
-                      status={state.hasWater ? 'active' : 'error'} 
+                      status={cirrusMachine ? (cirrusMachine.hasWater ? 'active' : 'error') : (state.hasWater ? 'active' : 'error')} 
                       label="Water Level" 
                     />
                     <StatusLight 
-                      status={state.isCooling ? 'active' : 'inactive'} 
+                      status={cirrusMachine ? (supabaseFanActive ? 'active' : 'inactive') : (state.fanMode ? 'active' : 'inactive')} 
+                      label="Fan" 
+                    />
+                    <StatusLight 
+                      status={cirrusMachine ? (supabaseIsCooling ? 'active' : 'inactive') : (state.isCooling ? 'active' : 'inactive')} 
                       label="Cooling Active" 
                     />
                     <StatusLight 
-                      status={state.motorTemp > 80 ? 'error' : state.motorTemp > 60 ? 'warning' : 'active'} 
+                      status={cirrusMachine ? (cirrusMachine.motorTemp > 80 ? 'error' : cirrusMachine.motorTemp > 60 ? 'warning' : 'active') : (state.motorTemp > 80 ? 'error' : state.motorTemp > 60 ? 'warning' : 'active')} 
                       label="Motor Status" 
                     />
                   </div>
@@ -143,7 +250,7 @@ const Index = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-muted-foreground">ΔT Efficiency</span>
                       <div className="text-xl font-bold text-primary">
-                        {state.deltaT.toFixed(1)}°C
+                        {cirrusMachine ? cirrusMachine.deltaT.toFixed(1) : state.deltaT.toFixed(1)}°C
                       </div>
                     </div>
                   </div>
@@ -157,18 +264,18 @@ const Index = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Outside</span>
-                        <span className="text-sm font-bold text-warning">{state.outsideTemp.toFixed(1)}°C</span>
+                        <span className="text-sm font-bold text-warning">{cirrusMachine ? cirrusMachine.outsideTemp.toFixed(1) : state.outsideTemp.toFixed(1)}°C</span>
                       </div>
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Inside</span>
-                        <span className="text-sm font-bold text-accent">{state.insideTemp.toFixed(1)}°C</span>
+                        <span className="text-sm font-bold text-accent">{cirrusMachine ? cirrusMachine.insideTemp.toFixed(1) : state.insideTemp.toFixed(1)}°C</span>
                       </div>
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Motor</span>
                         <span className={`text-sm font-bold ${
-                          state.motorTemp > 80 ? 'text-destructive' : 
-                          state.motorTemp > 60 ? 'text-warning' : 'text-accent'
-                        }`}>{state.motorTemp.toFixed(1)}°C</span>
+                          (cirrusMachine ? cirrusMachine.motorTemp : state.motorTemp) > 80 ? 'text-destructive' : 
+                          (cirrusMachine ? cirrusMachine.motorTemp : state.motorTemp) > 60 ? 'text-warning' : 'text-accent'
+                        }`}>{(cirrusMachine ? cirrusMachine.motorTemp : state.motorTemp).toFixed(1)}°C</span>
                       </div>
                     </div>
                   </div>
@@ -179,15 +286,15 @@ const Index = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Current</span>
-                        <span className="text-sm font-bold text-primary">{state.currentAmps.toFixed(1)}A</span>
+                        <span className="text-sm font-bold text-primary">{(cirrusMachine ? cirrusMachine.current : state.currentAmps).toFixed(1)}A</span>
                       </div>
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Voltage</span>
-                        <span className="text-sm font-bold text-primary">{state.voltage.toFixed(0)}V</span>
+                        <span className="text-sm font-bold text-primary">{(cirrusMachine ? cirrusMachine.voltage : state.voltage).toFixed(0)}V</span>
                       </div>
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Power</span>
-                        <span className="text-sm font-bold text-primary">{Math.round(state.power)}W</span>
+                        <span className="text-sm font-bold text-primary">{Math.round(cirrusMachine ? cirrusMachine.power : state.power)}W</span>
                       </div>
                     </div>
                   </div>

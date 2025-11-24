@@ -15,7 +15,7 @@ interface ChangeOwnerDialogProps {
   currentOwnerId: string;
   users: Array<{ id: string; name: string; role: string }>;
   onOwnerChanged: () => void;
-  currentUserRole: 'super_admin' | 'admin' | 'client';
+  currentUserRole: 'super_admin' | 'installer' | 'company' | 'client';
   currentUserId: string;
 }
 
@@ -32,7 +32,7 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
 }) => {
   const [newOwnerId, setNewOwnerId] = useState(currentOwnerId);
   const [isLoading, setIsLoading] = useState(false);
-  const [assignmentType, setAssignmentType] = useState<'client' | 'admin'>('client');
+  const [assignmentType, setAssignmentType] = useState<'client' | 'installer'>('client');
   const [availableUsers, setAvailableUsers] = useState<Array<{ id: string; name: string; role: string }>>([]);
 
   useEffect(() => {
@@ -44,17 +44,16 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
   const loadAvailableUsers = async () => {
     try {
       if (currentUserRole === 'super_admin') {
-        // Super admins can assign to themselves or other admins
-        const { data: adminRoles, error: rolesError } = await supabase
+        // Super admins can assign to companies, installers, and clients
+        const { data: allRoles, error: rolesError } = await supabase
           .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
+          .select('user_id, role')
+          .in('role', ['company', 'installer', 'client']);
 
         if (rolesError) throw rolesError;
 
-        const adminIds = (adminRoles || []).map(r => r.user_id);
-        
-        const allIds = [currentUserId, ...adminIds];
+        const userIds = (allRoles || []).map(r => r.user_id);
+        const allIds = [currentUserId, ...userIds];
 
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
@@ -63,42 +62,29 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
 
         if (profilesError) throw profilesError;
 
-        const userList = (profiles || []).map(p => ({ 
-          ...p, 
-          role: p.id === currentUserId ? 'super_admin' : 'admin' 
-        }));
+        // Map profiles with their roles
+        const userList = (profiles || []).map(p => {
+          if (p.id === currentUserId) {
+            return { ...p, role: 'super_admin' };
+          }
+          const roleData = allRoles?.find(r => r.user_id === p.id);
+          return { ...p, role: roleData?.role || 'client' };
+        });
 
         setAvailableUsers(userList);
-      } else if (currentUserRole === 'admin') {
+      } else if (currentUserRole === 'installer' || currentUserRole === 'admin') {
         if (assignmentType === 'client') {
-          // Load admin's clients
+          // Load installer's clients
           const { data, error } = await supabase
             .from('client_admin_assignments')
-            .select('client_id, profiles!client_admin_assignments_client_id_fkey(name)')
+            .select('client_id')
             .eq('admin_id', currentUserId);
 
           if (error) throw error;
 
-          const userList = (data || []).map((assignment: any) => ({
-            id: assignment.client_id,
-            name: assignment.profiles?.name || 'Unknown',
-            role: 'client',
-          }));
+          const clientIds = (data || []).map((a: any) => a.client_id);
 
-          setAvailableUsers(userList);
-        } else {
-          // Load other admins
-          const { data: adminRoles, error: rolesError } = await supabase
-            .from('user_roles')
-            .select('user_id')
-            .eq('role', 'admin')
-            .neq('user_id', currentUserId);
-
-          if (rolesError) throw rolesError;
-
-          const adminIds = (adminRoles || []).map(r => r.user_id);
-          
-          if (adminIds.length === 0) {
+          if (clientIds.length === 0) {
             setAvailableUsers([]);
             return;
           }
@@ -106,12 +92,91 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
           const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
             .select('id, name')
-            .in('id', adminIds);
+            .in('id', clientIds);
 
           if (profilesError) throw profilesError;
 
-          setAvailableUsers((profiles || []).map(p => ({ ...p, role: 'admin' })));
+          const userList = (profiles || []).map(p => ({
+            ...p,
+            role: 'client',
+          }));
+
+          setAvailableUsers(userList);
+        } else {
+          // Load other installers
+          const { data: installerRoles, error: rolesError } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'installer')
+            .neq('user_id', currentUserId);
+
+          if (rolesError) throw rolesError;
+
+          const installerIds = (installerRoles || []).map(r => r.user_id);
+          
+          if (installerIds.length === 0) {
+            setAvailableUsers([]);
+            return;
+          }
+
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .in('id', installerIds);
+
+          if (profilesError) throw profilesError;
+
+          setAvailableUsers((profiles || []).map(p => ({ ...p, role: 'installer' })));
         }
+      } else if (currentUserRole === 'company') {
+        // Company can assign to their installers and clients
+        // Get installers
+        const { data: installerAssignments, error: installerError } = await supabase
+          .from('installer_company_assignments')
+          .select('installer_id')
+          .eq('company_id', currentUserId);
+
+        if (installerError) throw installerError;
+
+        const installerIds = (installerAssignments || []).map((a: any) => a.installer_id);
+        
+        // Get clients of those installers
+        let clientIds: string[] = [];
+        if (installerIds.length > 0) {
+          const { data: clientAssignments, error: clientError } = await supabase
+            .from('client_admin_assignments')
+            .select('client_id')
+            .in('admin_id', installerIds);
+
+          if (!clientError && clientAssignments) {
+            clientIds = clientAssignments.map((a: any) => a.client_id);
+          }
+        }
+
+        const allUserIds = [...installerIds, ...clientIds];
+        
+        if (allUserIds.length === 0) {
+          setAvailableUsers([]);
+          return;
+        }
+
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', allUserIds);
+
+        if (profilesError) throw profilesError;
+
+        // Map profiles with their roles
+        const userList = (profiles || []).map(p => {
+          const isInstaller = installerIds.includes(p.id);
+          return {
+            ...p,
+            role: isInstaller ? 'installer' : 'client',
+          };
+        });
+
+        setAvailableUsers(userList);
       }
     } catch (error) {
       console.error('Error loading available users:', error);
@@ -153,10 +218,10 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {currentUserRole === 'admin' && (
+          {(currentUserRole === 'installer' || currentUserRole === 'admin') && (
             <div className="space-y-2">
               <Label>Assign To</Label>
-              <RadioGroup value={assignmentType} onValueChange={(value: 'client' | 'admin') => {
+              <RadioGroup value={assignmentType} onValueChange={(value: 'client' | 'installer') => {
                 setAssignmentType(value);
                 setNewOwnerId('');
               }}>
@@ -165,8 +230,8 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
                   <Label htmlFor="client" className="font-normal cursor-pointer">My Client</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="admin" id="admin" />
-                  <Label htmlFor="admin" className="font-normal cursor-pointer">Another Admin</Label>
+                  <RadioGroupItem value="installer" id="installer" />
+                  <Label htmlFor="installer" className="font-normal cursor-pointer">Another Installer</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -174,7 +239,7 @@ export const ChangeOwnerDialog: React.FC<ChangeOwnerDialogProps> = ({
 
           <div className="space-y-2">
             <Label>
-              Select {currentUserRole === 'super_admin' ? 'Owner' : assignmentType === 'client' ? 'Client' : 'Admin'}
+              Select {currentUserRole === 'super_admin' ? 'Owner' : assignmentType === 'client' ? 'Client' : 'Installer'}
             </Label>
             <Select value={newOwnerId} onValueChange={setNewOwnerId}>
               <SelectTrigger className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-green-500 focus:bg-accent/20 transition-all">

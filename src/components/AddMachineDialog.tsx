@@ -18,7 +18,7 @@ interface AddMachineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ownerId: string;
-  userRole: 'super_admin' | 'admin' | 'client';
+  userRole: 'super_admin' | 'installer' | 'company' | 'client';
   onMachineAdded: () => void;
 }
 

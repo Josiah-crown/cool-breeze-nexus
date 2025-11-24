@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMachineData } from '@/hooks/useMachineData';
 import MachineCard from '@/components/MachineCard';
@@ -26,6 +26,60 @@ const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const { machines, historicalData, users, refetch } = useMachineData(user?.id || '', user?.role || 'client');
   const [selectedMachine, setSelectedMachine] = useState<MachineStatus | null>(null);
+  
+  // Keep selectedMachine in sync with updated machines data
+  useEffect(() => {
+    if (selectedMachine && machines.length > 0) {
+      const updatedMachine = machines.find(m => m.id === selectedMachine.id);
+      if (updatedMachine) {
+        console.log('🔄 Dashboard: Updating selectedMachine with fresh data:', {
+          id: updatedMachine.id,
+          fanActive: updatedMachine.fanActive,
+          isCooling: updatedMachine.isCooling,
+        });
+        setSelectedMachine(updatedMachine);
+      }
+    }
+  }, [machines, selectedMachine?.id]);
+  
+  // Set up real-time updates for machines
+  useEffect(() => {
+    if (!user) return;
+    
+    console.log('📡 Dashboard: Setting up real-time subscription for machines');
+    
+    // Subscribe to machines table updates
+    const channel = supabase
+      .channel('dashboard-machines-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'machines',
+        },
+        (payload) => {
+          console.log('📨 Dashboard: Machine update received:', payload.new);
+          // Refetch machine data when any machine is updated
+          refetch();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Dashboard: Subscription status:', status);
+      });
+    
+    // Also poll periodically to catch any missed updates
+    const pollInterval = setInterval(() => {
+      console.log('🔄 Dashboard: Polling for machine updates...');
+      refetch();
+    }, 10000); // Poll every 10 seconds
+    
+    return () => {
+      console.log('🧹 Dashboard: Cleaning up subscription and polling');
+      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+    };
+  }, [user, refetch]);
   const [selectedUserId, setSelectedUserId] = useState<string>('all');
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddMachineDialog, setShowAddMachineDialog] = useState(false);
@@ -479,6 +533,7 @@ const Dashboard: React.FC = () => {
                       onDelete={handleDeleteMachine}
                       onChangeOwner={handleChangeOwner}
                       onRename={handleRename}
+                      onChangeManufacturer={handleChangeManufacturer}
                       showManagement={true}
                     />
                   ))}
@@ -618,6 +673,7 @@ const Dashboard: React.FC = () => {
                       onDelete={handleDeleteMachine}
                       onChangeOwner={handleChangeOwner}
                       onRename={handleRename}
+                      onChangeManufacturer={handleChangeManufacturer}
                       showManagement={true}
                     />
                   ))}
@@ -741,7 +797,7 @@ const Dashboard: React.FC = () => {
             open={showAddMachineDialog}
             onOpenChange={setShowAddMachineDialog}
             ownerId={user.id}
-            userRole={user.role === 'company' || user.role === 'installer' ? 'admin' : user.role}
+            userRole={user.role as 'super_admin' | 'installer' | 'company' | 'client'}
             onMachineAdded={handleRefresh}
           />
         </>
@@ -757,7 +813,7 @@ const Dashboard: React.FC = () => {
           currentOwnerId={selectedMachineForOwnerChange.ownerId}
           users={users}
           onOwnerChanged={handleRefresh}
-          currentUserRole={user.role === 'company' || user.role === 'installer' ? 'admin' : user.role}
+          currentUserRole={user.role}
           currentUserId={user.id}
         />
       )}

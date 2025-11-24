@@ -116,7 +116,14 @@ const useMachineData = (userId: string, userRole: string) => {
           .in('machine_id', machineIds)
           .order('timestamp', { ascending: false });
         
-        // Build map of latest timestamps (take most recent from either table)
+        // Check coolbreeze table for latest timestamps
+        const { data: latestCoolBreeze } = await supabase
+          .from('coolbreeze')
+          .select('machine_id, timestamp')
+          .in('machine_id', machineIds)
+          .order('timestamp', { ascending: false });
+        
+        // Build map of latest timestamps (take most recent from any table)
         // Group by machine_id and take the most recent timestamp for each
         const readingsByMachine = new Map<string, Date>();
         
@@ -129,6 +136,14 @@ const useMachineData = (userId: string, userRole: string) => {
         });
         
         (latestCirrus || []).forEach((reading: any) => {
+          const existing = readingsByMachine.get(reading.machine_id);
+          const readingTime = new Date(reading.timestamp);
+          if (!existing || readingTime > existing) {
+            readingsByMachine.set(reading.machine_id, readingTime);
+          }
+        });
+        
+        (latestCoolBreeze || []).forEach((reading: any) => {
           const existing = readingsByMachine.get(reading.machine_id);
           const readingTime = new Date(reading.timestamp);
           if (!existing || readingTime > existing) {
