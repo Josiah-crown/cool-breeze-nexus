@@ -11,7 +11,7 @@
    ```bash
    git add .
    git commit -m "Your commit message"
-   git push origin main
+   git push origin
    ```
 3. **Wait 3-5 minutes** - GitHub Actions automatically:
    - Builds your project
