@@ -46,7 +46,7 @@ Fixed GitHub Actions deployment, investigated CoolBreeze 403 error, analyzed Sup
 - `DEPLOYMENT_GUIDE_GITHUB.md` - Created comprehensive deployment guide
 
 **GitHub Secrets Required:**
-- `VITE_SUPABASE_URL` = `https://lkvnhskxbxzeohopqjcr.supabase.co`
+- `VITE_SUPABASE_URL` = `https://wjyanxstvbiqefmgpccb.supabase.co`
 - `VITE_SUPABASE_PUBLISHABLE_KEY` = `sb_publishable_WFlhZieCuuEHBwjaw3EZ9A__LDjjEoq`
 - `CPANEL_HOST` - FTP hostname
 - `CPANEL_USER` - FTP username

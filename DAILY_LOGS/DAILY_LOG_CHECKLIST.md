@@ -133,57 +133,67 @@ Before finalizing the log:
 
 ## 📝 Updating REMAINING_TASKS.md
 
-### When to Update:
-- After completing tasks mentioned in daily logs
+### When to Update (When updating, Ensure there is a daily log to record the updates to):
+- After completing tasks mentioned in daily logs 
 - When user confirms tasks are completed
-- When marking tasks as done
+- When tasks are properly documented in daily logs
 
 ### Update Process:
 
-1. **Mark Completed Tasks:**
-   - Change status from ⏳ to ✅ **COMPLETED**
-   - Add completion date if known
-   - Check off all sub-tasks with [x]
-   - Add "Result:" section summarizing outcomes
+1. **Verify Task Completion:**
+   - ✅ Task must be documented in a daily log with matching date
+   - ✅ Daily log must explain what was completed and how
+   - ✅ All sub-tasks should be documented
+   - ⚠️ **DO NOT remove tasks that aren't documented in logs**
 
-2. **Delete Completed Sections:**
-   - Remove completed tasks from high/medium priority sections
-   - Keep only active/pending tasks
-   - Move completed items to a "Recently Completed" section if needed for reference
+2. **Remove Completed Tasks:**
+   - **DELETE the entire task section** from REMAINING_TASKS.md
+   - Do NOT mark as completed and leave in the list
+   - Do NOT create a "Completed Tasks" section
+   - Completed tasks are tracked in daily logs, not in REMAINING_TASKS.md
 
 3. **Add New Tasks:**
    - Add new tasks identified during the session
    - Use proper priority levels (🔴 High, 🟡 Medium, 🟢 Low)
    - Include source date and status
+   - Number tasks sequentially within each priority section
 
 4. **Update Header:**
    - Update "Last Updated" date
-   - Note any tasks completed today
-   - Update status if needed
+   - Note that completed tasks have been removed
+   - Reference daily logs for completion details
 
-5. **Verification:**
+5. **Update Task Summary:**
+   - Remove completed tasks from summary sections
+   - Keep only active/pending tasks
+   - Update recommended order of completion
+
+6. **Verification:**
+   - ⚠️ **ALWAYS verify task is documented in daily log** before removing
    - ⚠️ **ALWAYS verify with user** if uncertain about completion status
-   - Don't mark tasks as completed without confirmation
+   - Don't remove tasks without proper documentation
    - Ask user if unsure whether a task is truly done
 
 ### Example Update Format:
 
-**Before:**
+**Before (in REMAINING_TASKS.md):**
 ```
-**Status:** ⏳ **PENDING** - Need to test
-- [ ] Task 1
-- [ ] Task 2
+### 1. Fix GitHub Actions Deployment
+**Source:** November 18, 2025  
+**Status:** ✅ **COMPLETED** - November 19, 2025
+...
 ```
 
-**After:**
+**After (in REMAINING_TASKS.md):**
 ```
-**Status:** ✅ **COMPLETED** - November 20, 2025
-**Tasks Completed:**
-- [x] Task 1
-- [x] Task 2
-**Result:**
-- ✅ Outcome 1
-- ✅ Outcome 2
+[Task completely removed - see 2025-11-20_FULL_SESSION.md for details]
+```
+
+**In Daily Log (2025-11-20_FULL_SESSION.md):**
+```
+### 1. Fixed GitHub Actions Deployment with Environment Variables
+**Status:** ✅ **COMPLETED** - Morning session
+[Full documentation of what was done]
 ```
 
 ---

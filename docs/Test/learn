@@ -1,0 +1,6 @@
+// JavaScript - no type checking
+function calculatePower(voltage, current) {
+  return voltage * current; // What if someone passes strings?
+}
+
+calculatePower("120", "5"); // Returns "1205" (string concatenation) - BUG!

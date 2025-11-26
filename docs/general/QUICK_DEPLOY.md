@@ -50,3 +50,15 @@ git push origin main
 
 See `docs/general/GITHUB_DEPLOYMENT_GUIDE.md` for detailed information.
 
+---
+
+## 🔄 Manual Deployment (Fallback)
+
+If GitHub Actions fails, you can deploy manually:
+
+**Quick Manual Upload:**
+- See: [`docs/general/MANUAL_UPLOAD_QUICK_GUIDE.md`](./MANUAL_UPLOAD_QUICK_GUIDE.md)
+- Build locally: `npm run build`
+- Upload `dist/` contents to cPanel File Manager
+- Takes ~2-3 minutes
+

@@ -6,8 +6,13 @@ type Period = '24h' | '7d' | '30d' | '1y';
 
 /**
  * Determines which processing table to use based on machine type
+ * 
+ * NOTE: After migration to new Supabase instance, this will return:
+ * - 'cirrus_calculated' instead of 'cirrus'
+ * - 'coolbreeze_calculated' instead of 'coolbreeze'
+ * Pattern: {manufacturer}_calculated
  */
-async function getMachineProcessingTable(machineId: string): Promise<'cirrus' | 'coolbreeze' | null> {
+async function getMachineProcessingTable(machineId: string): Promise<'cirrus' | 'coolbreeze' | 'alliance' | null> {
   const { data: machine, error } = await supabase
     .from('machines')
     .select('type, manufacturer')
@@ -29,14 +34,20 @@ async function getMachineProcessingTable(machineId: string): Promise<'cirrus' | 
 }
 
 /**
- * Fetches historical data from device-specific processing tables (cirrus or coolbreeze)
- * Raw data is deleted after processing, so we fetch from processed tables
+ * Fetches historical data from device-specific processing tables
+ * 
+ * CURRENT: Fetches from 'cirrus' or 'coolbreeze' tables
+ * AFTER MIGRATION: Will fetch from 'cirrus_calculated' or 'coolbreeze_calculated' tables
+ * 
+ * Raw data is stored in {manufacturer}_raw tables (2 weeks retention)
+ * Processed data is stored in {manufacturer}_calculated tables (1 year retention)
  */
 export async function fetchHistoricalData(
   machineId: string,
   period: Period = '24h'
 ): Promise<MachineHistoricalData> {
   // Calculate the start time based on the period
+  // Always calculate from "now" backwards to ensure full period is shown
   const now = new Date();
   let startTime: Date;
   
@@ -56,6 +67,9 @@ export async function fetchHistoricalData(
     default:
       startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   }
+  
+  // Store period info for use in formatChartData
+  // We'll use the period to generate complete date ranges
 
   // Determine which processing table to use
   const processingTable = await getMachineProcessingTable(machineId);
@@ -75,33 +89,47 @@ export async function fetchHistoricalData(
     };
   }
 
-  // Fetch readings from the appropriate processing table
-  console.log(`[Historical Data] Fetching from ${processingTable} for machine ${machineId}, period: ${period}, startTime: ${startTime.toISOString()}`);
+  // Use the optimized database function for fetching historical data
+  // This function handles aggregation automatically based on period:
+  // - 24h: All readings (no aggregation)
+  // - 7d: 10-minute averages
+  // - 30d: 1-hour averages
+  // - 1y: 1-day averages
+  console.log(`[Historical Data] Fetching from ${processingTable} for machine ${machineId}, period: ${period} using get_historical_data() function`);
   
-  const { data: readings, error } = await supabase
-    .from(processingTable)
-    .select('*')
-    .eq('machine_id', machineId)
-    .gte('timestamp', startTime.toISOString())
-    .order('timestamp', { ascending: true });
+  const { data: readings, error } = await supabase.rpc('get_historical_data', {
+    p_machine_id: machineId,
+    p_period: period,
+    p_table_name: processingTable,
+  });
 
   if (error) {
-    console.error('[Historical Data] Error fetching historical data:', error);
-    // Return empty data structure on error
-    return {
-      motorTemp: [],
-      current: [],
-      outsideTemp: [],
-      insideTemp: [],
-      deltaT: [],
-      fanActive: [],
-      isCooling: [],
-      hasWater: [],
-      power: [],
-    };
+    // Check if it's a function-not-found error (might need to run migration)
+    if (error.code === '42883' || error.message?.includes('function') || error.message?.includes('does not exist')) {
+      console.error(`[Historical Data] Function 'get_historical_data' does not exist. Please run migration: 20250126000000_create_historical_data_views.sql`);
+      // Fallback to direct table query
+      console.warn('[Historical Data] Falling back to direct table query...');
+      return await fetchHistoricalDataDirect(machineId, period, processingTable, startTime);
+    } else {
+      // Other errors (permissions, network, etc.)
+      console.error('[Historical Data] Error fetching historical data:', error);
+      return {
+        motorTemp: [],
+        current: [],
+        outsideTemp: [],
+        insideTemp: [],
+        deltaT: [],
+        fanActive: [],
+        isCooling: [],
+        hasWater: [],
+        pumpActive: [],
+        power: [],
+        fanSpeed: [],
+      };
+    }
   }
 
-  console.log(`[Historical Data] Fetched ${readings?.length || 0} readings from ${processingTable}`);
+  console.log(`[Historical Data] Fetched ${readings?.length || 0} readings from ${processingTable} using optimized function`);
 
   if (!readings || readings.length === 0) {
     console.warn(`[Historical Data] No readings found for machine ${machineId} in ${processingTable} for period ${period}`);
@@ -128,10 +156,15 @@ export async function fetchHistoricalData(
   const fanActive: HistoricalDataPoint[] = [];
   const isCooling: HistoricalDataPoint[] = [];
   const hasWater: HistoricalDataPoint[] = [];
+  const pumpActive: HistoricalDataPoint[] = [];
   const power: HistoricalDataPoint[] = [];
+  const fanSpeed: HistoricalDataPoint[] = [];
 
+  // Handle quoted column names from function (timestamp and current are reserved keywords)
   readings.forEach((reading: any) => {
-    const timestamp = new Date(reading.timestamp || reading.created_at).getTime();
+    // Function returns "timestamp" and "current" as quoted identifiers
+    const timestampValue = reading.timestamp || reading['timestamp'] || reading.created_at;
+    const timestamp = new Date(timestampValue).getTime();
 
     // Motor temp (from processing table)
     if (reading.motor_temp != null) {
@@ -141,11 +174,12 @@ export async function fetchHistoricalData(
       });
     }
 
-    // Current (from processing table)
-    if (reading.current != null) {
+    // Current (from processing table - may be quoted as "current")
+    const currentValue = reading.current ?? reading['current'];
+    if (currentValue != null) {
       current.push({
         timestamp,
-        value: reading.current,
+        value: currentValue,
       });
     }
 
@@ -203,6 +237,14 @@ export async function fetchHistoricalData(
       });
     }
 
+    // Pump active (from processing table)
+    if (reading.pump_active != null) {
+      pumpActive.push({
+        timestamp,
+        value: reading.pump_active ? 1 : 0,
+      });
+    }
+
     // Power (from processing table)
     if (reading.power != null) {
       power.push({
@@ -216,6 +258,15 @@ export async function fetchHistoricalData(
         value: reading.voltage * reading.current,
       });
     }
+
+    // Fan speed (from processing table, 0-100%, NULL for heatpumps)
+    const fanSpeedValue = reading.fan_speed;
+    if (fanSpeedValue != null) {
+      fanSpeed.push({
+        timestamp,
+        value: Math.max(0, Math.min(100, fanSpeedValue)), // Ensure 0-100 range
+      });
+    }
   });
 
   return {
@@ -227,7 +278,99 @@ export async function fetchHistoricalData(
     fanActive,
     isCooling,
     hasWater,
+    pumpActive,
     power,
+    fanSpeed,
+  };
+}
+
+/**
+ * Fallback function: Direct table query (used if database function doesn't exist)
+ */
+async function fetchHistoricalDataDirect(
+  machineId: string,
+  period: Period,
+  processingTable: string,
+  startTime: Date
+): Promise<MachineHistoricalData> {
+  console.log(`[Historical Data] Using direct table query fallback for ${processingTable}`);
+  
+  const { data: readings, error } = await supabase
+    .from(processingTable)
+    .select('*')
+    .eq('machine_id', machineId)
+    .gte('timestamp', startTime.toISOString())
+    .order('timestamp', { ascending: true });
+
+  if (error) {
+    console.error('[Historical Data] Error in direct table query:', error);
+    return {
+      motorTemp: [],
+      current: [],
+      outsideTemp: [],
+      insideTemp: [],
+      deltaT: [],
+      fanActive: [],
+      isCooling: [],
+      hasWater: [],
+      power: [],
+      fanSpeed: [],
+    };
+  }
+
+  // Transform readings (same logic as main function)
+  const motorTemp: HistoricalDataPoint[] = [];
+  const current: HistoricalDataPoint[] = [];
+  const outsideTemp: HistoricalDataPoint[] = [];
+  const insideTemp: HistoricalDataPoint[] = [];
+  const deltaT: HistoricalDataPoint[] = [];
+  const fanActive: HistoricalDataPoint[] = [];
+  const isCooling: HistoricalDataPoint[] = [];
+  const hasWater: HistoricalDataPoint[] = [];
+  const pumpActive: HistoricalDataPoint[] = [];
+  const power: HistoricalDataPoint[] = [];
+  const fanSpeed: HistoricalDataPoint[] = [];
+
+  readings?.forEach((reading: any) => {
+    const timestamp = new Date(reading.timestamp || reading.created_at).getTime();
+
+    if (reading.motor_temp != null) motorTemp.push({ timestamp, value: reading.motor_temp });
+    if (reading.current != null) current.push({ timestamp, value: reading.current });
+    if (reading.ambient_temp != null) outsideTemp.push({ timestamp, value: reading.ambient_temp });
+    if (reading.duct_temp != null) insideTemp.push({ timestamp, value: reading.duct_temp });
+    if (reading.delta_t != null) {
+      deltaT.push({ timestamp, value: reading.delta_t });
+    } else if (reading.ambient_temp != null && reading.duct_temp != null) {
+      deltaT.push({ timestamp, value: Math.abs(reading.ambient_temp - reading.duct_temp) });
+    }
+    if (reading.fan_active != null) fanActive.push({ timestamp, value: reading.fan_active ? 1 : 0 });
+    if (reading.is_cooling != null) isCooling.push({ timestamp, value: reading.is_cooling ? 1 : 0 });
+    if (reading.has_water != null) hasWater.push({ timestamp, value: reading.has_water ? 1 : 0 });
+    if (reading.pump_active != null) pumpActive.push({ timestamp, value: reading.pump_active ? 1 : 0 });
+    if (reading.power != null) {
+      power.push({ timestamp, value: reading.power });
+    } else if (reading.voltage != null && reading.current != null) {
+      power.push({ timestamp, value: reading.voltage * reading.current });
+    }
+    // Fan speed (0-100%, NULL for heatpumps)
+    const fanSpeedValue = reading.fan_speed;
+    if (fanSpeedValue != null) {
+      fanSpeed.push({ timestamp, value: Math.max(0, Math.min(100, fanSpeedValue)) });
+    }
+  });
+
+  return {
+    motorTemp,
+    current,
+    outsideTemp,
+    insideTemp,
+    deltaT,
+    fanActive,
+    isCooling,
+    hasWater,
+    pumpActive,
+    power,
+    fanSpeed,
   };
 }
 

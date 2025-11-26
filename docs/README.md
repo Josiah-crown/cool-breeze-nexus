@@ -97,6 +97,9 @@ Default parameters and configuration for different machine types.
 - [System Access and Backup](./general/SYSTEM_ACCESS_AND_BACKUP.md)
 - [Backup Schedule](./general/BACKUP_SCHEDULE.md)
 - [Troubleshooting New Code](./general/TROUBLESHOOTING_NEW_CODE.md)
+- [Complete Alert Parameters](./general/COMPLETE_ALERT_PARAMETERS.md) - All alert conditions
+- [Run Demo Setup](./general/RUN_DEMO_SETUP.md) - Demo data management
+- [Session Progress (Nov 8, 2025)](./general/SESSION_PROGRESS_2025-11-08.md) - Historical progress report
 
 ---
 

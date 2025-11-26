@@ -36,7 +36,7 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
   const [formData, setFormData] = useState({
     name: '',
     type: 'evaporative' as MachineType,
-    manufacturer: getInitialManufacturer('evaporative') as 'Cirrus' | 'CoolBreeze' | '',
+    manufacturer: getInitialManufacturer('evaporative') as 'Cirrus' | 'CoolBreeze' | 'Alliance' | '',
     apiEndpoint: '',
     assignedUserId: '',
   });

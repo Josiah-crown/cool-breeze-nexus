@@ -43,6 +43,8 @@ export interface MachineHistoricalData {
   fanActive: HistoricalDataPoint[];
   isCooling: HistoricalDataPoint[];
   hasWater: HistoricalDataPoint[];
+  pumpActive: HistoricalDataPoint[];
+  fanSpeed: HistoricalDataPoint[];
 }
 
 export interface NotificationRecipient {

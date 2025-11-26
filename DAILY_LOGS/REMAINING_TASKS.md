@@ -1,89 +1,63 @@
 # Remaining Tasks - Compiled from Daily Logs
 
-**Last Updated:** November 20, 2025  
+**Last Updated:** January 26, 2025  
 **Status:** Active tracking of outstanding tasks from all daily logs  
-**Tasks Completed Today:** Migration 4, RLS Policy for Cirrus, Verify Live Website, Fix Connection Status Function, Continue Cirrus Setup Migrations (Task 9), Update Supabase Authentication URLs (Task 10), Environment Variables on Server (Task 11), Historical Data Testing (Task 12)
+**Note:** Completed tasks have been removed from this list. See daily logs for completion details:
+- `2025-11-20_FULL_SESSION.md` - GitHub Actions deployment, frontend fixes
+- `2025-11-25_DATABASE_CLEANUP_AND_MIGRATION_PREP.md` - RLS grants fix, connection threshold fix, ESP32 verification
+- `2025-01-26_HISTORICAL_DATA_UPDATES.md` - Historical graph updates (fan speed, pump line, data ranges)
 
 ---
 
 ## 🔴 High Priority Tasks
 
-### 1. Fix GitHub Actions Deployment
-**Source:** November 18, 2025  
-**Status:** ✅ **COMPLETED** - November 19, 2025
+### 1. Alert Logic Implementation
+**Source:** November 25, 2025  
+**Status:** ⏳ **IN PROGRESS** - ESP32 is working, alert logic needs to be implemented
 
-**Tasks Completed:**
-- [x] Added environment variables to GitHub Secrets (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`)
-- [x] Updated workflow file to pass environment variables during build
-- [x] Verified GitHub Secrets for FTP deployment (`CPANEL_HOST`, `CPANEL_USER`, `CPANEL_PASS`)
-- [x] Tested deployment - builds and uploads successfully
-- [x] Verified login/authentication works after deployment
+**Current Status:**
+- ✅ ESP32 integration complete - Device is working in the field using `ESP32_Cirrus_Optimized_2Min.ino`
+- ✅ Alert thresholds UI complete - Users can configure thresholds per machine
+- ✅ Database schema ready - Alert tables and configuration tables exist
+- ⏳ Alert checking logic - Needs to be implemented to monitor sensor data
+- ⏳ Email sending - Needs to be implemented when alerts trigger
 
-**Files:**
-- `.github/workflows/deploy.yml` - Updated with environment variables
-- `DEPLOYMENT_GUIDE_GITHUB.md` - Created comprehensive deployment guide
+**Tasks:**
+- [ ] Implement alert checking logic (monitors sensor data from ESP32)
+- [ ] Check all alert conditions against configured thresholds:
+  - [ ] Motor overheating (motor_temp > threshold for duration)
+  - [ ] Motor overcurrent (current > threshold for duration)
+  - [ ] Fan failure (fan_active but current < threshold)
+  - [ ] Ineffective cooling/heating (delta_t < threshold for duration)
+  - [ ] Low water (cooling on but no water for duration)
+  - [ ] Other manufacturer-specific alerts
+- [ ] Create alert state tracking (when alerts trigger/resolve)
+- [ ] Implement email sending when alerts trigger
+- [ ] Implement recovery notifications (when alerts resolve)
+- [ ] Create alert history logging
+- [ ] Test with real ESP32 data from field device
 
-**Result:**
-- ✅ GitHub Actions deployment now works correctly
-- ✅ Environment variables embedded during build
-- ✅ Site connects to Supabase after deployment
-- ✅ Login/authentication working
+**Important Documents:**
+- `docs/general/COMPLETE_ALERT_PARAMETERS.md` - All 17 alert conditions documented
+- `docs/general/SESSION_PROGRESS_2025-11-08.md` - Alert system implementation details
+- `supabase/migrations/archive/20251108000001_add_alert_system.sql` - Alert system migration (already run)
 
----
+**Files to Update:**
+- Create Supabase Edge Function or database trigger for alert checking
+- Update `src/components/AlertThresholdsEditor.tsx` if needed
+- Create alert monitoring service/function
+- Email sending implementation (Supabase Edge Function or external service)
 
-### 2. Run Migration 4: Add Manufacturer Column
-**Source:** November 13, 2025  
-**Status:** ✅ **COMPLETED** - Previously completed
-
-**Tasks Completed:**
-- [x] Run migration: `supabase/migrations/20250108000003_add_manufacturer_column.sql`
-- [x] Added `manufacturer` column to `machines` table
-- [x] Fixed console error: `column machines.manufacturer does not exist`
-
-**Result:**
-- ✅ "Change Model" feature now works
-- ✅ Manufacturer selection functionality enabled
-
----
-
-### 3. Fix RLS Policy for Cirrus Table
-**Source:** November 13, 2025  
-**Status:** ✅ **COMPLETED** - Previously completed
-
-**Tasks Completed:**
-- [x] Ran SQL from `FIX_CIRRUS_RLS.md`
-- [x] Fixed: `permission denied for table cirrus` (403 Forbidden)
-- [x] Historical data now loads correctly
-
-**Result:**
-- ✅ Historical data display working
-- ✅ Users can view charts without errors
+**Impact:**
+- Critical for system functionality
+- Users need alerts when machines have issues
+- Enables proactive maintenance
 
 ---
 
-### 4. Verify Live Website
-**Source:** November 18, 2025  
-**Status:** ✅ **COMPLETED** - November 20, 2025
-
-**Tasks Completed:**
-- [x] Tested all new color scheme on production
-- [x] Verified logo displays correctly at new size
-- [x] Tested all buttons and interactive elements
-- [x] Verified all container borders display correctly
-- [x] Tested responsive design with new colors
-- [x] Tested historical data display
-- [x] Tested manufacturer features
-- [x] Verified all new functionality works on production
-
-**Result:**
-- ✅ All production testing completed
-- ✅ Website verified and working correctly
-
----
-
-### 5. Notification System Setup and Verification
+### 2. Notification System Setup and Verification
 **Source:** November 19, 2025  
-**Status:** ⏳ **NEW TASK** - Needs comprehensive setup and testing
+**Status:** ⏳ **PENDING** - Depends on Alert Logic Implementation (Task 5)
 
 **Tasks:**
 - [ ] Verify email notification system is properly configured
@@ -120,9 +94,11 @@
 - Users need to be notified of machine issues
 - Affects user trust and system reliability
 
+**Note:** This task depends on Task 1 (Alert Logic Implementation) being completed first.
+
 ---
 
-### 6. Fee Structure and Billing System Design
+### 3. Fee Structure and Billing System Design
 **Source:** November 19, 2025  
 **Status:** ⏳ **NEW TASK** - Business model and payment system needed
 
@@ -207,59 +183,77 @@
 
 ---
 
-## 🟡 Medium Priority Tasks
+### 4. Database Migration to New Architecture (After MVP)
+**Source:** November 25, 2025  
+**Status:** ⏳ **PREPARED** - Ready for migration when new Supabase instance is set up
 
-### 7. Fix CoolBreeze 403 Error (RLS Policy Issue)
-**Source:** November 20, 2025  
-**Status:** ⏳ **INVESTIGATING** - Policy exists but 403 error persists
+**Preparation Completed:**
+- [x] Database architecture analyzed and documented
+- [x] New architecture designed (manufacturer-agnostic pattern)
+- [x] Complete SQL schema created (`000_COMPLETE_DATABASE_SCHEMA.sql`)
+- [x] Migration guide created (`MIGRATION_GUIDE_NEW_SUPABASE.md`)
+- [x] Files to update checklist created (`FILES_TO_UPDATE_AFTER_MIGRATION.md`)
+- [x] Code files marked with TODO comments for future updates
+- [x] Old migration files archived
 
-**Problem:**
-- CoolBreeze table returns `403 (Forbidden)` when fetching historical data
-- RLS policy exists and appears correct
-- Even simple test policy doesn't work, suggesting issue is NOT with policy logic
+**New Architecture:**
+- `{manufacturer}_raw` - Raw data (2 weeks retention)
+- `{manufacturer}_calculated` - Processed data (1 year retention)
+- `{manufacturer}_notifications` - Notification thresholds per manufacturer
+- `{manufacturer}_voltage_config` - Voltage input mappings per manufacturer
+- `machine_connection_status` - Shared connection tracking
 
-**Attempts Made:**
-- [x] Created `FIX_COOLBREEZE_RLS_SIMPLE.sql` - Recreated policy matching working pattern
-- [x] Created `FIX_COOLBREEZE_RLS_DEBUG.sql` - Enhanced version with client role check
-- [x] Created `FIX_COOLBREEZE_403_COMPLETE.sql` - Complete fix using exact cirrus table pattern
-- [x] Created `FIX_COOLBREEZE_403_SIMPLE_TEST.sql` - Simple test policy (super_admin OR owner)
-- [x] Verified policy exists in Supabase (SELECT, INSERT, UPDATE policies all present)
-- [x] Verified RLS is enabled on coolbreeze table
-- [x] Tested simple policy - still returns 403
-
-**Current Status:**
-- ⚠️ **Issue persists** - Even simple policy doesn't work
-- This suggests the problem is NOT with the RLS policy logic itself
-- Possible causes:
-  - Browser/cache issue (unlikely if hard refresh tried)
-  - User permissions issue (user role not being recognized)
-  - Query structure issue (how frontend queries the table)
-  - Supabase configuration issue
-
-**Next Steps:**
-- [ ] Check user role in database: `SELECT role FROM public.user_roles WHERE user_id = auth.uid();`
-- [ ] Test direct query in Supabase SQL Editor: `SELECT COUNT(*) FROM public.coolbreeze;`
-- [ ] Check Supabase logs for detailed error messages
-- [ ] Verify frontend query structure matches working cirrus queries
-- [ ] Check if there's a difference in how coolbreeze vs cirrus tables are queried
-- [ ] Consider temporary workaround: Grant service role access or bypass RLS for testing
+**Migration Tasks (After MVP):**
+- [ ] Set up new Supabase instance
+- [ ] Run `000_COMPLETE_DATABASE_SCHEMA.sql`
+- [ ] Migrate existing data (if applicable)
+- [ ] Create processing triggers (`{manufacturer}_raw` → `{manufacturer}_calculated`)
+- [ ] Create cleanup jobs (auto-delete old data)
+- [ ] Update frontend code (table name changes)
+- [ ] Update ESP32 code (use `{manufacturer}_raw` tables)
+- [ ] Test all functionality
+- [ ] Drop old tables after migration verified
 
 **Files Created:**
-- `FIX_COOLBREEZE_RLS_SIMPLE.sql` - Simple policy recreation
-- `FIX_COOLBREEZE_RLS_DEBUG.sql` - Debug version with verification
-- `FIX_COOLBREEZE_403_COMPLETE.sql` - Complete fix using cirrus pattern
-- `FIX_COOLBREEZE_403_SIMPLE_TEST.sql` - Simple test policy
-- `FIX_403_ERROR_COMPLETE_GUIDE.md` - Step-by-step guide
-- `VERIFY_COOLBREEZE_RLS.sql` - Policy verification query
+- `SUPABASE_ANALYSIS_AND_CLEANUP_PLAN.md` - Database analysis
+- `PROPOSED_DATABASE_ARCHITECTURE.md` - Architecture proposal
+- `DATABASE_SCHEMA.md` - Schema documentation
+- `MIGRATION_GUIDE_NEW_SUPABASE.md` - Migration guide
+- `FILES_TO_UPDATE_AFTER_MIGRATION.md` - Update checklist
+- `supabase/migrations/000_COMPLETE_DATABASE_SCHEMA.sql` - Complete schema
 
 **Impact:**
-- Blocks historical data display for CoolBreeze machines
-- Users cannot view charts/historical data
-- Affects user experience for CoolBreeze manufacturer machines
+- ✅ Expansion-friendly: Add manufacturer = add 4 tables
+- ✅ Historical data: 2 weeks raw + 1 year calculated
+- ✅ Better organization: Self-contained per manufacturer
+- ✅ Generic voltage mapping: Custom_1-6 system
+
+**Priority:** 🟠 **MEDIUM** - After MVP, when setting up new Supabase instance
 
 ---
 
-### 8. Fix Function Search Path Security (Security Best Practice)
+## 🟡 Medium Priority Tasks
+
+### 1. Historical Graph Data Polish
+**Source:** January 26, 2025  
+**Status:** ⏳ **PENDING**
+
+**Issue:**
+- Graph rendering is working, but data handling needs refinement.
+- Data aggregation and display logic should be optimized for better user experience.
+
+**Requirements:**
+- [ ] Review data aggregation logic in `get_historical_data` SQL function
+- [ ] Ensure smooth transitions between data points
+- [ ] Verify data accuracy for all time periods (24h, 7d, 30d, 1y)
+- [ ] Address any edge cases with missing or null data
+- [ ] Optimize frontend data processing performance
+
+**Priority:** 🟠 **MEDIUM** - Polish after core functionality is working
+
+---
+
+### 2. Fix Function Search Path Security (Security Best Practice)
 **Source:** November 20, 2025  
 **Status:** ⏳ **PENDING**
 
@@ -295,110 +289,9 @@
 
 ---
 
-### 8. Fix Connection Status Function (Permanent)
-**Source:** November 17, 2025  
-**Status:** ✅ **COMPLETED** - November 20, 2025
-
-**Tasks Completed:**
-- [x] Direct SQL fix (`DIRECT_FIX_CONNECTION.sql`) implemented and working
-- [x] Connection status updates working correctly
-- [x] Solution has been running reliably
-
-**Result:**
-- ✅ Connection status function working correctly
-- ✅ Using `DIRECT_FIX_CONNECTION.sql` as stable solution
-- ✅ Can be revisited if issues arise in the future
-
-**Files:**
-- `docs/supabase/DIRECT_FIX_CONNECTION.sql` - **Solution (working and stable)**
-
-**Note:**
-- Workaround is sufficient and stable - no need to fix underlying function unless it breaks
-
----
-
-### 9. Continue Cirrus Setup Migrations
-**Source:** November 13, 2025  
-**Status:** ✅ **COMPLETED** - November 20, 2025
-
-**Tasks Completed:**
-- [x] All migrations have been run and verified
-- [x] Data pipeline is working correctly
-
-**Result:**
-- ✅ All Cirrus setup migrations completed
-- ✅ Data processing pipeline operational
-
----
-
-### 10. Update Supabase Authentication URLs
-**Source:** November 18, 2025  
-**Status:** ✅ **COMPLETED** - November 20, 2025
-
-**Tasks Completed:**
-- [x] Added production URL to Supabase dashboard
-- [x] Updated Site URL: `https://iotnexus.site`
-- [x] Updated Redirect URLs: `https://iotnexus.site/**`
-
-**Result:**
-- ✅ Supabase authentication URLs configured for production
-
----
-
-### 11. Environment Variables on Server
-**Source:** November 18, 2025  
-**Status:** ✅ **COMPLETED** - November 20, 2025
-
-**Tasks Completed:**
-- [x] Verified `VITE_SUPABASE_URL` is set in GitHub Secrets
-- [x] Verified `VITE_SUPABASE_PUBLISHABLE_KEY` is set in GitHub Secrets
-- [x] Confirmed variables are embedded during build process
-
-**Result:**
-- ✅ Environment variables properly configured in GitHub Secrets
-- ✅ Variables embedded during build (Vite build-time replacement)
-- ✅ No server-side configuration needed (static hosting)
-
----
-
-### 12. Historical Data Testing
-**Source:** November 17, 2025  
-**Status:** ✅ **COMPLETED** - November 20, 2025
-
-**Tasks Completed:**
-- [x] Verified historical data is being stored in `cirrus` and `coolbreeze` tables
-- [x] Tested historical data display with real data
-- [x] Verified time period selection (24h, 7d, 30d, 1y) works correctly
-- [x] Ensured charts render properly with actual data points
-- [x] Tested empty state handling (when no historical data exists)
-- [x] Verified field mapping between processing tables and frontend
-- [x] Tested with both Cirrus and CoolBreeze machines
-- [x] Verified query performance is acceptable
-
-**Result:**
-- ✅ Historical data testing completed and verified
-- ✅ All functionality working as expected
-
----
-
-### 12. Verify Trigger Chain
-**Source:** November 17, 2025  
-**Status:** ⏳ **PENDING**
-
-**Tasks:**
-- [ ] Confirm `trigger_auto_update_machine_on_cirrus_insert` fires correctly
-- [ ] Verify `trigger_auto_update_machine_on_coolbreeze_insert` works
-- [ ] Test that new readings automatically update connection status
-- [ ] Test edge cases:
-  - [ ] Device disconnects (no data for >15 minutes)
-  - [ ] Device reconnects after being offline
-  - [ ] Verify readings are zeroed out when disconnected
-
----
-
 ## 🟢 Low Priority Tasks
 
-### 13. Documentation Updates
+### 3. Documentation Updates
 **Source:** November 18, 2025  
 **Status:** ⏳ **PENDING**
 
@@ -410,7 +303,7 @@
 
 ---
 
-### 14. Build Optimization (Performance)
+### 4. Build Optimization (Performance)
 **Source:** November 18, 2025  
 **Status:** ⏳ **PENDING** - Low priority optimization
 
@@ -429,25 +322,8 @@
 
 ---
 
-### 15. Test ESP32 Code
-**Source:** November 13, 2025  
-**Status:** ⏳ **PENDING** - Code ready, needs real-world testing
 
-**Tasks:**
-- [ ] Verify temperature validation works
-- [ ] Verify WiFi robustness improvements
-- [ ] Verify new boot button logic (5-second hold)
-- [ ] Test data transmission at 2-minute intervals
-- [ ] Verify sensor read count tracking
-- [ ] Test error handling and fallback mechanisms
-
-**Files:**
-- `hardware/esp32/ESP32_Cirrus_Optimized_2Min/ESP32_Cirrus_Optimized_2Min.ino`
-- `hardware/esp32/ESP32_HVAC_CoolBreezeNexus_V2_Optimized.ino`
-
----
-
-### 16. Code Cleanup
+### 5. Code Cleanup
 **Source:** November 17, 2025  
 **Status:** ⏳ **PENDING**
 
@@ -463,65 +339,45 @@
 
 ## 📋 Task Summary by Category
 
-### Deployment & Production
-1. ✅ Fix GitHub Actions Deployment - **COMPLETED**
-2. ✅ Verify Live Website - **COMPLETED**
-3. Update Supabase Authentication URLs (Task 9)
-4. Environment Variables on Server (Task 10)
-
-### Database & Migrations
-5. ✅ Run Migration 4: Add Manufacturer Column - **COMPLETED**
-6. ✅ Fix RLS Policy for Cirrus Table - **COMPLETED**
-7. Continue Cirrus Setup Migrations (Task 8 - 9 migrations pending)
-
 ### Business & Operations
-8. Notification System Setup and Verification ⚠️ **NEW** (Task 5)
-9. Fee Structure and Billing System Design ⚠️ **NEW** (Task 6)
+- Alert Logic Implementation ⚠️ **IN PROGRESS** - ESP32 working, needs implementation
+- Notification System Setup and Verification ⚠️ **PENDING** - Depends on Alert Logic
+- Fee Structure and Billing System Design ⚠️ **NEW**
 
 ### Functionality & Testing
-10. ✅ Fix Connection Status Function (Permanent) (Task 7) - **COMPLETED**
-11. Historical Data Testing (Task 11)
-12. Verify Trigger Chain (Task 12)
-13. Test ESP32 Code (Task 15)
+- Historical Graph Data Polish ⚠️ **NEW**
+- Function Search Path Security ⚠️ **PENDING**
 
 ### Documentation & Optimization
-14. Documentation Updates (Task 13)
-15. Build Optimization (Performance) (Task 14)
-16. Code Cleanup (Task 16)
+- Documentation Updates ⚠️ **PENDING**
+- Build Optimization (Performance) ⚠️ **PENDING**
+- Code Cleanup ⚠️ **PENDING**
+
+### Future Planning
+- Database Migration to New Architecture (After MVP) ⚠️ **PREPARED**
 
 ---
 
 ## 🎯 Recommended Order of Completion
 
-### Week 1 (Critical):
-1. ✅ Run Migration 4 (Manufacturer Column) - **COMPLETED**
-2. ✅ Fix RLS Policy for Cirrus Table - **COMPLETED**
-3. Run Migration 2 (Cirrus Processor) - **CRITICAL**
-4. ✅ Verify Live Website - **COMPLETED**
+### Current Priority (High):
+1. **Alert Logic Implementation** - ESP32 is working, implement alert monitoring
+2. **Notification System Setup** - Depends on alert logic completion
 
-### Week 2 (High Priority):
-5. ✅ Fix GitHub Actions Deployment - **COMPLETED**
-6. Continue remaining Cirrus migrations
-7. Notification System Setup and Verification - **NEW**
-8. Historical Data Testing
-9. ✅ Fix Connection Status Function - **COMPLETED**
+### Next Priority (Medium):
+3. **Historical Graph Data Polish** - Refine data handling
+4. **Function Search Path Security** - Security best practice
 
-### Week 3 (Business Model):
-10. Fee Structure and Billing System Design - **NEW** (Task 6)
-   - Research payment providers
-   - Design pricing model
-   - Begin implementation
-
-### Week 4+ (Medium/Low Priority):
-11. Update Supabase Authentication URLs
-12. Environment Variables on Server
-13. Verify Trigger Chain
-14. Test ESP32 Code
-15. Documentation Updates
-16. Build Optimization
-17. Code Cleanup
+### Future (Low Priority):
+5. **Documentation Updates** - Manual deployment guides
+6. **Build Optimization** - Performance improvements
+7. **Code Cleanup** - Remove debug code, clean up files
+8. **Database Migration** - After MVP completion
 
 ---
 
-**Note:** This document should be updated as tasks are completed. Mark items with ✅ when done and update status accordingly.
-
+**Note:** 
+- This document tracks ONLY remaining/active tasks
+- When tasks are completed, they are removed from this list (not marked as done)
+- Completed tasks are documented in daily logs with matching dates
+- See `DAILY_LOG_CHECKLIST.md` for process on handling completed tasks

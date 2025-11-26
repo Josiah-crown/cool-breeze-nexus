@@ -78,18 +78,18 @@
 
 ### **Project Details**
 - **Project Name:** cool-breeze-nexus (or your project name)
-- **Project ID:** `lkvnhskxbxzeohopqjcr`
-- **Project URL:** https://lkvnhskxbxzeohopqjcr.supabase.co
+- **Project ID:** `wjyanxstvbiqefmgpccb`
+- **Project URL:** https://wjyanxstvbiqefmgpccb.supabase.co
 - **Region:** (check in Supabase dashboard)
 
 ### **API Keys**
-- **Project URL:** `https://lkvnhskxbxzeohopqjcr.supabase.co`
+- **Project URL:** `https://wjyanxstvbiqefmgpccb.supabase.co`
 - **Anon Public Key:** `________________________` (used in frontend)
 - **Service Role Key:** `________________________` (NEVER expose to frontend!)
 
 ### **Database Access**
 - **Direct Connection:** Available in Supabase Dashboard → Project Settings → Database
-- **Host:** `db.lkvnhskxbxzeohopqjcr.supabase.co`
+- **Host:** `db.wjyanxstvbiqefmgpccb.supabase.co`
 - **Port:** 5432
 - **Database:** postgres
 - **Password:** (found in Supabase settings)
@@ -105,7 +105,7 @@
 
 ### **Environment Variables (.env file)**
 ```env
-VITE_SUPABASE_URL=https://lkvnhskxbxzeohopqjcr.supabase.co
+VITE_SUPABASE_URL=https://wjyanxstvbiqefmgpccb.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=________________________
 ```
 
@@ -175,7 +175,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=________________________
 Supabase automatically backs up your database, but you should also:
 
 #### **Manual Database Backup:**
-1. Go to: https://supabase.com/dashboard/project/lkvnhskxbxzeohopqjcr
+1. Go to: https://supabase.com/dashboard/project/wjyanxstvbiqefmgpccb
 2. Click **"Database"** → **"Backups"**
 3. Click **"Create Backup"**
 4. Name it: `manual_backup_YYYY-MM-DD`

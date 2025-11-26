@@ -31,11 +31,18 @@ export const ChangeManufacturerDialog: React.FC<ChangeManufacturerDialogProps> =
   onSuccess,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [selectedManufacturer, setSelectedManufacturer] = useState<Manufacturer | ''>(currentManufacturer as Manufacturer || '');
+  const [selectedManufacturer, setSelectedManufacturer] = useState<Manufacturer | undefined>(
+    (currentManufacturer as Manufacturer) || undefined
+  );
+
+  // Validate machineType
+  const validMachineType: MachineType = (['evaporative', 'heatpump', 'airconditioner'].includes(machineType) 
+    ? machineType 
+    : 'evaporative') as MachineType;
 
   useEffect(() => {
     if (open) {
-      setSelectedManufacturer(currentManufacturer as Manufacturer || '');
+      setSelectedManufacturer((currentManufacturer as Manufacturer) || undefined);
     }
   }, [open, currentManufacturer]);
 
@@ -43,8 +50,8 @@ export const ChangeManufacturerDialog: React.FC<ChangeManufacturerDialogProps> =
     setIsUpdating(true);
     try {
       // Validate if manufacturer is required
-      if (isManufacturerRequired(machineType) && !selectedManufacturer) {
-        toast.error(`Please select a ${machineType === 'evaporative' ? 'Evaporative Cooler' : 'HVAC'} model`);
+      if (isManufacturerRequired(validMachineType) && !selectedManufacturer) {
+        toast.error(`Please select a ${validMachineType === 'evaporative' ? 'Evaporative Cooler' : 'HVAC'} model`);
         setIsUpdating(false);
         return;
       }
@@ -67,8 +74,19 @@ export const ChangeManufacturerDialog: React.FC<ChangeManufacturerDialogProps> =
     }
   };
 
-  const availableManufacturers = getAvailableManufacturers(machineType);
-  const manufacturerRequired = isManufacturerRequired(machineType);
+  // Safely get available manufacturers with error handling
+  let availableManufacturers: Manufacturer[] = [];
+  let manufacturerRequired = false;
+  
+  try {
+    availableManufacturers = getAvailableManufacturers(validMachineType);
+    manufacturerRequired = isManufacturerRequired(validMachineType);
+  } catch (error) {
+    console.error('Error getting manufacturer config:', error);
+    // Fallback to default manufacturers
+    availableManufacturers = ['Cirrus', 'CoolBreeze'];
+    manufacturerRequired = false;
+  }
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -104,7 +122,7 @@ export const ChangeManufacturerDialog: React.FC<ChangeManufacturerDialogProps> =
           </Label>
           <Select 
             value={selectedManufacturer} 
-            onValueChange={(value: Manufacturer | '') => setSelectedManufacturer(value || '')}
+            onValueChange={(value: Manufacturer) => setSelectedManufacturer(value)}
             disabled={isUpdating}
           >
             <SelectTrigger 
@@ -114,9 +132,6 @@ export const ChangeManufacturerDialog: React.FC<ChangeManufacturerDialogProps> =
               <SelectValue placeholder={manufacturerRequired ? "Select manufacturer" : "Select manufacturer (optional)"} />
             </SelectTrigger>
             <SelectContent className="bg-card border-2 border-border">
-              {!manufacturerRequired && (
-                <SelectItem value="">None</SelectItem>
-              )}
               {availableManufacturers.map((manufacturer) => (
                 <SelectItem key={manufacturer} value={manufacturer}>
                   {manufacturer}
@@ -127,7 +142,7 @@ export const ChangeManufacturerDialog: React.FC<ChangeManufacturerDialogProps> =
           <p className="text-xs text-muted-foreground">
             {manufacturerRequired
               ? 'Select the manufacturer to ensure data is processed in the correct table'
-              : `Select a manufacturer if this is a specific ${machineType === 'airconditioner' ? 'air conditioner' : 'heat pump'} system`}
+              : `Select a manufacturer if this is a specific ${validMachineType === 'airconditioner' ? 'air conditioner' : validMachineType === 'heatpump' ? 'heat pump' : 'system'}`}
           </p>
         </div>
 

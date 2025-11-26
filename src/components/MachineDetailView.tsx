@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { MachineStatus, MachineHistoricalData } from '@/types/machine';
 import { StatusLight } from './StatusLight';
@@ -18,6 +18,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getProcessingTable, type MachineType } from '@/lib/machineConfig';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast as sonnerToast } from 'sonner';
 import { fetchHistoricalData } from '@/lib/historicalData';
@@ -57,28 +58,37 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   const [newLocation, setNewLocation] = useState(initialMachine.location || '');
   const [locationFallback, setLocationFallback] = useState<string | null>(null);
   
-  // Fetch latest reading from cirrus table (same source as historical graph)
+  // Fetch latest reading from processing table (same source as historical graph)
   const fetchLatestReading = async () => {
-    if (machine.type !== 'evaporative' || machine.manufacturer !== 'Cirrus') {
-      return; // Only for Cirrus machines
+    const processingTable = getProcessingTable(machine.type as MachineType, machine.manufacturer);
+    if (!processingTable) {
+      return; // No processing table for this machine type/manufacturer
     }
     
     try {
-      const { data: latestReading, error } = await supabase
-        .from('cirrus')
-        .select('fan_active, is_cooling, is_on, has_water, motor_temp, ambient_temp, duct_temp, current, voltage, power')
-        .eq('machine_id', machine.id)
-        .order('timestamp', { ascending: false })
-        .limit(1)
-        .single();
+        const { data: latestReading, error } = await supabase
+          .from(processingTable)
+          .select('fan_active, is_cooling, is_on, has_water, motor_temp, ambient_temp, duct_temp, current, voltage, power')
+          .eq('machine_id', machine.id)
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .maybeSingle(); // Use maybeSingle() to handle empty results gracefully
       
       if (error) {
-        console.warn('⚠️ MachineDetailView: Error fetching latest cirrus reading:', error);
+        // Handle table-not-found errors gracefully
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table') || error.message?.includes('does not exist')) {
+          console.debug(`[MachineDetailView] Table '${processingTable}' does not exist yet. Using default values.`);
+          return; // Use existing machine state
+        } else if (error.code === 'PGRST116') {
+          console.debug(`[MachineDetailView] No readings found in '${processingTable}'. Using default values.`);
+          return; // Use existing machine state
+        }
+        console.warn(`⚠️ MachineDetailView: Error fetching latest ${processingTable} reading:`, error);
         return;
       }
       
       if (latestReading) {
-        console.log('✅ MachineDetailView: Latest cirrus reading:', {
+        console.log(`✅ MachineDetailView: Latest ${processingTable} reading:`, {
           fan_active: latestReading.fan_active,
           is_cooling: latestReading.is_cooling,
         });
@@ -98,9 +108,20 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
           deltaT: Math.abs((latestReading.ambient_temp ?? prev.outsideTemp) - (latestReading.duct_temp ?? prev.insideTemp)),
         }));
       }
-    } catch (err) {
-      console.error('❌ MachineDetailView: Error in fetchLatestReading:', err);
-    }
+      } catch (err) {
+        // Handle table-not-found errors gracefully
+        if (err && typeof err === 'object' && 'code' in err) {
+          const error = err as any;
+          if (error.code === 'PGRST205' || error.message?.includes('Could not find the table') || error.message?.includes('does not exist')) {
+            console.debug(`[MachineDetailView] Table '${processingTable}' does not exist yet. Using default values.`);
+            return; // Use existing machine state
+          } else if (error.code === 'PGRST116') {
+            console.debug(`[MachineDetailView] No readings found in '${processingTable}'. Using default values.`);
+            return; // Use existing machine state
+          }
+        }
+        console.error('❌ MachineDetailView: Error in fetchLatestReading:', err);
+      }
   };
   
   // Update machine state when prop changes
@@ -111,31 +132,32 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       isCooling: initialMachine.isCooling,
     });
     setMachine(initialMachine);
-    // Also fetch latest from cirrus table
+    // Also fetch latest from processing table
     fetchLatestReading();
-  }, [initialMachine.id]);
+  }, [machine.id, machine.type, machine.manufacturer]);
   
-  // Set up real-time subscription to cirrus table (same source as historical graph)
+  // Set up real-time subscription to processing table (same source as historical graph)
   useEffect(() => {
-    if (machine.type !== 'evaporative' || machine.manufacturer !== 'Cirrus') {
-      return; // Only for Cirrus machines
+    const processingTable = getProcessingTable(machine.type as MachineType, machine.manufacturer);
+    if (!processingTable) {
+      return; // No processing table for this machine type/manufacturer
     }
     
-    console.log('📡 MachineDetailView: Setting up real-time subscription to cirrus table for machine:', machine.id);
+    console.log(`📡 MachineDetailView: Setting up real-time subscription to ${processingTable} table for machine:`, machine.id);
     
-    // Subscribe to cirrus table updates (same source as historical graph)
+    // Subscribe to processing table updates (same source as historical graph)
     const channel = supabase
-      .channel(`machine-detail-cirrus-${machine.id}`)
+      .channel(`machine-detail-${processingTable}-${machine.id}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'cirrus',
+          table: processingTable,
           filter: `machine_id=eq.${machine.id}`,
         },
         (payload) => {
-          console.log('📨 MachineDetailView: New cirrus reading received:', payload.new);
+          console.log(`📨 MachineDetailView: New ${processingTable} reading received:`, payload.new);
           const newReading = payload.new as any;
           setMachine(prev => ({
             ...prev,
@@ -154,7 +176,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
         }
       )
       .subscribe((status) => {
-        console.log('📡 MachineDetailView: Cirrus subscription status:', status);
+        console.log(`📡 MachineDetailView: ${processingTable} subscription status:`, status);
       });
     
     // Also poll every 5 seconds to catch any missed updates
@@ -163,7 +185,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     }, 5000);
     
     return () => {
-      console.log('🧹 MachineDetailView: Cleaning up cirrus subscription and polling');
+      console.log(`🧹 MachineDetailView: Cleaning up ${processingTable} subscription and polling`);
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
@@ -258,7 +280,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
   const labels = getTemperatureLabels();
 
-  const formatChartData = () => {
+  // Memoize chart data to prevent graph resets when hovering
+  const chartData = useMemo(() => {
     const motorTempData = historicalData.motorTemp || [];
     const currentData = historicalData.current || [];
     const outsideTempData = historicalData.outsideTemp || [];
@@ -267,25 +290,66 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     const fanActiveData = historicalData.fanActive || [];
     const isCoolingData = historicalData.isCooling || [];
     const hasWaterData = historicalData.hasWater || [];
+    const pumpActiveData = historicalData.pumpActive || [];
+    const fanSpeedData = historicalData.fanSpeed || [];
     
-    // Collect all unique timestamps from all datasets
-    const allTimestamps = new Set<number>();
-    [motorTempData, currentData, outsideTempData, insideTempData, deltaTData, fanActiveData, isCoolingData, hasWaterData].forEach(dataset => {
-      dataset.forEach(point => allTimestamps.add(point.timestamp));
-    });
+    // Always use current time as the rightmost point (end of graph)
+    const now = Date.now();
+    let startTime: number;
+    let intervalMs: number; // Interval between data points
     
-    // Convert to sorted array
-    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+    switch (selectedPeriod) {
+      case '24h':
+        startTime = now - 24 * 60 * 60 * 1000;
+        intervalMs = 3 * 60 * 1000; // 3 minute intervals
+        break;
+      case '7d':
+        startTime = now - 7 * 24 * 60 * 60 * 1000;
+        intervalMs = 10 * 60 * 1000; // 10 minute intervals
+        break;
+      case '30d':
+        startTime = now - 30 * 24 * 60 * 60 * 1000;
+        intervalMs = 60 * 60 * 1000; // 1 hour intervals (FIXED: was showing daily)
+        break;
+      case '1y':
+        startTime = now - 365 * 24 * 60 * 60 * 1000;
+        intervalMs = 24 * 60 * 60 * 1000; // 1 day intervals
+        break;
+      default:
+        startTime = now - 24 * 60 * 60 * 1000;
+        intervalMs = 3 * 60 * 1000;
+    }
     
-    // Create maps for quick lookup by timestamp
-    const motorTempMap = new Map(motorTempData.map(p => [p.timestamp, p.value]));
-    const currentMap = new Map(currentData.map(p => [p.timestamp, p.value]));
-    const outsideTempMap = new Map(outsideTempData.map(p => [p.timestamp, p.value]));
-    const insideTempMap = new Map(insideTempData.map(p => [p.timestamp, p.value]));
-    const deltaTMap = new Map(deltaTData.map(p => [p.timestamp, p.value]));
-    const fanActiveMap = new Map(fanActiveData.map(p => [p.timestamp, p.value]));
-    const isCoolingMap = new Map(isCoolingData.map(p => [p.timestamp, p.value]));
-    const hasWaterMap = new Map(hasWaterData.map(p => [p.timestamp, p.value]));
+    // Generate complete date range from startTime to now (always full period)
+    const completeTimestamps: number[] = [];
+    let currentTime = startTime;
+    const endTime = now;
+    
+    while (currentTime <= endTime) {
+      completeTimestamps.push(currentTime);
+      currentTime += intervalMs;
+    }
+    
+    // Ensure latest timestamp is included
+    if (completeTimestamps[completeTimestamps.length - 1] !== endTime) {
+      completeTimestamps.push(endTime);
+    }
+    
+    // Create maps for quick lookup by timestamp (round to nearest interval for matching)
+    const roundToInterval = (ts: number) => {
+      return Math.round(ts / intervalMs) * intervalMs;
+    };
+    
+    const motorTempMap = new Map(motorTempData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const currentMap = new Map(currentData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const outsideTempMap = new Map(outsideTempData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const insideTempMap = new Map(insideTempData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const deltaTMap = new Map(deltaTData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const fanActiveMap = new Map(fanActiveData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const isCoolingMap = new Map(isCoolingData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const hasWaterMap = new Map(hasWaterData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const pumpActiveMap = new Map(pumpActiveData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const fanSpeedMap = new Map(fanSpeedData.map(p => [roundToInterval(p.timestamp), p.value]));
     
     // Format time based on selected period
     const formatTime = (timestamp: number): string => {
@@ -302,7 +366,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       } else if (selectedPeriod === '30d') {
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const day = date.getDate().toString().padStart(2, '0');
-        return `${month}/${day}`;
+        return `${month}/${day} ${hours}:${minutes}`; // Show hours for 30d
       } else { // 1y
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const day = date.getDate().toString().padStart(2, '0');
@@ -311,36 +375,47 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       }
     };
     
-    // Combine all datasets by timestamp
-    const combinedData = sortedTimestamps.map(timestamp => {
-      const motorTemp = motorTempMap.get(timestamp);
-      const current = currentMap.get(timestamp);
-      const outsideTemp = outsideTempMap.get(timestamp);
-      const insideTemp = insideTempMap.get(timestamp);
-      const deltaT = deltaTMap.get(timestamp);
-      const fanOn = fanActiveMap.get(timestamp) || 0;
-      const coolOn = isCoolingMap.get(timestamp) || 0;
-      const waterOn = hasWaterMap.get(timestamp) || 0;
+    // Combine all datasets by timestamp, filling in missing values with 0 (not null)
+    const combinedData = completeTimestamps.map(timestamp => {
+      const roundedTs = roundToInterval(timestamp);
+      const motorTemp = motorTempMap.get(roundedTs);
+      const current = currentMap.get(roundedTs);
+      const outsideTemp = outsideTempMap.get(roundedTs);
+      const insideTemp = insideTempMap.get(roundedTs);
+      const deltaT = deltaTMap.get(roundedTs);
+      const fanOn = fanActiveMap.get(roundedTs);
+      const coolOn = isCoolingMap.get(roundedTs);
+      const waterOn = hasWaterMap.get(roundedTs);
+      const pumpOn = pumpActiveMap.get(roundedTs);
+      const fanSpeed = fanSpeedMap.get(roundedTs);
       
+      // Convert null/undefined to 0 for numeric values (show 0 instead of null on graph)
+      // For boolean values (fanActive, isCooling, hasWater, pumpActive), use null if not present (won't show line)
+      // Pump is positioned just below cool/fan (at 115°C, 5°C below the 120°C line)
       return {
         time: formatTime(timestamp),
-        motorTemp: motorTemp != null ? parseFloat(motorTemp.toFixed(1)) : null,
-        current: current != null ? parseFloat(current.toFixed(1)) : null,
-        outsideTemp: outsideTemp != null ? parseFloat(outsideTemp.toFixed(1)) : null,
-        insideTemp: insideTemp != null ? parseFloat(insideTemp.toFixed(1)) : null,
-        deltaT: deltaT != null ? parseFloat(deltaT.toFixed(1)) : null,
-        fanActive: fanOn > 0 ? 30 : null,
-        isCooling: coolOn > 0 ? 30 : null,
-        fanAndCool: (fanOn > 0 && coolOn > 0) ? 30 : null,
-        hasWater: waterOn > 0 ? 20 : null,
-        fanStatus: fanOn > 0 ? 'ON' : 'OFF',
-        coolStatus: coolOn > 0 ? 'ON' : 'OFF',
-        waterStatus: waterOn > 0 ? 'FULL' : 'EMPTY'
+        timestamp, // Keep for sorting
+        motorTemp: motorTemp != null ? parseFloat(motorTemp.toFixed(1)) : 0,
+        current: current != null ? parseFloat(current.toFixed(1)) : 0,
+        outsideTemp: outsideTemp != null ? parseFloat(outsideTemp.toFixed(1)) : 0,
+        insideTemp: insideTemp != null ? parseFloat(insideTemp.toFixed(1)) : 0,
+        deltaT: deltaT != null ? parseFloat(deltaT.toFixed(1)) : 0,
+        fanSpeed: fanSpeed != null ? Math.max(0, Math.min(100, parseFloat(fanSpeed.toFixed(1)))) : null, // 0-100%, null for heatpumps
+        fanActive: fanOn != null && fanOn > 0 ? 120 : null, // At top of graph (120°C)
+        isCooling: coolOn != null && coolOn > 0 ? 120 : null, // At top of graph (120°C)
+        fanAndCool: (fanOn != null && fanOn > 0 && coolOn != null && coolOn > 0) ? 120 : null, // At top of graph (120°C)
+        pumpActive: pumpOn != null && pumpOn > 0 ? 115 : null, // Just below cool/fan (115°C)
+        hasWater: waterOn != null && waterOn > 0 ? 0 : null, // At base of graph (0°C)
+        fanStatus: (fanOn != null && fanOn > 0) ? 'ON' : 'OFF',
+        coolStatus: (coolOn != null && coolOn > 0) ? 'ON' : 'OFF',
+        pumpStatus: (pumpOn != null && pumpOn > 0) ? 'ON' : 'OFF',
+        waterStatus: (waterOn != null && waterOn > 0) ? 'FULL' : 'EMPTY'
       };
     });
     
-    return combinedData;
-  };
+    // Sort by timestamp to ensure correct order
+    return combinedData.sort((a, b) => a.timestamp - b.timestamp);
+  }, [historicalData, selectedPeriod]);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -369,6 +444,12 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               <span className="text-muted-foreground">Motor Amps:</span>
               <span className="font-semibold text-foreground">{data.current}A</span>
             </div>
+            {machine.type !== 'heatpump' && data.fanSpeed != null && (
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Fan Speed:</span>
+                <span className="font-semibold text-foreground" style={{ color: '#166534' }}>{data.fanSpeed}%</span>
+              </div>
+            )}
             <div className="border-t border-border pt-1 mt-1">
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Fan:</span>
@@ -377,6 +458,10 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Cool:</span>
                 <span className={`font-semibold ${data.coolStatus === 'ON' ? 'text-blue-500' : 'text-muted-foreground'}`}>{data.coolStatus}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Pump:</span>
+                <span className={`font-semibold ${data.pumpStatus === 'ON' ? 'text-green-500' : 'text-muted-foreground'}`}>{data.pumpStatus}</span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Water:</span>
@@ -654,13 +739,13 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   <div className="flex items-center justify-center h-[400px]">
                     <p className="text-muted-foreground">Loading historical data...</p>
                   </div>
-                ) : formatChartData().length === 0 ? (
+                ) : chartData.length === 0 ? (
                   <div className="flex items-center justify-center h-[400px]">
                     <p className="text-muted-foreground">No historical data available for the selected period</p>
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={formatChartData()}>
+                    <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" />
                     <YAxis 
@@ -675,6 +760,14 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       stroke="hsl(var(--muted-foreground))" 
                       label={{ value: `Current (A)`, angle: 90, position: 'insideRight' }}
                       domain={[0, 40]}
+                    />
+                    <YAxis 
+                      yAxisId="fanSpeed"
+                      orientation="right"
+                      stroke="hsl(var(--muted-foreground))" 
+                      label={{ value: `Fan Speed (%)`, angle: 90, position: 'insideRight' }}
+                      domain={[0, 100]}
+                      hide={true}
                     />
                     <RechartsTooltip content={<CustomTooltip />} />
                     <Legend />
@@ -717,14 +810,27 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       dot={false}
                     />
                     
-                    {/* ON/OFF State Lines */}
+                    {/* Fan Speed Line (Dark Green, 0-100%) - Hidden for heatpumps */}
+                    {machine.type !== 'heatpump' && (
+                      <Line 
+                        yAxisId="fanSpeed"
+                        type="monotone" 
+                        dataKey="fanSpeed" 
+                        name="Fan Speed"
+                        stroke="#166534" 
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    )}
+                    
+                    {/* ON/OFF State Lines - At Top of Graph (300% wider) */}
                     <Line 
                       yAxisId="temp"
                       type="stepAfter" 
                       dataKey="fanActive" 
                       name="Fan"
                       stroke="#EF4444" 
-                      strokeWidth={3}
+                      strokeWidth={9}
                       dot={false}
                       connectNulls={false}
                     />
@@ -734,7 +840,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       dataKey="isCooling" 
                       name="Cool"
                       stroke="#3B82F6" 
-                      strokeWidth={3}
+                      strokeWidth={9}
                       dot={false}
                       connectNulls={false}
                     />
@@ -744,17 +850,29 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       dataKey="fanAndCool" 
                       name="Fan+Cool"
                       stroke="#9333EA" 
-                      strokeWidth={4}
+                      strokeWidth={9}
                       dot={false}
                       connectNulls={false}
                     />
+                    {/* Pump Line - Just Below Cool/Fan (at 115°C) */}
+                    <Line 
+                      yAxisId="temp"
+                      type="stepAfter" 
+                      dataKey="pumpActive" 
+                      name="Pump"
+                      stroke="#10B981" 
+                      strokeWidth={9}
+                      dot={false}
+                      connectNulls={false}
+                    />
+                    {/* Tank Line - At Base of Graph (300% thicker) */}
                     <Line 
                       yAxisId="temp"
                       type="stepAfter" 
                       dataKey="hasWater" 
                       name="Tank"
                       stroke="#4B5563" 
-                      strokeWidth={3}
+                      strokeWidth={9}
                       dot={false}
                       connectNulls={false}
                     />

@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { getProcessingTable, type MachineType } from '@/lib/machineConfig';
 
 interface MachineCardProps {
   machine: MachineStatus;
@@ -42,9 +43,10 @@ const MachineCard: React.FC<MachineCardProps> = ({
   const [machine, setMachine] = useState<MachineStatus>(initialMachine);
   const { user } = useAuth();
   
-  // Fetch latest reading from cirrus table for Cirrus machines (same source as historical graph)
+  // Fetch latest reading from processing table (same source as historical graph)
   useEffect(() => {
-    if (initialMachine.type !== 'evaporative' || initialMachine.manufacturer !== 'Cirrus') {
+    const processingTable = getProcessingTable(initialMachine.type as MachineType, initialMachine.manufacturer);
+    if (!processingTable) {
       setMachine(initialMachine);
       return;
     }
@@ -52,14 +54,33 @@ const MachineCard: React.FC<MachineCardProps> = ({
     const fetchLatestReading = async () => {
       try {
         const { data: latestReading, error } = await supabase
-          .from('cirrus')
+          .from(processingTable)
           .select('fan_active, is_cooling, is_on, has_water')
           .eq('machine_id', initialMachine.id)
           .order('timestamp', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle(); // Use maybeSingle() instead of single() to handle empty results gracefully
         
-        if (!error && latestReading) {
+        // Handle table-not-found errors gracefully (table might not exist yet)
+        if (error) {
+          if (error.code === 'PGRST205' || error.message?.includes('Could not find the table') || error.message?.includes('does not exist')) {
+            // Table doesn't exist yet - this is expected for new manufacturers
+            console.debug(`[MachineCard] Table '${processingTable}' does not exist yet for machine ${initialMachine.id}. Using default values.`);
+            setMachine(initialMachine);
+            return;
+          } else if (error.code === 'PGRST116') {
+            // No rows found - this is normal when there's no data yet
+            console.debug(`[MachineCard] No readings found in '${processingTable}' for machine ${initialMachine.id}. Using default values.`);
+            setMachine(initialMachine);
+            return;
+          } else {
+            console.warn(`[MachineCard] Error fetching latest ${processingTable} reading:`, error);
+            setMachine(initialMachine);
+            return;
+          }
+        }
+        
+        if (latestReading) {
           setMachine(prev => ({
             ...prev,
             fanActive: latestReading.fan_active ?? prev.fanActive,
@@ -68,10 +89,11 @@ const MachineCard: React.FC<MachineCardProps> = ({
             hasWater: latestReading.has_water ?? prev.hasWater,
           }));
         } else {
+          // No data found - use default values
           setMachine(initialMachine);
         }
       } catch (err) {
-        console.error('Error fetching latest cirrus reading for MachineCard:', err);
+        console.error(`[MachineCard] Unexpected error fetching latest ${processingTable} reading:`, err);
         setMachine(initialMachine);
       }
     };
@@ -169,15 +191,16 @@ const MachineCard: React.FC<MachineCardProps> = ({
                     Change Owner
                   </DropdownMenuItem>
                 )}
-                {showManagement && (
+                {showManagement && onChangeManufacturer && (
                   <DropdownMenuItem 
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      if (onChangeManufacturer) {
+                      try {
                         onChangeManufacturer(machine.id);
-                      } else {
-                        console.warn('onChangeManufacturer prop not provided to MachineCard');
-                        toast.error('Change Manufacturer feature not available');
+                      } catch (error) {
+                        console.error('Error opening Change Manufacturer dialog:', error);
+                        toast.error('Failed to open Change Manufacturer dialog');
                       }
                     }}
                   >

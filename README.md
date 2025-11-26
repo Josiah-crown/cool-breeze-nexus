@@ -2,10 +2,17 @@
 
 ---
 
-## 🤖 **FOR AI ASSISTANT (Demo Tomorrow!):**
-- **START HERE:** `HANDOFF_FOR_AI.md` - Complete project context, current state, and priorities
-- **USER CHECKLIST:** `TOMORROW_MORNING_CHECKLIST.md` - 90-minute pre-demo prep
-- **CURRENT STATUS:** ✅ ESP32 WORKING! Dashboard functional. Need to build 2-3 more devices.
+## 📚 **Quick Reference Guides:**
+- **AI Assistant:** `AI_REFERENCE.md` - Complete project context for AI assistants
+- **AI Prompts:** `AI_PROMPT_GUIDE.md` - Example prompts and best practices for working with AI
+- **Deployment:** `DEPLOYMENT_GUIDE_GITHUB.md` - GitHub Actions deployment guide
+- **Quick Deploy:** `docs/general/QUICK_DEPLOY.md` - One-command deployment
+- **Manual Deploy:** `docs/general/MANUAL_UPLOAD_QUICK_GUIDE.md` - Manual upload (if GitHub Actions fails)
+- **ESP32 Setup:** `ESP32_INTEGRATION_GUIDE.md` - ESP32 hardware integration
+- **Database:** `DATABASE_SCHEMA.md` - Complete database documentation
+- **Adding Machines:** `HOW_TO_ADD_MACHINE_WITH_PARAMETERS.md` - How to add new machines
+- **Documentation Index:** `docs/README.md` - Complete documentation index by category
+- **Task Tracking:** `DAILY_LOGS/REMAINING_TASKS.md` - Active task list and status
 
 ---
 
@@ -95,17 +102,43 @@ cool-breeze-nexus-main/
 ## 📚 Documentation
 
 ### **Essential Guides**
-- **`NEXT_SESSION.md`** ⭐ - Quick start for next session
-- **`SESSION_PROGRESS_2025-11-08.md`** - Latest progress report
 - **`ESP32_INTEGRATION_GUIDE.md`** - Connect ESP32 devices
-- **`COMPLETE_ALERT_PARAMETERS.md`** - All alert conditions
 - **`CPANEL_EMAIL_SETUP_GUIDE.md`** - Email configuration
-- **`RUN_DEMO_SETUP.md`** - Demo data management
+- **`HOW_TO_ADD_MACHINE_WITH_PARAMETERS.md`** - How to add new machines
+- **`docs/README.md`** ⭐ - Complete documentation index (organized by category)
 
-### **Database**
+### **Deployment Guides**
+- **`DEPLOYMENT_GUIDE_GITHUB.md`** - Complete GitHub Actions deployment guide
+- **`docs/general/QUICK_DEPLOY.md`** - One-command deployment reference
+- **`docs/general/MANUAL_UPLOAD_QUICK_GUIDE.md`** - Manual upload fallback (if GitHub Actions fails)
+- **`docs/general/GITHUB_DEPLOYMENT_GUIDE.md`** - Detailed deployment guide with troubleshooting
+
+### **Database & Architecture**
+- **`DATABASE_SCHEMA.md`** - Complete database documentation
+- **`PROPOSED_DATABASE_ARCHITECTURE.md`** - New manufacturer-agnostic architecture design
+- **`SUPABASE_ANALYSIS_AND_CLEANUP_PLAN.md`** - Database analysis and cleanup plan
+- **`MIGRATION_GUIDE_NEW_SUPABASE.md`** - Guide for migrating to new Supabase instance
+- **`FILES_TO_UPDATE_AFTER_MIGRATION.md`** - Checklist of files to update after migration
 - **`supabase/migrations/`** - All schema changes (versioned)
+- **`docs/supabase/DIRECT_FIX_CONNECTION.sql`** - Connection status fix
+- **`CHECK_ALL_RLS_STATUS.sql`** - RLS policy verification script
 - **`create-demo-users.js`** - Create demo accounts
 - **`DEBUG_USER_SESSION.sql`** - Troubleshooting queries
+
+### **Task Management & Progress**
+- **`DAILY_LOGS/REMAINING_TASKS.md`** ⭐ - Active task tracking and status (updated regularly)
+- **`DAILY_LOGS/2025-11-25_DATABASE_CLEANUP_AND_MIGRATION_PREP.md`** - Latest session summary
+- **`DAILY_LOGS/2025-11-20_FULL_SESSION.md`** - Full session details
+- **`DAILY_LOGS/DAILY_LOG_CHECKLIST.md`** - Daily logging checklist
+- **`DAILY_LOGS/`** - All daily session summaries
+- **`docs/general/SESSION_PROGRESS_2025-11-08.md`** - Historical progress report
+
+### **Manufacturer-Specific Guides**
+- **`ALLIANCE_MANUFACTURER_ADDITION.md`** - Guide for adding Alliance manufacturer
+
+### **Alert & Demo Guides**
+- **`docs/general/COMPLETE_ALERT_PARAMETERS.md`** - All alert conditions
+- **`docs/general/RUN_DEMO_SETUP.md`** - Demo data management
 
 ---
 
@@ -136,19 +169,22 @@ cool-breeze-nexus-main/
 
 ## 🎯 Current Status
 
-**Completion:** ~85% ✅
+**Status:** ✅ Production Ready (MVP Complete)
 
-```
-✅ Frontend Dashboard
-✅ User Management & Hierarchy
-✅ Machine Monitoring
-✅ Notification Preferences
-✅ Alert Threshold Editor
-✅ Email System (SMTP tested)
-⏳ Alert Logic Implementation (3 hours)
-⏳ ESP32 Integration (in progress)
-⏳ Production Deployment
-```
+**What's Working:**
+- ✅ Frontend Dashboard with real-time data
+- ✅ User Management & Hierarchy
+- ✅ Machine Monitoring and Historical Data
+- ✅ Notification Preferences
+- ✅ Alert Threshold Editor
+- ✅ Email System (SMTP tested)
+- ✅ GitHub Actions Deployment
+- ✅ ESP32 Integration Guide (code ready, real-world testing pending)
+- ✅ Database Schema Complete
+
+**In Progress:**
+- ⏳ Alert Logic Implementation (backend monitoring)
+- ⏳ ESP32 Real-World Testing
 
 ---
 
@@ -171,12 +207,26 @@ node test-email-connection.js
 
 ---
 
+## 🚀 Deployment
+
+### **Automatic Deployment (Recommended)**
+- **GitHub Actions:** Push to `main` branch for automatic deployment
+- **Quick Guide:** `docs/general/QUICK_DEPLOY.md` - One-command deployment
+- **Full Guide:** `DEPLOYMENT_GUIDE_GITHUB.md` - Complete GitHub Actions guide
+
+### **Manual Deployment (If GitHub Actions Fails)**
+If automatic deployment fails, use manual upload:
+- **Quick Manual Guide:** `docs/general/MANUAL_UPLOAD_QUICK_GUIDE.md` - 5-step manual upload process
+- **Alternative:** Use the detailed guide in `docs/general/GITHUB_DEPLOYMENT_GUIDE.md` (see Troubleshooting section)
+
+---
+
 ## 🚨 Alert System
 
 ### **Supported Machines**
-- **Evaporative Coolers** (7 alert types)
-- **Air Conditioners** (4 alert types)
-- **Heat Pumps** (6 alert types)
+- **Evaporative Coolers** (7 alert types) - Cirrus, CoolBreeze
+- **Air Conditioners** (4 alert types) - CoolBreeze
+- **Heat Pumps** (6 alert types) - Alliance, CoolBreeze
 
 ### **Alert Conditions**
 - Motor/compressor overheating
@@ -186,7 +236,7 @@ node test-email-connection.js
 - Water system issues (evap coolers)
 - Delta T monitoring
 
-**See:** `COMPLETE_ALERT_PARAMETERS.md` for full details
+**See:** `docs/general/COMPLETE_ALERT_PARAMETERS.md` for full details
 
 ---
 
@@ -205,7 +255,7 @@ node test-email-connection.js
 ### **ESP32 Devices**
 - RESTful API via Supabase
 - API key authentication
-- 5-minute update interval
+- 2-5 minute update interval (configurable)
 - See: `ESP32_INTEGRATION_GUIDE.md`
 
 ### **Endpoints**
@@ -273,9 +323,10 @@ node create-demo-users.js
 ## 📞 Support
 
 For issues or questions:
-1. Check `NEXT_SESSION.md` for quick answers
-2. Review `SESSION_PROGRESS_2025-11-08.md` for recent changes
-3. Consult specific guide documents
+1. Check `DAILY_LOGS/REMAINING_TASKS.md` for current task status
+2. Review `docs/README.md` for complete documentation index
+3. Review `DAILY_LOGS/REMAINING_TASKS.md` for current priorities
+4. Consult specific guide documents in `docs/` folder
 
 ---
 
@@ -285,8 +336,22 @@ Private project - All rights reserved
 
 ---
 
-## 🎉 Recent Updates (November 8, 2025)
+## 🎉 Recent Updates
 
+### **November 25, 2025**
+- ✅ Database architecture analysis and new design completed
+- ✅ Complete database schema prepared for migration
+- ✅ Fixed CoolBreeze and Alliance RLS policy issues (403 errors)
+- ✅ Fixed connection status threshold (5 minutes)
+- ✅ Fixed Change Manufacturer menu for evaporative coolers
+- ✅ Migration guide and update checklist created
+
+### **November 20, 2025**
+- ✅ Fixed GitHub Actions deployment
+- ✅ Verified live website functionality
+- ✅ Updated Supabase authentication URLs
+
+### **November 8, 2025**
 - ✅ Added email subscription checkbox (GDPR compliant)
 - ✅ Implemented alert thresholds editor (17 alert types)
 - ✅ 2-column responsive layout with green divider
@@ -295,7 +360,7 @@ Private project - All rights reserved
 - ✅ SMTP system tested and verified
 - ✅ Comprehensive documentation
 
-**Next:** ESP32 integration + alert logic implementation
+**See:** `DAILY_LOGS/REMAINING_TASKS.md` for current task status and next steps
 
 ---
 

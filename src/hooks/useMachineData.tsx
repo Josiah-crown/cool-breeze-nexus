@@ -117,11 +117,23 @@ const useMachineData = (userId: string, userRole: string) => {
           .order('timestamp', { ascending: false });
         
         // Check coolbreeze table for latest timestamps
-        const { data: latestCoolBreeze } = await supabase
+        const { data: latestCoolBreeze, error: coolbreezeError } = await supabase
           .from('coolbreeze')
           .select('machine_id, timestamp')
           .in('machine_id', machineIds)
           .order('timestamp', { ascending: false });
+        
+        // Handle table-not-found errors: suppress 404 errors, but log other errors
+        if (coolbreezeError) {
+          if (coolbreezeError.code === 'PGRST205' || coolbreezeError.message?.includes('Could not find the table') || coolbreezeError.message?.includes('does not exist')) {
+            // Table doesn't exist - this is a 404 that needs to be fixed by creating the table
+            // For now, treat as empty data (0 readings)
+            console.debug('[useMachineData] coolbreeze table does not exist yet - showing 0 readings');
+          } else {
+            // Other errors (permissions, etc.) - log but continue
+            console.warn('[useMachineData] Error fetching coolbreeze timestamps:', coolbreezeError);
+          }
+        }
         
         // Build map of latest timestamps (take most recent from any table)
         // Group by machine_id and take the most recent timestamp for each
@@ -151,6 +163,33 @@ const useMachineData = (userId: string, userRole: string) => {
           }
         });
         
+        // Check alliance table for latest timestamps (if it exists)
+        const { data: latestAlliance, error: allianceError } = await supabase
+          .from('alliance')
+          .select('machine_id, timestamp')
+          .in('machine_id', machineIds)
+          .order('timestamp', { ascending: false });
+        
+        // Handle table-not-found errors: suppress 404 errors, but log other errors
+        if (allianceError) {
+          if (allianceError.code === 'PGRST205' || allianceError.message?.includes('Could not find the table') || allianceError.message?.includes('does not exist')) {
+            // Table doesn't exist - this is a 404 that needs to be fixed by creating the table
+            // For now, treat as empty data (0 readings)
+            console.debug('[useMachineData] alliance table does not exist yet - showing 0 readings');
+          } else {
+            // Other errors (permissions, etc.) - log but continue
+            console.warn('[useMachineData] Error fetching alliance timestamps:', allianceError);
+          }
+        }
+        
+        (latestAlliance || []).forEach((reading: any) => {
+          const existing = readingsByMachine.get(reading.machine_id);
+          const readingTime = new Date(reading.timestamp);
+          if (!existing || readingTime > existing) {
+            readingsByMachine.set(reading.machine_id, readingTime);
+          }
+        });
+        
         // Copy to latestTimestamps map
         readingsByMachine.forEach((timestamp, machineId) => {
           latestTimestamps.set(machineId, timestamp);
@@ -167,8 +206,8 @@ const useMachineData = (userId: string, userRole: string) => {
         const now = new Date();
         const minutesSinceLastReading = (now.getTime() - latestTimestamp.getTime()) / (1000 * 60);
         
-        // Connected if last reading was within 15 minutes
-        return minutesSinceLastReading <= 15;
+        // Connected if last reading was within 5 minutes
+        return minutesSinceLastReading <= 5;
       };
 
       // Transform profiles into UserHierarchy, joining with roles and assignments

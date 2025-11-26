@@ -11,7 +11,7 @@
    ```bash
    git add .
    git commit -m "Your commit message"
-   git push origin
+   git push origin main
    ```
 3. **Wait 3-5 minutes** - GitHub Actions automatically:
    - Builds your project
@@ -58,7 +58,7 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase anon public key | Supabase Dashboard → Settings → API → `anon` `public` key |
 
 **Example values:**
-- `VITE_SUPABASE_URL`: `https://lkvnhskxbxzeohopqjcr.supabase.co`
+- `VITE_SUPABASE_URL`: `https://wjyanxstvbiqefmgpccb.supabase.co`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`: `sb_publishable_WFlhZieCuuEHBwjaw3EZ9A__LDjjEoq`
 
 #### **Required Secrets for FTP Deployment:**
@@ -254,7 +254,7 @@ http.addHeader("Content-Type", "application/json");
 
 1. **Go to GitHub** → Your repository → **Settings** → **Secrets and variables** → **Actions**
 2. **Add these two secrets** (if not already added):
-   - `VITE_SUPABASE_URL` = `https://lkvnhskxbxzeohopqjcr.supabase.co`
+   - `VITE_SUPABASE_URL` = `https://wjyanxstvbiqefmgpccb.supabase.co`
    - `VITE_SUPABASE_PUBLISHABLE_KEY` = `sb_publishable_WFlhZieCuuEHBwjaw3EZ9A__LDjjEoq`
 3. **Push a new commit** to trigger rebuild:
    ```bash

@@ -157,6 +157,23 @@ After deployment, make sure Supabase knows about your production URL:
    - Error: Could not connect to server
    - **Fix:** Check if FTP server is accessible, firewall isn't blocking
 
+### GitHub Actions Not Working?
+
+**If GitHub Actions deployment fails or you need to deploy manually:**
+
+1. **Quick Manual Upload:**
+   - See: [`docs/general/MANUAL_UPLOAD_QUICK_GUIDE.md`](./MANUAL_UPLOAD_QUICK_GUIDE.md)
+   - 5-step process: Build → Login to cPanel → Upload files
+   - Takes ~2-3 minutes
+
+2. **Quick Deploy Reference:**
+   - See: [`docs/general/QUICK_DEPLOY.md`](./QUICK_DEPLOY.md) for GitHub Actions quick reference
+
+**Manual deployment is a reliable fallback when:**
+- GitHub Actions workflow is broken
+- FTP credentials need updating
+- You need to deploy immediately without waiting for CI/CD
+
 ### Website Shows Old Version
 
 1. **Clear browser cache:** Ctrl+Shift+R

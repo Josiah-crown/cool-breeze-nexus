@@ -39,20 +39,89 @@ Your ESP32 needs to:
 
 ## Step 3: ESP32 Example Code (Arduino)
 
+### **Quick Example (Auto Mode)**
+
+This is a simplified example for quick testing. For production use, see the full example below or use `ESP32_Cirrus_Optimized_2Min.ino`.
+
 ```cpp
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-// WiFi Credentials
+// WiFi
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 
-// Supabase Configuration
-const char* supabaseUrl = "https://lkvnhskxbxzeohopqjcr.supabase.co";
-const char* supabaseAnonKey = "YOUR_ANON_KEY_HERE";
-const char* apiKey = "YOUR_GENERATED_API_KEY_HERE";  // From website
-const char* machineId = "YOUR_MACHINE_UUID_HERE";    // From website
+// Supabase
+const char* supabaseUrl = "https://wjyanxstvbiqefmgpccb.supabase.co";
+const char* supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqeWFueHN0dmJpcWVmbWdwY2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMzI4NDUsImV4cCI6MjA3NzgwODg0NX0.r1xQG8HYHioH8_ALGQTRO2wM5F2tAOhM-xe_eh3VxhY";
+const char* apiKey = "YOUR_GENERATED_API_KEY_HERE";
+const char* machineId = "YOUR_MACHINE_UUID_HERE";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected!");
+}
+
+void loop() {
+  // Read sensors (replace with your actual sensors)
+  float motorTemp = random(30, 50);    // °C
+  float outsideTemp = random(25, 35);  // °C
+  float insideTemp = random(20, 30);   // °C
+  float current = random(10, 20);      // A
+  float voltage = 230;                 // V
+  
+  // Send to Supabase
+  sendToSupabase(motorTemp, outsideTemp, insideTemp, current, voltage);
+  
+  // Wait 5 minutes
+  delay(5 * 60 * 1000);
+}
+
+bool sendToSupabase(float motorTemp, float outsideTemp, float insideTemp, float current, float voltage) {
+  HTTPClient http;
+  http.begin(String(supabaseUrl) + "/rest/v1/readings_raw");
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("apikey", supabaseAnonKey);
+  http.addHeader("Authorization", "Bearer " + String(apiKey));
+  
+  StaticJsonDocument<512> doc;
+  doc["machine_id"] = machineId;
+  doc["motor_temp"] = motorTemp;
+  doc["outside_temp"] = outsideTemp;
+  doc["inside_temp"] = insideTemp;
+  doc["current"] = current;
+  doc["voltage"] = voltage;
+  doc["power"] = current * voltage;
+  doc["delta_t"] = abs(outsideTemp - insideTemp);
+  doc["is_on"] = true;
+  doc["fan_active"] = true;
+  doc["overall_status"] = "good";
+  
+  String payload;
+  serializeJson(doc, payload);
+  
+  int httpCode = http.POST(payload);
+  http.end();
+  
+  if (httpCode == 201) {
+    Serial.println("✅ Data sent!");
+    return true;
+  } else {
+    Serial.println("❌ Failed: " + String(httpCode));
+    return false;
+  }
+}
+```
+
+### **Full Production Example**
+
+For production use with real sensors:
 
 // Sensor Pins (example)
 #define TEMP_SENSOR_PIN 34

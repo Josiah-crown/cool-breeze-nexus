@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
   const [reassignClientId, setReassignClientId] = useState<string | null>(null);
   
   const handleRefresh = () => {
-    window.location.reload();
+    refetch();
   };
 
   const handleDeleteMachine = async (machineId: string) => {
@@ -119,8 +119,20 @@ const Dashboard: React.FC = () => {
   };
 
   const handleChangeManufacturer = (machineId: string) => {
-    console.log('handleChangeManufacturer called with machineId:', machineId);
-    setChangeManufacturerMachineId(machineId);
+    try {
+      console.log('handleChangeManufacturer called with machineId:', machineId);
+      const machine = machines.find(m => m.id === machineId);
+      if (!machine) {
+        console.error('Machine not found:', machineId);
+        toast.error('Machine not found');
+        return;
+      }
+      console.log('Setting changeManufacturerMachineId to:', machineId, 'Machine:', machine);
+      setChangeManufacturerMachineId(machineId);
+    } catch (error) {
+      console.error('Error in handleChangeManufacturer:', error);
+      toast.error('Failed to open Change Manufacturer dialog');
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -822,12 +834,19 @@ const Dashboard: React.FC = () => {
       {changeManufacturerMachineId && selectedMachineForManufacturerChange && (
         <ChangeManufacturerDialog
           open={!!changeManufacturerMachineId}
-          onOpenChange={(open) => !open && setChangeManufacturerMachineId(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setChangeManufacturerMachineId(null);
+            }
+          }}
           machineId={changeManufacturerMachineId}
           machineName={selectedMachineForManufacturerChange.name}
           machineType={selectedMachineForManufacturerChange.type}
           currentManufacturer={selectedMachineForManufacturerChange.manufacturer || null}
-          onSuccess={handleRefresh}
+          onSuccess={() => {
+            refetch();
+            setChangeManufacturerMachineId(null);
+          }}
         />
       )}
 
