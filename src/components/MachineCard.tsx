@@ -53,9 +53,17 @@ const MachineCard: React.FC<MachineCardProps> = ({
     
     const fetchLatestReading = async () => {
       try {
+        // Select columns based on table type (different tables have different columns)
+        let selectColumns = 'fan_active, is_on, has_water, pump_active';
+        if (processingTable === 'alliance') {
+          selectColumns = 'fan_active, is_heating, is_on, has_water, pump_active, compressor_status';
+        } else if (processingTable === 'cirrus' || processingTable === 'coolbreeze') {
+          selectColumns = 'fan_active, is_cooling, is_on, has_water, pump_active';
+        }
+        
         const { data: latestReading, error } = await supabase
           .from(processingTable)
-          .select('fan_active, is_cooling, is_on, has_water')
+          .select(selectColumns)
           .eq('machine_id', initialMachine.id)
           .order('timestamp', { ascending: false })
           .limit(1)
@@ -84,9 +92,14 @@ const MachineCard: React.FC<MachineCardProps> = ({
           setMachine(prev => ({
             ...prev,
             fanActive: latestReading.fan_active ?? prev.fanActive,
-            isCooling: latestReading.is_cooling ?? prev.isCooling,
+            // Only set isCooling if column exists (cirrus/coolbreeze)
+            isCooling: 'is_cooling' in latestReading ? (latestReading.is_cooling ?? prev.isCooling) : prev.isCooling,
+            // Only set hasHeat if column exists (alliance)
+            hasHeat: 'is_heating' in latestReading ? (latestReading.is_heating ?? prev.hasHeat) : prev.hasHeat,
+            hasWater: latestReading.has_water ?? prev.hasWater,  // Pump from GPIO5 relay (repurposed field)
+            // Only set compressorStatus if column exists (alliance)
+            compressorStatus: 'compressor_status' in latestReading ? (latestReading.compressor_status ?? prev.compressorStatus) : prev.compressorStatus,
             isOn: latestReading.is_on ?? prev.isOn,
-            hasWater: latestReading.has_water ?? prev.hasWater,
           }));
         } else {
           // No data found - use default values
@@ -106,28 +119,6 @@ const MachineCard: React.FC<MachineCardProps> = ({
     return () => clearInterval(pollInterval);
   }, [initialMachine.id, initialMachine.type, initialMachine.manufacturer]);
 
-  // Debug: Log props when component renders
-  useEffect(() => {
-    if (showManagement) {
-      console.log('MachineCard DEBUG:', {
-        machineId: initialMachine.id,
-        machineName: initialMachine.name,
-        manufacturer: initialMachine.manufacturer,
-        location: initialMachine.location,
-        hasLocation: !!initialMachine.location,
-        hasOnChangeManufacturer: !!onChangeManufacturer,
-        onChangeManufacturerType: typeof onChangeManufacturer,
-        onChangeManufacturerValue: onChangeManufacturer,
-        showManagement,
-        allProps: {
-          hasOnRename: !!onRename,
-          hasOnChangeOwner: !!onChangeOwner,
-          hasOnDelete: !!onDelete,
-          hasOnChangeManufacturer: !!onChangeManufacturer
-        }
-      });
-    }
-  }, [initialMachine.id, initialMachine.manufacturer, initialMachine.location, onChangeManufacturer, showManagement, onRename, onChangeOwner, onDelete]);
 
   const getMachineComponent = () => {
     const size = 'w-32 h-32';
@@ -136,16 +127,19 @@ const MachineCard: React.FC<MachineCardProps> = ({
       case 'evaporative':
         return <FanComponent 
           isSpinning={machine.fanActive}
+          isCooling={machine.isCooling}
+          isConnected={machine.is_connected}
           size={size}
         />;
       case 'airconditioner':
         return <AirConditionerComponent 
-          isActive={machine.isCooling}
+          isActive={machine.is_connected && machine.isCooling}
           size={size}
         />;
       case 'heatpump':
         return <HeatPumpComponent 
-          isActive={machine.isOn}
+          isHeating={machine.hasHeat}
+          isConnected={machine.is_connected}
           size={size}
         />;
       default:
@@ -383,13 +377,21 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   size="sm"
                 />
                 <StatusLight
-                  status={machine.hasPump ? 'active' : 'inactive'}
+                  status={machine.hasWater ? 'active' : 'inactive'}
                   label="Pump"
                   size="sm"
                 />
                 <StatusLight
                   status={machine.hasHeat ? 'active' : 'inactive'}
                   label="Heat"
+                  size="sm"
+                />
+                <StatusLight
+                  status={
+                    machine.compressorStatus === 'good' ? 'active' : 
+                    machine.compressorStatus === 'warning' ? 'warning' : 'error'
+                  }
+                  label="Compressor"
                   size="sm"
                 />
                 <div className="text-center p-1.5 bg-panel-bg rounded-md">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, memo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { MachineStatus, MachineHistoricalData } from '@/types/machine';
 import { StatusLight } from './StatusLight';
@@ -41,6 +41,336 @@ interface MachineDetailViewProps {
 
 type Period = '24h' | '7d' | '30d' | '1y';
 
+// Move CustomTooltip outside component to prevent recreation on every render
+const CustomTooltip = memo(({ active, payload, machineType }: { active?: boolean; payload?: any[]; machineType?: string }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    
+    // Helper to format numeric values, showing "N/A" for null
+    const formatValue = (value: number | null | undefined, unit: string): string => {
+      if (value == null) return 'N/A';
+      return `${value}${unit}`;
+    };
+    
+    return (
+      <div className="bg-card border-2 border-[#8FB83D] p-3 rounded-lg shadow-lg">
+        <p className="font-semibold mb-2" style={{ color: '#8FB83D' }}>{data.time}</p>
+        <div className="space-y-1 text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Delta T:</span>
+            <span className="font-semibold text-foreground">{formatValue(data.deltaT, '°C')}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Motor Temp:</span>
+            <span className="font-semibold text-foreground">{formatValue(data.motorTemp, '°C')}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Ambient Temp:</span>
+            <span className="font-semibold text-foreground">{formatValue(data.outsideTemp, '°C')}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Duct Temp:</span>
+            <span className="font-semibold text-foreground">{formatValue(data.insideTemp, '°C')}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Motor Amps:</span>
+            <span className="font-semibold text-foreground">{formatValue(data.current, 'A')}</span>
+          </div>
+          {machineType !== 'heatpump' && data.fanSpeed != null && (
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Fan Speed:</span>
+              <span className="font-semibold text-foreground" style={{ color: '#166534' }}>{formatValue(data.fanSpeed, '%')}</span>
+            </div>
+          )}
+          <div className="border-t border-border pt-1 mt-1">
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Fan:</span>
+              <span className={`font-semibold ${data.fanStatus === 'ON' ? 'text-red-500' : 'text-muted-foreground'}`}>{data.fanStatus}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Cool:</span>
+              <span className={`font-semibold ${data.coolStatus === 'ON' ? 'text-blue-500' : 'text-muted-foreground'}`}>{data.coolStatus}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Pump:</span>
+              <span className={`font-semibold ${data.pumpStatus === 'ON' ? 'text-green-500' : 'text-muted-foreground'}`}>{data.pumpStatus}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Water:</span>
+              <span className={`font-semibold ${data.waterStatus === 'FULL' ? 'text-[#8FB83D]' : 'text-muted-foreground'}`}>{data.waterStatus}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+});
+CustomTooltip.displayName = 'CustomTooltip';
+
+// Memoized Historical Chart Component to prevent re-renders on hover
+const HistoricalChart = memo(({ 
+  chartData, 
+  machineType, 
+  temperatureSetpoint 
+}: { 
+  chartData: any[]; 
+  machineType: string; 
+  temperatureSetpoint?: number;
+}) => {
+  const [hiddenLines, setHiddenLines] = useState<Set<string>>(new Set());
+  
+  const tooltipContent = useCallback((props: any) => {
+    return <CustomTooltip {...props} machineType={machineType} />;
+  }, [machineType]);
+
+  const handleLegendClick = useCallback((e: any) => {
+    // Recharts Legend onClick provides the dataKey in the event
+    // The event structure can vary, so we check multiple possible properties
+    const dataKey = e?.dataKey || e?.value || e?.payload?.dataKey;
+    if (dataKey) {
+      setHiddenLines(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(dataKey)) {
+          newSet.delete(dataKey);
+        } else {
+          newSet.add(dataKey);
+        }
+        return newSet;
+      });
+    }
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        .recharts-legend-item {
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .recharts-legend-item:hover {
+          opacity: 0.7;
+        }
+        .recharts-legend-item-text {
+          transition: all 0.2s ease;
+        }
+        .recharts-legend-item:hover .recharts-legend-item-text {
+          color: #8FB83D !important;
+          text-decoration: underline;
+        }
+      `}</style>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart 
+          data={chartData}
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis 
+            dataKey="time" 
+            stroke="hsl(var(--muted-foreground))"
+            interval="preserveStartEnd"
+          />
+          <YAxis 
+            yAxisId="temp"
+            stroke="hsl(var(--muted-foreground))" 
+            label={{ value: 'Temperature (°C)', angle: -90, position: 'insideLeft' }}
+            domain={() => [0, 120]}
+            allowDataOverflow={true}
+            type="number"
+          />
+          <YAxis 
+            yAxisId="current"
+            orientation="right"
+            stroke="hsl(var(--muted-foreground))" 
+            label={{ value: `Current (A)`, angle: 90, position: 'insideRight' }}
+            domain={() => [0, 40]}
+            allowDataOverflow={true}
+            type="number"
+          />
+          <YAxis 
+            yAxisId="fanSpeed"
+            orientation="right"
+            stroke="hsl(var(--muted-foreground))" 
+            label={{ value: `Fan Speed (%)`, angle: 90, position: 'insideRight' }}
+            domain={[0, 100]}
+            hide={true}
+          />
+          <RechartsTooltip content={tooltipContent} />
+          <Legend 
+            onClick={handleLegendClick}
+            wrapperStyle={{ cursor: 'pointer' }}
+            iconType="line"
+          />
+        
+        {/* Free Flow Lines - With fill areas like 24h view */}
+        <Line 
+          yAxisId="temp"
+          type="monotone" 
+          dataKey="outsideTemp" 
+          name="Ambient Temp"
+          stroke="#000000" 
+          strokeWidth={2}
+          dot={false}
+          fill="#000000"
+          fillOpacity={0.3}
+          connectNulls={false}
+          hide={hiddenLines.has('outsideTemp')}
+        />
+        <Line 
+          yAxisId="temp"
+          type="monotone" 
+          dataKey="motorTemp" 
+          name="Motor Temp"
+          stroke="#EAB308" 
+          strokeWidth={2}
+          dot={false}
+          fill="#EAB308"
+          fillOpacity={0.3}
+          connectNulls={false}
+          hide={hiddenLines.has('motorTemp')}
+        />
+        <Line 
+          yAxisId="temp"
+          type="monotone" 
+          dataKey="insideTemp" 
+          name="Duct Temp"
+          stroke="#F97316" 
+          strokeWidth={2}
+          dot={false}
+          fill="#F97316"
+          fillOpacity={0.3}
+          connectNulls={false}
+          hide={hiddenLines.has('insideTemp')}
+        />
+        <Line 
+          yAxisId="current"
+          type="monotone" 
+          dataKey="current" 
+          name="Motor Amps"
+          stroke="#EC4899" 
+          strokeWidth={2}
+          dot={false}
+          fill="#EC4899"
+          fillOpacity={0.3}
+          connectNulls={false}
+          hide={hiddenLines.has('current')}
+        />
+        
+        {/* Fan Speed Line (Dark Green, 0-100%) - Hidden for heatpumps */}
+        {machineType !== 'heatpump' && (
+          <Line 
+            yAxisId="fanSpeed"
+            type="monotone" 
+            dataKey="fanSpeed" 
+            name="Fan Speed"
+            stroke="#166534" 
+            strokeWidth={2}
+            dot={false}
+            fill="#166534"
+            fillOpacity={0.3}
+            connectNulls={false}
+            hide={hiddenLines.has('fanSpeed')}
+          />
+        )}
+        
+        {/* ON/OFF State Lines - At Top of Graph (300% wider) */}
+        {/* Fan and Cool lines - Not shown for heatpumps */}
+        {machineType !== 'heatpump' && (
+          <>
+            <Line 
+              yAxisId="temp"
+              type="stepAfter" 
+              dataKey="fanActive" 
+              name="Fan"
+              stroke="#EF4444" 
+              strokeWidth={9}
+              dot={false}
+              connectNulls={false}
+              hide={hiddenLines.has('fanActive')}
+            />
+            <Line 
+              yAxisId="temp"
+              type="stepAfter" 
+              dataKey="isCooling" 
+              name="Cool"
+              stroke="#3B82F6" 
+              strokeWidth={9}
+              dot={false}
+              connectNulls={false}
+              hide={hiddenLines.has('isCooling')}
+            />
+            <Line 
+              yAxisId="temp"
+              type="stepAfter" 
+              dataKey="fanAndCool" 
+              name="Fan+Cool"
+              stroke="#9333EA" 
+              strokeWidth={9}
+              dot={false}
+              connectNulls={false}
+              hide={hiddenLines.has('fanAndCool')}
+            />
+          </>
+        )}
+        
+        {/* Heat line - Heatpumps only */}
+        {machineType === 'heatpump' && (
+          <Line 
+            yAxisId="temp"
+            type="stepAfter" 
+            dataKey="isHeating" 
+            name="Heat"
+            stroke="#F59E0B" 
+            strokeWidth={9}
+            dot={false}
+            connectNulls={false}
+            hide={hiddenLines.has('isHeating')}
+          />
+        )}
+        
+        {/* Pump Line - Just Below Cool/Fan (at 115°C) */}
+        <Line 
+          yAxisId="temp"
+          type="stepAfter" 
+          dataKey="pumpActive" 
+          name="Pump"
+          stroke="#10B981" 
+          strokeWidth={9}
+          dot={false}
+          connectNulls={false}
+          hide={hiddenLines.has('pumpActive')}
+        />
+        {/* Tank/Pump Line - At Base of Graph (300% thicker) */}
+        {/* For evaporative: shows water level, For heatpump: shows pump status (GPIO5) */}
+        <Line 
+          yAxisId="temp"
+          type="stepAfter" 
+          dataKey="hasWater" 
+          name={machineType === 'heatpump' ? 'Pump (GPIO5)' : 'Tank'}
+          stroke="#4B5563" 
+          strokeWidth={9}
+          dot={false}
+          connectNulls={false}
+          hide={hiddenLines.has('hasWater')}
+        />
+        
+        {/* Setpoint Reference Line for Heat Pump */}
+        {machineType === 'heatpump' && temperatureSetpoint && (
+          <ReferenceLine 
+            yAxisId="temp"
+            y={temperatureSetpoint} 
+            stroke="hsl(var(--accent))" 
+            strokeDasharray="5 5"
+            label="Setpoint"
+          />
+        )}
+      </LineChart>
+    </ResponsiveContainer>
+    </>
+  );
+});
+HistoricalChart.displayName = 'HistoricalChart';
+
 const MachineDetailView: React.FC<MachineDetailViewProps> = ({ 
   machine: initialMachine, 
   historicalData: initialHistoricalData,
@@ -65,10 +395,17 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       return; // No processing table for this machine type/manufacturer
     }
     
+    // Select columns based on table type - each manufacturer table has different columns
+    let selectColumns = 'fan_active, is_cooling, is_on, has_water, pump_active, motor_temp, ambient_temp, duct_temp, current, voltage, power';
+    if (processingTable === 'alliance') {
+      // Alliance (heatpump) has additional columns: is_heating, compressor_status
+      selectColumns = 'fan_active, is_heating, is_on, has_water, pump_active, compressor_status, motor_temp, ambient_temp, duct_temp, current, voltage, power';
+    }
+    
     try {
-        const { data: latestReading, error } = await supabase
+        const { data: latestReading, error } = await (supabase as any)
           .from(processingTable)
-          .select('fan_active, is_cooling, is_on, has_water, motor_temp, ambient_temp, duct_temp, current, voltage, power')
+          .select(selectColumns)
           .eq('machine_id', machine.id)
           .order('timestamp', { ascending: false })
           .limit(1)
@@ -88,17 +425,17 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       }
       
       if (latestReading) {
-        console.log(`✅ MachineDetailView: Latest ${processingTable} reading:`, {
-          fan_active: latestReading.fan_active,
-          is_cooling: latestReading.is_cooling,
-        });
-        
         setMachine(prev => ({
           ...prev,
           fanActive: latestReading.fan_active ?? prev.fanActive,
-          isCooling: latestReading.is_cooling ?? prev.isCooling,
-          isOn: latestReading.is_on ?? prev.isOn,
+          // is_cooling only exists on cirrus/coolbreeze tables
+          isCooling: 'is_cooling' in latestReading ? (latestReading.is_cooling ?? prev.isCooling) : prev.isCooling,
+          // is_heating only exists on alliance table
+          hasHeat: 'is_heating' in latestReading ? (latestReading.is_heating ?? prev.hasHeat) : prev.hasHeat,
           hasWater: latestReading.has_water ?? prev.hasWater,
+          // compressor_status only exists on alliance table
+          compressorStatus: 'compressor_status' in latestReading ? (latestReading.compressor_status ?? prev.compressorStatus) : prev.compressorStatus,
+          isOn: latestReading.is_on ?? prev.isOn,
           motorTemp: latestReading.motor_temp ?? prev.motorTemp,
           outsideTemp: latestReading.ambient_temp ?? prev.outsideTemp,
           insideTemp: latestReading.duct_temp ?? prev.insideTemp,
@@ -126,11 +463,6 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   
   // Update machine state when prop changes
   useEffect(() => {
-    console.log('🔄 MachineDetailView: Updating machine data:', {
-      id: initialMachine.id,
-      fanActive: initialMachine.fanActive,
-      isCooling: initialMachine.isCooling,
-    });
     setMachine(initialMachine);
     // Also fetch latest from processing table
     fetchLatestReading();
@@ -142,8 +474,6 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     if (!processingTable) {
       return; // No processing table for this machine type/manufacturer
     }
-    
-    console.log(`📡 MachineDetailView: Setting up real-time subscription to ${processingTable} table for machine:`, machine.id);
     
     // Subscribe to processing table updates (same source as historical graph)
     const channel = supabase
@@ -157,14 +487,15 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
           filter: `machine_id=eq.${machine.id}`,
         },
         (payload) => {
-          console.log(`📨 MachineDetailView: New ${processingTable} reading received:`, payload.new);
           const newReading = payload.new as any;
           setMachine(prev => ({
             ...prev,
             fanActive: newReading.fan_active ?? prev.fanActive,
             isCooling: newReading.is_cooling ?? prev.isCooling,
+            hasHeat: newReading.is_heating ?? prev.hasHeat,  // Heat = current > 1A
+            hasWater: newReading.has_water ?? prev.hasWater,  // For heatpumps: Pump from GPIO5
+            compressorStatus: newReading.compressor_status as 'good' | 'warning' | 'failed' | undefined ?? prev.compressorStatus,
             isOn: newReading.is_on ?? prev.isOn,
-            hasWater: newReading.has_water ?? prev.hasWater,
             motorTemp: newReading.motor_temp ?? prev.motorTemp,
             outsideTemp: newReading.ambient_temp ?? prev.outsideTemp,
             insideTemp: newReading.duct_temp ?? prev.insideTemp,
@@ -175,9 +506,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
           }));
         }
       )
-      .subscribe((status) => {
-        console.log(`📡 MachineDetailView: ${processingTable} subscription status:`, status);
-      });
+      .subscribe();
     
     // Also poll every 5 seconds to catch any missed updates
     const pollInterval = setInterval(() => {
@@ -185,7 +514,6 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     }, 5000);
     
     return () => {
-      console.log(`🧹 MachineDetailView: Cleaning up ${processingTable} subscription and polling`);
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
@@ -253,11 +581,24 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     const size = 'w-[480px] h-[480px]';
     switch (machine.type) {
       case 'evaporative':
-        return <FanComponent isSpinning={machine.fanActive} size={size} />;
+        return (
+          <FanComponent 
+            isSpinning={machine.fanActive} 
+            isCooling={machine.isCooling}
+            isConnected={machine.isConnected}
+            size={size} 
+          />
+        );
       case 'heatpump':
-        return <HeatPumpComponent isActive={machine.isOn} size={size} />;
+        return (
+          <HeatPumpComponent 
+            isHeating={machine.hasHeat} 
+            isConnected={machine.isConnected}
+            size={size} 
+          />
+        );
       case 'airconditioner':
-        return <AirConditionerComponent isActive={machine.isCooling} size={size} />;
+        return <AirConditionerComponent isActive={machine.isConnected && machine.isCooling} size={size} />;
     }
   };
 
@@ -289,6 +630,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     const deltaTData = historicalData.deltaT || [];
     const fanActiveData = historicalData.fanActive || [];
     const isCoolingData = historicalData.isCooling || [];
+    const isHeatingData = historicalData.isHeating || [];
     const hasWaterData = historicalData.hasWater || [];
     const pumpActiveData = historicalData.pumpActive || [];
     const fanSpeedData = historicalData.fanSpeed || [];
@@ -347,6 +689,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     const deltaTMap = new Map(deltaTData.map(p => [roundToInterval(p.timestamp), p.value]));
     const fanActiveMap = new Map(fanActiveData.map(p => [roundToInterval(p.timestamp), p.value]));
     const isCoolingMap = new Map(isCoolingData.map(p => [roundToInterval(p.timestamp), p.value]));
+    const isHeatingMap = new Map(isHeatingData.map(p => [roundToInterval(p.timestamp), p.value]));
     const hasWaterMap = new Map(hasWaterData.map(p => [roundToInterval(p.timestamp), p.value]));
     const pumpActiveMap = new Map(pumpActiveData.map(p => [roundToInterval(p.timestamp), p.value]));
     const fanSpeedMap = new Map(fanSpeedData.map(p => [roundToInterval(p.timestamp), p.value]));
@@ -375,105 +718,251 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       }
     };
     
-    // Combine all datasets by timestamp, filling in missing values with 0 (not null)
+    // Helper function to interpolate missing numeric values between known data points
+    // Only interpolates if gap is within reasonable threshold (e.g., 5 minutes for 24h view)
+    const getInterpolatedValue = (
+      map: Map<number, number>,
+      timestamp: number,
+      sortedTimestamps: number[],
+      maxGapMs: number
+    ): number | null => {
+      // First check if we have an exact match
+      const roundedTs = roundToInterval(timestamp);
+      const exactValue = map.get(roundedTs);
+      if (exactValue != null) {
+        return exactValue;
+      }
+
+      // Find the previous and next known values
+      let prevTs: number | null = null;
+      let prevValue: number | null = null;
+      let nextTs: number | null = null;
+      let nextValue: number | null = null;
+
+      // Search backwards for previous value
+      for (let i = sortedTimestamps.length - 1; i >= 0; i--) {
+        const ts = sortedTimestamps[i];
+        if (ts < timestamp) {
+          const value = map.get(roundToInterval(ts));
+          if (value != null) {
+            prevTs = ts;
+            prevValue = value;
+            break;
+          }
+        }
+      }
+
+      // Search forwards for next value
+      for (let i = 0; i < sortedTimestamps.length; i++) {
+        const ts = sortedTimestamps[i];
+        if (ts > timestamp) {
+          const value = map.get(roundToInterval(ts));
+          if (value != null) {
+            nextTs = ts;
+            nextValue = value;
+            break;
+          }
+        }
+      }
+
+      // If we have both previous and next values, check if gap is reasonable
+      if (prevTs != null && nextTs != null && prevValue != null && nextValue != null) {
+        const gapToPrev = timestamp - prevTs;
+        const gapToNext = nextTs - timestamp;
+        const totalGap = nextTs - prevTs;
+
+        // Only interpolate if total gap is within threshold
+        if (totalGap <= maxGapMs) {
+          // Linear interpolation
+          const ratio = gapToPrev / totalGap;
+          const interpolated = prevValue + (nextValue - prevValue) * ratio;
+          return interpolated;
+        }
+      }
+
+      // If we only have previous value and gap is reasonable, use forward-fill
+      if (prevTs != null && prevValue != null) {
+        const gapToPrev = timestamp - prevTs;
+        if (gapToPrev <= maxGapMs) {
+          return prevValue;
+        }
+      }
+
+      // If we only have next value and gap is reasonable, use backward-fill
+      if (nextTs != null && nextValue != null) {
+        const gapToNext = nextTs - timestamp;
+        if (gapToNext <= maxGapMs) {
+          return nextValue;
+        }
+      }
+
+      return null; // Gap too large, don't interpolate
+    };
+
+    // Helper function for forward-filling boolean/status values (carry last known value forward)
+    const getForwardFilledValue = (
+      map: Map<number, number>,
+      timestamp: number,
+      sortedTimestamps: number[],
+      maxGapMs: number
+    ): number | null => {
+      // First check if we have an exact match
+      const roundedTs = roundToInterval(timestamp);
+      const exactValue = map.get(roundedTs);
+      if (exactValue != null) {
+        return exactValue;
+      }
+
+      // Find the previous known value
+      for (let i = sortedTimestamps.length - 1; i >= 0; i--) {
+        const ts = sortedTimestamps[i];
+        if (ts < timestamp) {
+          const value = map.get(roundToInterval(ts));
+          if (value != null) {
+            const gapToPrev = timestamp - ts;
+            // Only forward-fill if gap is reasonable
+            if (gapToPrev <= maxGapMs) {
+              return value;
+            }
+            break;
+          }
+        }
+      }
+
+      return null; // No previous value or gap too large
+    };
+
+    // Determine max gap threshold based on period (5 minutes for 24h, proportionally longer for others)
+    let maxGapMs: number;
+    switch (selectedPeriod) {
+      case '24h':
+        maxGapMs = 5 * 60 * 1000; // 5 minutes
+        break;
+      case '7d':
+        maxGapMs = 20 * 60 * 1000; // 20 minutes
+        break;
+      case '30d':
+        maxGapMs = 2 * 60 * 60 * 1000; // 2 hours
+        break;
+      case '1y':
+        maxGapMs = 12 * 60 * 60 * 1000; // 12 hours
+        break;
+      default:
+        maxGapMs = 5 * 60 * 1000;
+    }
+
+    // Get sorted timestamps from all data sources for interpolation lookup
+    const allTimestamps = new Set<number>();
+    [motorTempData, currentData, outsideTempData, insideTempData, deltaTData].forEach(data => {
+      data.forEach(p => allTimestamps.add(roundToInterval(p.timestamp)));
+    });
+    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+
+    // Combine all datasets by timestamp, using interpolation for missing values
     const combinedData = completeTimestamps.map(timestamp => {
       const roundedTs = roundToInterval(timestamp);
-      const motorTemp = motorTempMap.get(roundedTs);
-      const current = currentMap.get(roundedTs);
-      const outsideTemp = outsideTempMap.get(roundedTs);
-      const insideTemp = insideTempMap.get(roundedTs);
-      const deltaT = deltaTMap.get(roundedTs);
-      const fanOn = fanActiveMap.get(roundedTs);
-      const coolOn = isCoolingMap.get(roundedTs);
-      const waterOn = hasWaterMap.get(roundedTs);
-      const pumpOn = pumpActiveMap.get(roundedTs);
-      const fanSpeed = fanSpeedMap.get(roundedTs);
       
-      // Convert null/undefined to 0 for numeric values (show 0 instead of null on graph)
-      // For boolean values (fanActive, isCooling, hasWater, pumpActive), use null if not present (won't show line)
-      // Pump is positioned just below cool/fan (at 115°C, 5°C below the 120°C line)
+      // Get values with interpolation for numeric fields
+      const motorTemp = getInterpolatedValue(motorTempMap, timestamp, sortedTimestamps, maxGapMs) ?? motorTempMap.get(roundedTs);
+      const current = getInterpolatedValue(currentMap, timestamp, sortedTimestamps, maxGapMs) ?? currentMap.get(roundedTs);
+      const outsideTemp = getInterpolatedValue(outsideTempMap, timestamp, sortedTimestamps, maxGapMs) ?? outsideTempMap.get(roundedTs);
+      const insideTemp = getInterpolatedValue(insideTempMap, timestamp, sortedTimestamps, maxGapMs) ?? insideTempMap.get(roundedTs);
+      const deltaT = getInterpolatedValue(deltaTMap, timestamp, sortedTimestamps, maxGapMs) ?? deltaTMap.get(roundedTs);
+      const fanSpeed = getInterpolatedValue(fanSpeedMap, timestamp, sortedTimestamps, maxGapMs) ?? fanSpeedMap.get(roundedTs);
+      
+      // For boolean/status values, use forward-fill if gap is reasonable
+      const fanOn = fanActiveMap.get(roundedTs) ?? 
+        (getForwardFilledValue(fanActiveMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
+      const coolOn = isCoolingMap.get(roundedTs) ?? 
+        (getForwardFilledValue(isCoolingMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
+      const heatOn = isHeatingMap.get(roundedTs) ?? 
+        (getForwardFilledValue(isHeatingMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
+      const waterOn = hasWaterMap.get(roundedTs) ?? 
+        (getForwardFilledValue(hasWaterMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
+      const pumpOn = pumpActiveMap.get(roundedTs) ?? 
+        (getForwardFilledValue(pumpActiveMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
+      
+      // Convert to display values - use 0 only if we truly have no data (not interpolated)
+      // For boolean values (fanActive, isCooling, isHeating, hasWater, pumpActive), use null if not present (won't show line)
+      // Positioning: Fan/Cool/Heat at 120°C, Pump at 115°C, Water/Pump at 0°C
       return {
         time: formatTime(timestamp),
         timestamp, // Keep for sorting
-        motorTemp: motorTemp != null ? parseFloat(motorTemp.toFixed(1)) : 0,
-        current: current != null ? parseFloat(current.toFixed(1)) : 0,
-        outsideTemp: outsideTemp != null ? parseFloat(outsideTemp.toFixed(1)) : 0,
-        insideTemp: insideTemp != null ? parseFloat(insideTemp.toFixed(1)) : 0,
-        deltaT: deltaT != null ? parseFloat(deltaT.toFixed(1)) : 0,
+        motorTemp: motorTemp != null ? parseFloat(motorTemp.toFixed(1)) : null,
+        current: current != null ? parseFloat(current.toFixed(1)) : null,
+        outsideTemp: outsideTemp != null ? parseFloat(outsideTemp.toFixed(1)) : null,
+        insideTemp: insideTemp != null ? parseFloat(insideTemp.toFixed(1)) : null,
+        deltaT: deltaT != null ? parseFloat(deltaT.toFixed(1)) : null,
         fanSpeed: fanSpeed != null ? Math.max(0, Math.min(100, parseFloat(fanSpeed.toFixed(1)))) : null, // 0-100%, null for heatpumps
-        fanActive: fanOn != null && fanOn > 0 ? 120 : null, // At top of graph (120°C)
-        isCooling: coolOn != null && coolOn > 0 ? 120 : null, // At top of graph (120°C)
+        fanActive: fanOn != null && fanOn > 0 ? 120 : null, // At top of graph (120°C) - evaporative/AC only
+        isCooling: coolOn != null && coolOn > 0 ? 120 : null, // At top of graph (120°C) - evaporative/AC only
+        isHeating: heatOn != null && heatOn > 0 ? 120 : null, // At top of graph (120°C) - heatpump only
         fanAndCool: (fanOn != null && fanOn > 0 && coolOn != null && coolOn > 0) ? 120 : null, // At top of graph (120°C)
         pumpActive: pumpOn != null && pumpOn > 0 ? 115 : null, // Just below cool/fan (115°C)
-        hasWater: waterOn != null && waterOn > 0 ? 0 : null, // At base of graph (0°C)
+        hasWater: waterOn != null && waterOn > 0 ? 0 : null, // At base of graph (0°C) - For evap: water, For heatpump: pump
         fanStatus: (fanOn != null && fanOn > 0) ? 'ON' : 'OFF',
         coolStatus: (coolOn != null && coolOn > 0) ? 'ON' : 'OFF',
+        heatStatus: (heatOn != null && heatOn > 0) ? 'ON' : 'OFF',
         pumpStatus: (pumpOn != null && pumpOn > 0) ? 'ON' : 'OFF',
         waterStatus: (waterOn != null && waterOn > 0) ? 'FULL' : 'EMPTY'
       };
     });
     
     // Sort by timestamp to ensure correct order
-    return combinedData.sort((a, b) => a.timestamp - b.timestamp);
-  }, [historicalData, selectedPeriod]);
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-card border-2 border-[#8FB83D] p-3 rounded-lg shadow-lg">
-          <p className="font-semibold mb-2" style={{ color: '#8FB83D' }}>{data.time}</p>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Delta T:</span>
-              <span className="font-semibold text-foreground">{data.deltaT}°C</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Motor Temp:</span>
-              <span className="font-semibold text-foreground">{data.motorTemp}°C</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Ambient Temp:</span>
-              <span className="font-semibold text-foreground">{data.outsideTemp}°C</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Duct Temp:</span>
-              <span className="font-semibold text-foreground">{data.insideTemp}°C</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Motor Amps:</span>
-              <span className="font-semibold text-foreground">{data.current}A</span>
-            </div>
-            {machine.type !== 'heatpump' && data.fanSpeed != null && (
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Fan Speed:</span>
-                <span className="font-semibold text-foreground" style={{ color: '#166534' }}>{data.fanSpeed}%</span>
-              </div>
-            )}
-            <div className="border-t border-border pt-1 mt-1">
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Fan:</span>
-                <span className={`font-semibold ${data.fanStatus === 'ON' ? 'text-red-500' : 'text-muted-foreground'}`}>{data.fanStatus}</span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Cool:</span>
-                <span className={`font-semibold ${data.coolStatus === 'ON' ? 'text-blue-500' : 'text-muted-foreground'}`}>{data.coolStatus}</span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Pump:</span>
-                <span className={`font-semibold ${data.pumpStatus === 'ON' ? 'text-green-500' : 'text-muted-foreground'}`}>{data.pumpStatus}</span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Water:</span>
-                <span className={`font-semibold ${data.waterStatus === 'FULL' ? 'text-[#8FB83D]' : 'text-muted-foreground'}`}>{data.waterStatus}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+    const sortedData = combinedData.sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Apply moving average smoothing for longer periods (7d, 30d, 1y) to reduce jagged lines
+    if (selectedPeriod !== '24h') {
+      // Determine window size based on period (larger window for longer periods)
+      let windowSize: number;
+      switch (selectedPeriod) {
+        case '7d':
+          windowSize = 3; // Average over 3 data points (~30 minutes)
+          break;
+        case '30d':
+          windowSize = 5; // Average over 5 data points (~5 hours)
+          break;
+        case '1y':
+          windowSize = 7; // Average over 7 data points (~7 days)
+          break;
+        default:
+          windowSize = 3;
+      }
+      
+      // Apply moving average to numeric values only (not boolean status lines)
+      const smoothedData = sortedData.map((point, index) => {
+        const start = Math.max(0, index - Math.floor(windowSize / 2));
+        const end = Math.min(sortedData.length - 1, index + Math.floor(windowSize / 2));
+        const window = sortedData.slice(start, end + 1);
+        
+        // Calculate averages for numeric values
+        const numericFields = ['motorTemp', 'current', 'outsideTemp', 'insideTemp', 'deltaT', 'fanSpeed'] as const;
+        const smoothed: any = { ...point };
+        
+        numericFields.forEach(field => {
+          if (field === 'fanSpeed' && point[field] === null) {
+            // Keep fanSpeed as null for heatpumps
+            return;
+          }
+          
+          const values = window
+            .map(p => p[field])
+            .filter(v => v != null && typeof v === 'number');
+          
+          if (values.length > 0) {
+            const sum = values.reduce((a, b) => a + b, 0);
+            smoothed[field] = parseFloat((sum / values.length).toFixed(1));
+          }
+        });
+        
+        return smoothed;
+      });
+      
+      return smoothedData;
     }
-    return null;
-  };
+    
+    return sortedData;
+  }, [historicalData, selectedPeriod]);
 
   const handleSetpointUpdate = async () => {
     const setpoint = parseFloat(newSetpoint);
@@ -616,7 +1105,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   
                   {machine.type === 'heatpump' && (
                     <>
-                      <StatusLight status={machine.hasPump ? 'active' : 'inactive'} label="Pump" />
+                      <StatusLight status={machine.hasWater ? 'active' : 'inactive'} label="Pump" />
                       <StatusLight status={machine.hasHeat ? 'active' : 'inactive'} label="Heat" />
                     </>
                   )}
@@ -744,151 +1233,11 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                     <p className="text-muted-foreground">No historical data available for the selected period</p>
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis 
-                      yAxisId="temp"
-                      stroke="hsl(var(--muted-foreground))" 
-                      label={{ value: 'Temperature (°C)', angle: -90, position: 'insideLeft' }}
-                      domain={[0, 120]}
-                    />
-                    <YAxis 
-                      yAxisId="current"
-                      orientation="right"
-                      stroke="hsl(var(--muted-foreground))" 
-                      label={{ value: `Current (A)`, angle: 90, position: 'insideRight' }}
-                      domain={[0, 40]}
-                    />
-                    <YAxis 
-                      yAxisId="fanSpeed"
-                      orientation="right"
-                      stroke="hsl(var(--muted-foreground))" 
-                      label={{ value: `Fan Speed (%)`, angle: 90, position: 'insideRight' }}
-                      domain={[0, 100]}
-                      hide={true}
-                    />
-                    <RechartsTooltip content={<CustomTooltip />} />
-                    <Legend />
-                    
-                    {/* Free Flow Lines */}
-                    <Line 
-                      yAxisId="temp"
-                      type="monotone" 
-                      dataKey="outsideTemp" 
-                      name="Ambient Temp"
-                      stroke="#000000" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line 
-                      yAxisId="temp"
-                      type="monotone" 
-                      dataKey="motorTemp" 
-                      name="Motor Temp"
-                      stroke="#EAB308" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line 
-                      yAxisId="temp"
-                      type="monotone" 
-                      dataKey="insideTemp" 
-                      name="Duct Temp"
-                      stroke="#F97316" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line 
-                      yAxisId="current"
-                      type="monotone" 
-                      dataKey="current" 
-                      name="Motor Amps"
-                      stroke="#EC4899" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    
-                    {/* Fan Speed Line (Dark Green, 0-100%) - Hidden for heatpumps */}
-                    {machine.type !== 'heatpump' && (
-                      <Line 
-                        yAxisId="fanSpeed"
-                        type="monotone" 
-                        dataKey="fanSpeed" 
-                        name="Fan Speed"
-                        stroke="#166534" 
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    )}
-                    
-                    {/* ON/OFF State Lines - At Top of Graph (300% wider) */}
-                    <Line 
-                      yAxisId="temp"
-                      type="stepAfter" 
-                      dataKey="fanActive" 
-                      name="Fan"
-                      stroke="#EF4444" 
-                      strokeWidth={9}
-                      dot={false}
-                      connectNulls={false}
-                    />
-                    <Line 
-                      yAxisId="temp"
-                      type="stepAfter" 
-                      dataKey="isCooling" 
-                      name="Cool"
-                      stroke="#3B82F6" 
-                      strokeWidth={9}
-                      dot={false}
-                      connectNulls={false}
-                    />
-                    <Line 
-                      yAxisId="temp"
-                      type="stepAfter" 
-                      dataKey="fanAndCool" 
-                      name="Fan+Cool"
-                      stroke="#9333EA" 
-                      strokeWidth={9}
-                      dot={false}
-                      connectNulls={false}
-                    />
-                    {/* Pump Line - Just Below Cool/Fan (at 115°C) */}
-                    <Line 
-                      yAxisId="temp"
-                      type="stepAfter" 
-                      dataKey="pumpActive" 
-                      name="Pump"
-                      stroke="#10B981" 
-                      strokeWidth={9}
-                      dot={false}
-                      connectNulls={false}
-                    />
-                    {/* Tank Line - At Base of Graph (300% thicker) */}
-                    <Line 
-                      yAxisId="temp"
-                      type="stepAfter" 
-                      dataKey="hasWater" 
-                      name="Tank"
-                      stroke="#4B5563" 
-                      strokeWidth={9}
-                      dot={false}
-                      connectNulls={false}
-                    />
-                    
-                    {/* Setpoint Reference Line for Heat Pump */}
-                    {machine.type === 'heatpump' && machine.temperatureSetpoint && (
-                      <ReferenceLine 
-                        yAxisId="temp"
-                        y={machine.temperatureSetpoint} 
-                        stroke="hsl(var(--accent))" 
-                        strokeDasharray="5 5"
-                        label="Setpoint"
-                      />
-                    )}
-                  </LineChart>
-                </ResponsiveContainer>
+                  <HistoricalChart 
+                    chartData={chartData}
+                    machineType={machine.type}
+                    temperatureSetpoint={machine.temperatureSetpoint}
+                  />
                 )}
               </CardContent>
             </Card>

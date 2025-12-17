@@ -9,11 +9,10 @@ export interface MachineStatus {
   location?: string;
   isOn: boolean;
   isConnected: boolean;
-  hasWater: boolean;
+  hasWater: boolean;  // For evaporative: water level | For heatpumps: pump status (GPIO5)
   isCooling: boolean;
   fanActive: boolean;
-  hasPump: boolean;
-  hasHeat: boolean;
+  hasHeat: boolean;  // For heatpumps: heating status (current > 1A)
   motorTemp: number;
   outsideTemp: number;
   insideTemp: number;
@@ -24,6 +23,7 @@ export interface MachineStatus {
   temperatureSetpoint?: number;
   overallStatus: 'good' | 'warning' | 'error';
   motorStatus: 'normal' | 'warning' | 'critical';
+  compressorStatus?: 'good' | 'warning' | 'failed';  // For heatpumps: compressor health
   notificationsEnabled: boolean;
   apiKey?: string | null;
 }
@@ -42,7 +42,8 @@ export interface MachineHistoricalData {
   insideTemp: HistoricalDataPoint[];
   fanActive: HistoricalDataPoint[];
   isCooling: HistoricalDataPoint[];
-  hasWater: HistoricalDataPoint[];
+  isHeating: HistoricalDataPoint[];  // For heatpumps: heating status
+  hasWater: HistoricalDataPoint[];  // For evaporative: water level | For heatpumps: pump status
   pumpActive: HistoricalDataPoint[];
   fanSpeed: HistoricalDataPoint[];
 }

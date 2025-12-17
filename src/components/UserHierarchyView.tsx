@@ -21,10 +21,6 @@ interface UserHierarchyViewProps {
 }
 
 const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, onMachineClick, onDeleteMachine, onChangeOwner, onRename, onChangeManufacturer, onDeleteUser, onReassignClient, onNotificationChange }) => {
-  console.log('👥 UserHierarchyView: Total users:', users.length);
-  console.log('🏭 UserHierarchyView: Total machines:', machines.length);
-  console.log('👥 UserHierarchyView: User roles:', users.map(u => ({ name: u.name, role: u.role })));
-  
   const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
   const [expandedInstaller, setExpandedInstaller] = useState<string | null>(null);
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
@@ -34,9 +30,6 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
   const companies = users.filter(u => u.role === 'company');
   const topLevelInstallers = users.filter(u => u.role === 'installer');
   const topLevelClients = users.filter(u => u.role === 'client');
-  console.log('🏢 UserHierarchyView: Companies found:', companies.length, companies.map(c => c.name));
-  console.log('👷 UserHierarchyView: Top-level installers found:', topLevelInstallers.length);
-  console.log('👤 UserHierarchyView: Top-level clients found:', topLevelClients.length);
   // ALWAYS define ALL display arrays at top level (Rules of Hooks - must be unconditional)
   const displayCompanies = React.useMemo(() => {
     const arr = [...companies];

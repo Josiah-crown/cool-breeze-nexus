@@ -24,19 +24,17 @@ export const MACHINE_MANUFACTURERS: Record<MachineType, Manufacturer[]> = {
 
 /**
  * Mapping of manufacturer to processing table
- * This determines which Supabase table processes the raw data
+ * This determines which Supabase table stores the processed data
  * 
- * NOTE: After migration to new Supabase instance, these will change to:
- * - 'Cirrus': 'cirrus_calculated'
- * - 'CoolBreeze': 'coolbreeze_calculated'
- * Pattern: {manufacturer}_calculated
+ * Tables are simply named after the manufacturer (lowercase)
+ * Pattern for new manufacturers: just use lowercase manufacturer name
  */
 export const PROCESSING_TABLE_MAP: Record<Manufacturer | string, 'cirrus' | 'coolbreeze' | 'alliance' | null> = {
-  'Cirrus': 'cirrus',  // TODO: Change to 'cirrus_calculated' after migration
-  'CoolBreeze': 'coolbreeze',  // TODO: Change to 'coolbreeze_calculated' after migration
-  'Alliance': 'alliance',  // TODO: Change to 'alliance_calculated' after migration
+  'Cirrus': 'cirrus',
+  'CoolBreeze': 'coolbreeze',
+  'Alliance': 'alliance',
   // Add new manufacturers here:
-  // 'NewManufacturer': 'new_manufacturer_calculated',
+  // 'NewManufacturer': 'newmanufacturer',
 };
 
 /**

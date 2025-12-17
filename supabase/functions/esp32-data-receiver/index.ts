@@ -140,8 +140,8 @@ Deno.serve(async (req) => {
       inside_temp: reading.inside_temp,
       outside_temp: reading.outside_temp,
       current: reading.current,
-      voltage: reading.voltage || null, // May be null if not provided
-      power: reading.power || null, // May be null - will be calculated
+      voltage: reading.voltage || null, // Line voltage (230V for CoolBreeze, null for Cirrus)
+      power: reading.power || null, // Apparent power (may be null - will be calculated in trigger)
       has_water: reading.has_water,
       sensor_read_count: reading.sensor_read_count || 1 // Number of readings averaged (default to 1)
     }
@@ -158,11 +158,12 @@ Deno.serve(async (req) => {
     
     // Map voltage inputs - support both formats
     if (reading.voltage_input_1 !== undefined) {
-      // Cirrus format (direct voltage_input_1-4)
+      // Cirrus/Universal format (direct voltage_input_1-5)
       rawReading.voltage_input_1 = reading.voltage_input_1
       rawReading.voltage_input_2 = reading.voltage_input_2
       rawReading.voltage_input_3 = reading.voltage_input_3
       rawReading.voltage_input_4 = reading.voltage_input_4
+      rawReading.voltage_input_5 = reading.voltage_input_5 || null  // GPIO5 - Float/Heat Relay
     } else if (reading.exhaust_voltage !== undefined) {
       // CoolBreeze format (named voltages) - map to voltage_input_1-4
       // Default mapping: exhaust=1, fan=2, pump=3, drain=4
@@ -171,15 +172,18 @@ Deno.serve(async (req) => {
       rawReading.voltage_input_2 = reading.fan_voltage
       rawReading.voltage_input_3 = reading.pump_voltage
       rawReading.voltage_input_4 = reading.drain_voltage
+      rawReading.voltage_input_5 = reading.voltage_input_5 || null  // Optional
     } else {
       // No voltage inputs provided - set to null
       rawReading.voltage_input_1 = null
       rawReading.voltage_input_2 = null
       rawReading.voltage_input_3 = null
       rawReading.voltage_input_4 = null
+      rawReading.voltage_input_5 = null
     }
 
-    // Insert RAW reading only (bypass RLS with service role)
+    // Insert RAW reading into readings_raw (bypass RLS with service role)
+    // Database triggers will automatically route to correct manufacturer table (cirrus, coolbreeze, etc.)
     // Try with api_key_used first, if it fails, retry without it (graceful degradation)
     let { data, error } = await supabase
       .from('readings_raw')

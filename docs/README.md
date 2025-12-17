@@ -19,6 +19,8 @@ Documentation for ESP32 hardware, firmware, and sensor-related topics.
 Database setup, migrations, data processing, and Supabase configuration.
 
 **Key Topics:**
+- **[MAINTENANCE.md](./supabase/MAINTENANCE.md)** ⭐ - Database maintenance procedures
+- **[SCHEMA.md](./supabase/SCHEMA.md)** - Complete database schema
 - CIRRUS table setup and processing
 - Raw data implementation
 - Data flow architecture
@@ -36,6 +38,8 @@ Website, UI components, and frontend-specific documentation.
 General setup guides, troubleshooting, and system-wide documentation.
 
 **Key Topics:**
+- **[OVERVIEW.md](./general/OVERVIEW.md)** ⭐ - Complete system overview (START HERE)
+- **[AI_PROMPTING_GUIDE.md](./general/AI_PROMPTING_GUIDE.md)** - How to edit website with AI
 - Complete setup guides
 - System access and backup
 - Quick reference cards
@@ -49,9 +53,10 @@ Default parameters and configuration for different machine types.
 ## 🚀 Quick Start
 
 ### **New to the project?**
-1. Start with [general/COMPLETE_SETUP_GUIDE.md](./general/COMPLETE_SETUP_GUIDE.md)
-2. Review [supabase/DATA_FLOW_ARCHITECTURE.md](./supabase/DATA_FLOW_ARCHITECTURE.md)
-3. Check [hardware/ESP32_IMPROVEMENTS_SUMMARY.md](./hardware/ESP32_IMPROVEMENTS_SUMMARY.md)
+1. **Start with [general/OVERVIEW.md](./general/OVERVIEW.md)** ⭐ - Complete system overview
+2. Review [general/COMPLETE_SETUP_GUIDE.md](./general/COMPLETE_SETUP_GUIDE.md) for setup
+3. Check [supabase/MAINTENANCE.md](./supabase/MAINTENANCE.md) for database maintenance
+4. See [hardware/ESP32_GUIDE.md](./hardware/ESP32_GUIDE.md) for hardware integration
 
 ### **Setting up a new machine?**
 1. [supabase/CIRRUS_SETUP_GUIDE.md](./supabase/CIRRUS_SETUP_GUIDE.md) - Database setup

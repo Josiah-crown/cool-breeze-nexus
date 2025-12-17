@@ -1,16 +1,24 @@
 import React from 'react';
+import { Snowflake } from 'lucide-react';
 
 interface FanComponentProps {
   isSpinning: boolean;
+  isCooling?: boolean;
+  isConnected?: boolean;
   speed?: 'slow' | 'medium' | 'fast';
   size?: 'sm' | 'md' | 'lg' | string;
 }
 
 const FanComponent: React.FC<FanComponentProps> = ({ 
   isSpinning, 
+  isCooling = false,
+  isConnected = true,
   speed = 'medium',
   size = 'lg' 
 }) => {
+  // If disconnected, override all states to off
+  const actuallySpinning = isConnected && isSpinning;
+  const showCooling = isConnected && isCooling;
   const sizeClasses: Record<string, string> = {
     sm: 'w-28 h-28',
     md: 'w-72 h-72', 
@@ -37,9 +45,9 @@ const FanComponent: React.FC<FanComponentProps> = ({
           
           {/* Fan Blades Container */}
           <div 
-            className={`absolute inset-0 ${isSpinning ? 'fan-spinning' : ''}`}
+            className={`absolute inset-0 ${actuallySpinning ? 'fan-spinning' : ''}`}
             style={{
-              animationDuration: isSpinning ? speedDuration[speed] : '0s'
+              animationDuration: actuallySpinning ? speedDuration[speed] : '0s'
             }}
           >
             {/* Fan Blades - Smooth elliptical/teardrop shape */}
@@ -69,7 +77,7 @@ const FanComponent: React.FC<FanComponentProps> = ({
           </div>
           
           {/* Glow Effect When Spinning */}
-          {isSpinning && (
+          {actuallySpinning && (
             <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"></div>
           )}
         </div>
@@ -91,6 +99,20 @@ const FanComponent: React.FC<FanComponentProps> = ({
             />
           ))}
         </div>
+        
+        {/* Cooling Snowflake Indicator - Bottom Left */}
+        {showCooling && (
+          <div className="absolute -bottom-2 -left-2 z-10">
+            <div className="relative">
+              <Snowflake 
+                className="w-10 h-10 text-cyan-400 animate-pulse drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" 
+                strokeWidth={2}
+              />
+              {/* Glow effect behind snowflake */}
+              <div className="absolute inset-0 bg-cyan-400/30 rounded-full blur-md animate-pulse" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

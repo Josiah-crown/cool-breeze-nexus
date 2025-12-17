@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Manual Tester - Control Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    
+    .main-controls {
+      padding: 20px;
+      background: #f8f9fa;
+      border-bottom: 2px solid #e9ecef;
+    }
+    
+    .device-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .tab-button {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      background: white;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .tab-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .tab-button.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .config-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    
+    .config-group {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .config-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #495057;
+    }
+    
+    .config-group input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e9ecef;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    .config-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .device-panel {
+      display: none;
+      padding: 30px;
+    }
+    
+    .device-panel.active {
+      display: block;
+    }
+    
+    .control-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .control-section h3 {
+      margin-bottom: 15px;
+      color: #495057;
+      font-size: 18px;
+    }
+    
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    
+    .control-item {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .control-item label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #495057;
+      font-size: 14px;
+    }
+    
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .slider {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #e9ecef;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .value-display {
+      min-width: 70px;
+      padding: 5px 10px;
+      background: #e9ecef;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: #667eea;
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(26px);
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+    
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .btn-warning {
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .status-bar {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-top: 2px solid #e9ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #dc3545;
+    }
+    
+    .status-dot.active {
+      background: #28a745;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .log-panel {
+      background: #212529;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+    }
+    
+    .log-entry.error {
+      color: #ff6b6b;
+    }
+    
+    .log-entry.success {
+      color: #51cf66;
+    }
+    
+    .json-preview {
+      background: #212529;
+      color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 ESP32 Manual Testing Control Panel</h1>
+      <p>Manually control each parameter and test your hooks/notifications</p>
+    </div>
+    
+    <div class="main-controls">
+      <div class="config-section">
+        <div class="config-group">
+          <label>Supabase URL</label>
+          <input type="text" id="supabaseUrl" value="https://xuqbfykyumrseepdeuof.supabase.co" placeholder="https://xxxxx.supabase.co">
+        </div>
+        <div class="config-group">
+          <label>Post Interval (seconds)</label>
+          <input type="number" id="postInterval" value="30" min="5">
+        </div>
+      </div>
+    </div>
+    
+    <div class="device-tabs">
+      <button class="tab-button active" onclick="switchDevice('cirrus')">Cirrus Evaporative</button>
+      <button class="tab-button" onclick="switchDevice('alliance')">Alliance Heatpump</button>
+      <button class="tab-button" onclick="switchDevice('coolbreeze')">CoolBreeze Evaporative</button>
+    </div>
+    
+    <!-- CIRRUS PANEL -->
+    <div id="cirrus-panel" class="device-panel active">
+      <div class="config-section" style="margin-bottom: 20px;">
+        <div class="config-group">
+          <label>Machine ID (UUID)</label>
+          <input type="text" id="cirrus-machine-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+        </div>
+        <div class="config-group">
+          <label>API Key</label>
+          <input type="text" id="cirrus-api-key" placeholder="cirrus-test-...">
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>📊 Temperature Controls</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Temperature 1 (In/Ambient) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="cirrus-temp-in" min="0" max="50" value="25" step="0.5">
+              <span class="value-display" id="cirrus-temp-in-val">25°C</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Temperature 2 (Out/Duct) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="cirrus-temp-out" min="0" max="50" value="20" step="0.5">
+              <span class="value-display" id="cirrus-temp-out-val">20°C</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Temperature 3 (Motor) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="cirrus-temp-motor" min="0" max="100" value="45" step="0.5">
+              <span class="value-display" id="cirrus-temp-motor-val">45°C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>⚡ Electrical Controls</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Current (Amps)</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="cirrus-current" min="0" max="20" value="3" step="0.1">
+              <span class="value-display" id="cirrus-current-val">3.0A</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Voltage (V)</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="cirrus-voltage" min="200" max="250" value="230" step="1">
+              <span class="value-display" id="cirrus-voltage-val">230V</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>🔌 Voltage Pickups (12V Logic)</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Fan (voltage_input_1)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cirrus-fan">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Pump (voltage_input_2)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cirrus-pump">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Drain (voltage_input_3)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cirrus-drain">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Exhaust (voltage_input_4)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cirrus-exhaust">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Water/Float (GPIO5)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cirrus-water" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="btn btn-success" onclick="startPosting('cirrus')">▶️ Start Posting</button>
+        <button class="btn btn-danger" onclick="stopPosting('cirrus')">⏹️ Stop Posting</button>
+        <button class="btn btn-warning" onclick="postOnce('cirrus')">📤 Post Once</button>
+      </div>
+      
+      <div class="json-preview" id="cirrus-preview">
+        <pre id="cirrus-json">Configure device and values will appear here...</pre>
+      </div>
+    </div>
+    
+    <!-- ALLIANCE PANEL -->
+    <div id="alliance-panel" class="device-panel">
+      <div class="config-section" style="margin-bottom: 20px;">
+        <div class="config-group">
+          <label>Machine ID (UUID)</label>
+          <input type="text" id="alliance-machine-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+        </div>
+        <div class="config-group">
+          <label>API Key</label>
+          <input type="text" id="alliance-api-key" placeholder="alliance-test-...">
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>📊 Temperature Controls</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Temperature 1 (In/Ambient) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="alliance-temp-in" min="0" max="50" value="15" step="0.5">
+              <span class="value-display" id="alliance-temp-in-val">15°C</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Temperature 2 (Out/Duct) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="alliance-temp-out" min="0" max="80" value="25" step="0.5">
+              <span class="value-display" id="alliance-temp-out-val">25°C</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Temperature 3 (Compressor) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="alliance-temp-compressor" min="0" max="100" value="50" step="0.5">
+              <span class="value-display" id="alliance-temp-compressor-val">50°C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>⚡ Electrical Controls</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Current (Amps) - Heating when >1A</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="alliance-current" min="0" max="30" value="10" step="0.1">
+              <span class="value-display" id="alliance-current-val">10.0A</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Voltage (V)</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="alliance-voltage" min="200" max="250" value="230" step="1">
+              <span class="value-display" id="alliance-voltage-val">230V</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>🔌 Pump Control</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Pump (GPIO5 - Water Reading)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="alliance-pump" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="btn btn-success" onclick="startPosting('alliance')">▶️ Start Posting</button>
+        <button class="btn btn-danger" onclick="stopPosting('alliance')">⏹️ Stop Posting</button>
+        <button class="btn btn-warning" onclick="postOnce('alliance')">📤 Post Once</button>
+      </div>
+      
+      <div class="json-preview" id="alliance-preview">
+        <pre id="alliance-json">Configure device and values will appear here...</pre>
+      </div>
+    </div>
+    
+    <!-- COOLBREEZE PANEL -->
+    <div id="coolbreeze-panel" class="device-panel">
+      <div class="config-section" style="margin-bottom: 20px;">
+        <div class="config-group">
+          <label>Machine ID (UUID)</label>
+          <input type="text" id="coolbreeze-machine-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+        </div>
+        <div class="config-group">
+          <label>API Key</label>
+          <input type="text" id="coolbreeze-api-key" placeholder="coolbreeze-test-...">
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>📊 Temperature Controls</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Temperature 1 (In/Ambient) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="coolbreeze-temp-in" min="0" max="50" value="35" step="0.5">
+              <span class="value-display" id="coolbreeze-temp-in-val">35°C</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Temperature 2 (Out/Duct) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="coolbreeze-temp-out" min="0" max="50" value="28" step="0.5">
+              <span class="value-display" id="coolbreeze-temp-out-val">28°C</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Temperature 3 (Fan Motor) °C</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="coolbreeze-temp-motor" min="0" max="100" value="55" step="0.5">
+              <span class="value-display" id="coolbreeze-temp-motor-val">55°C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>⚡ Electrical Controls</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Current (Amps)</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="coolbreeze-current" min="0" max="20" value="4" step="0.1">
+              <span class="value-display" id="coolbreeze-current-val">4.0A</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <label>Voltage (V)</label>
+            <div class="slider-container">
+              <input type="range" class="slider" id="coolbreeze-voltage" min="200" max="250" value="230" step="1">
+              <span class="value-display" id="coolbreeze-voltage-val">230V</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-section">
+        <h3>🔌 Voltage Pickups (12V Logic)</h3>
+        <div class="control-grid">
+          <div class="control-item">
+            <label>Fan (voltage_input_1)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="coolbreeze-fan" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Pump (voltage_input_2)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="coolbreeze-pump" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Solenoid/Drain (voltage_input_3)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="coolbreeze-drain">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Exhaust (voltage_input_4)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="coolbreeze-exhaust">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="control-item">
+            <label>Water/Float (GPIO5)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="coolbreeze-water" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="btn btn-success" onclick="startPosting('coolbreeze')">▶️ Start Posting</button>
+        <button class="btn btn-danger" onclick="stopPosting('coolbreeze')">⏹️ Stop Posting</button>
+        <button class="btn btn-warning" onclick="postOnce('coolbreeze')">📤 Post Once</button>
+      </div>
+      
+      <div class="json-preview" id="coolbreeze-preview">
+        <pre id="coolbreeze-json">Configure device and values will appear here...</pre>
+      </div>
+    </div>
+    
+    <div class="status-bar">
+      <div class="status-indicator">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Not posting</span>
+      </div>
+      <div>
+        <span>Last post: <strong id="last-post-time">Never</strong></span>
+      </div>
+    </div>
+    
+    <div style="padding: 20px;">
+      <div class="log-panel" id="log-panel">
+        <div class="log-entry">📝 Console Log - Waiting for activity...</div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Global state
+    let currentDevice = 'cirrus';
+    let postingInterval = null;
+    let isPosting = false;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeSliders();
+      updatePreviews();
+    });
+    
+    function switchDevice(device) {
+      currentDevice = device;
+      
+      // Update tabs
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update panels
+      document.querySelectorAll('.device-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`${device}-panel`).classList.add('active');
+      
+      // Stop current posting
+      if (isPosting) {
+        stopPosting(device);
+      }
+      
+      updatePreviews();
+      addLog(`Switched to ${device.toUpperCase()} device`);
+    }
+    
+    function initializeSliders() {
+      document.querySelectorAll('.slider').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const id = e.target.id;
+          const value = e.target.value;
+          const displayId = id + '-val';
+          const display = document.getElementById(displayId);
+          
+          if (id.includes('temp')) {
+            display.textContent = value + '°C';
+          } else if (id.includes('current')) {
+            display.textContent = parseFloat(value).toFixed(1) + 'A';
+          } else if (id.includes('voltage')) {
+            display.textContent = value + 'V';
+          }
+          
+          updatePreviews();
+        });
+      });
+      
+      document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updatePreviews);
+      });
+    }
+    
+    function getData(device) {
+      const machineId = document.getElementById(`${device}-machine-id`).value;
+      const tempIn = parseFloat(document.getElementById(`${device}-temp-in`).value);
+      const tempOut = parseFloat(document.getElementById(`${device}-temp-out`).value);
+      const current = parseFloat(document.getElementById(`${device}-current`).value);
+      const voltage = parseFloat(document.getElementById(`${device}-voltage`).value);
+      
+      const data = {
+        machine_id: machineId,
+        outside_temp: tempIn,
+        inside_temp: tempOut,
+        current: current,
+        voltage: voltage,
+        power: parseFloat((voltage * current).toFixed(2)),
+        sensor_read_count: 1
+      };
+      
+      if (device === 'cirrus') {
+        const tempMotor = parseFloat(document.getElementById('cirrus-temp-motor').value);
+        const fan = document.getElementById('cirrus-fan').checked;
+        const pump = document.getElementById('cirrus-pump').checked;
+        const drain = document.getElementById('cirrus-drain').checked;
+        const exhaust = document.getElementById('cirrus-exhaust').checked;
+        const water = document.getElementById('cirrus-water').checked;
+        
+        data.motor_temp = tempMotor;
+        data.has_water = water;
+        data.voltage_input_1 = fan ? 11.5 + Math.random() * 0.5 : 0.1;
+        data.voltage_input_2 = pump ? 11.5 + Math.random() * 0.5 : 0.1;
+        data.voltage_input_3 = drain ? 11.5 + Math.random() * 0.5 : 0.1;
+        data.voltage_input_4 = exhaust ? 11.5 + Math.random() * 0.5 : 0.1;
+        data.voltage_input_5 = water ? 11.8 + Math.random() * 0.5 : 0.2;
+      }
+      else if (device === 'alliance') {
+        const tempCompressor = parseFloat(document.getElementById('alliance-temp-compressor').value);
+        const pump = document.getElementById('alliance-pump').checked;
+        
+        data.motor_temp = tempCompressor;
+        data.has_water = true;
+        data.voltage_input_1 = 0;
+        data.voltage_input_2 = 0;
+        data.voltage_input_3 = 0;
+        data.voltage_input_4 = 0;
+        data.voltage_input_5 = pump ? 12 + Math.random() * 0.5 : 0.2;
+      }
+      else if (device === 'coolbreeze') {
+        const tempMotor = parseFloat(document.getElementById('coolbreeze-temp-motor').value);
+        const fan = document.getElementById('coolbreeze-fan').checked;
+        const pump = document.getElementById('coolbreeze-pump').checked;
+        const drain = document.getElementById('coolbreeze-drain').checked;
+        const exhaust = document.getElementById('coolbreeze-exhaust').checked;
+        const water = document.getElementById('coolbreeze-water').checked;
+        
+        data.motor_temp = tempMotor;
+        data.has_water = water;
+        data.voltage_input_1 = fan ? 11 + Math.random() : 0.1;
+        data.voltage_input_2 = pump ? 11.5 + Math.random() * 0.5 : 0.1;
+        data.voltage_input_3 = drain ? 11 + Math.random() * 0.5 : 0.1;
+        data.voltage_input_4 = exhaust ? 11.2 + Math.random() * 0.5 : 0.1;
+        data.voltage_input_5 = water ? 11.8 + Math.random() * 0.5 : 0.2;
+      }
+      
+      return data;
+    }
+    
+    function updatePreviews() {
+      ['cirrus', 'alliance', 'coolbreeze'].forEach(device => {
+        const data = getData(device);
+        const preview = document.getElementById(`${device}-json`);
+        preview.textContent = JSON.stringify(data, null, 2);
+      });
+    }
+    
+    async function postOnce(device) {
+      const supabaseUrl = document.getElementById('supabaseUrl').value;
+      const apiKey = document.getElementById(`${device}-api-key`).value;
+      const machineId = document.getElementById(`${device}-machine-id`).value;
+      
+      if (!supabaseUrl || !apiKey || !machineId) {
+        addLog('❌ Please configure Supabase URL, Machine ID, and API Key', 'error');
+        return;
+      }
+      
+      const data = getData(device);
+      
+      try {
+        addLog(`📤 Posting data to ${device}...`);
+        const response = await fetch(`${supabaseUrl}/functions/v1/esp32-data-receiver`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          addLog(`✅ Success: ${JSON.stringify(result)}`, 'success');
+          document.getElementById('last-post-time').textContent = new Date().toLocaleTimeString();
+        } else {
+          addLog(`❌ Error ${response.status}: ${JSON.stringify(result)}`, 'error');
+        }
+      } catch (error) {
+        addLog(`❌ Request failed: ${error.message}`, 'error');
+      }
+    }
+    
+    function startPosting(device) {
+      if (isPosting) {
+        addLog('⚠️ Already posting. Stop current posting first.', 'error');
+        return;
+      }
+      
+      const interval = parseInt(document.getElementById('postInterval').value) * 1000;
+      
+      isPosting = true;
+      document.getElementById('status-dot').classList.add('active');
+      document.getElementById('status-text').textContent = `Posting ${device} data every ${interval/1000}s`;
+      
+      // Post immediately
+      postOnce(device);
+      
+      // Then post on interval
+      postingInterval = setInterval(() => {
+        postOnce(device);
+      }, interval);
+      
+      addLog(`▶️ Started auto-posting for ${device.toUpperCase()}`, 'success');
+    }
+    
+    function stopPosting(device) {
+      if (postingInterval) {
+        clearInterval(postingInterval);
+        postingInterval = null;
+      }
+      
+      isPosting = false;
+      document.getElementById('status-dot').classList.remove('active');
+      document.getElementById('status-text').textContent = 'Not posting';
+      
+      addLog(`⏹️ Stopped posting for ${device.toUpperCase()}`);
+    }
+    
+    function addLog(message, type = '') {
+      const logPanel = document.getElementById('log-panel');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logPanel.appendChild(entry);
+      logPanel.scrollTop = logPanel.scrollHeight;
+      
+      // Keep only last 50 entries
+      while (logPanel.children.length > 50) {
+        logPanel.removeChild(logPanel.firstChild);
+      }
+    }
+  </script>
+</body>
+</html>
+

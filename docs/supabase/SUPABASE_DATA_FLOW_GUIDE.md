@@ -1,226 +1,449 @@
-# Supabase Data Flow Guide
+# 🔄 Supabase Data Flow & Trigger Chain Guide
 
-**Last Updated:** November 17, 2025
-
-## Overview
-
-This guide explains how data flows through the Supabase system, from ESP32 devices to the website display.
+**Last Updated:** December 1, 2025  
+**Status:** Active Reference
 
 ---
 
-## Data Flow Architecture
+## 📋 Overview
+
+This document describes the complete data flow from ESP32 devices through Supabase to the frontend, including all database triggers and processing functions.
+
+---
+
+## 🔄 Data Flow Diagram
 
 ```
 ESP32 Device
-    ↓
-Edge Function (esp32-data-receiver)
-    ↓
-readings_raw table (temporary storage)
-    ↓
-Database Trigger (process_cirrus_reading or process_coolbreeze_reading)
-    ↓
-Processing Table (cirrus or coolbreeze)
-    ↓
-machines table (current status display)
-    ↓
-Website Frontend
+    │
+    │ POST /api/readings (Edge Function)
+    ▼
+readings_raw table
+    │
+    │ TRIGGER: trigger_process_{manufacturer}_reading
+    ▼
+{manufacturer}_calculated table (cirrus, coolbreeze, alliance)
+    │
+    │ TRIGGER: trigger_update_machine_on_{manufacturer}_insert (optional)
+    ▼
+machines table (updated with latest values)
+    │
+    │ Frontend queries
+    ▼
+React Components (Dashboard, MachineCard, etc.)
 ```
 
 ---
 
-## Step-by-Step Data Flow
+## 📥 Step 1: Data Ingestion
 
-### 1. ESP32 Sends Data
-- ESP32 device reads sensors every 2 minutes
-- Sends **RAW** sensor data to Supabase Edge Function
-- Data includes: temperatures, current, voltage, water status, voltage inputs
+### **ESP32 → Edge Function**
 
-### 2. Edge Function Receives Data
-- **File:** `supabase/functions/esp32-data-receiver/index.ts`
-- Validates API key
-- Checks rate limiting (2-minute minimum)
-- Inserts data into `readings_raw` table
+ESP32 devices POST sensor data to the edge function:
 
-### 3. Database Trigger Processes Data
-- **Trigger:** `trigger_process_cirrus_reading` or `trigger_process_coolbreeze_reading`
-- Automatically fires when data is inserted into `readings_raw`
-- Determines which processing table to use based on machine type/manufacturer:
-  - **Cirrus** machines → `cirrus` table
-  - **CoolBreeze** machines → `coolbreeze` table
-- Calculates:
-  - Delta T (temperature difference)
-  - Operational states (fan on, pump on, etc.)
-  - Status indicators (operational, warning, error)
-  - Parameter compliance flags
+**Endpoint:** `POST /api/readings`
 
-### 4. Raw Data Deleted
-- **Immediately after processing**, the raw data is deleted from `readings_raw`
-- This is why `readings_raw` appears empty - it's working as designed!
-- Raw data is only kept temporarily during processing
+**Request Body:**
+```json
+{
+  "api_key": "your-api-key",
+  "machine_id": "uuid",
+  "voltage_input_1": 3.3,
+  "voltage_input_2": 0.0,
+  "voltage_input_3": 2.5,
+  "voltage_input_4": 0.0,
+  "voltage_input_5": 3.3,
+  "voltage_input_6": 0.0,
+  "ct_current": 2.5,
+  "temp_inside": 25.5,
+  "temp_outside": 30.2,
+  "temp_machine": 28.0
+}
+```
 
-### 5. Processed Data Stored
-- Processed data is stored in `cirrus` or `coolbreeze` tables
-- These tables contain:
-  - Historical data (last 1 year)
-  - Calculated status values
-  - Operational states
-  - All sensor readings with timestamps
-
-### 6. Machines Table Updated
-- The `machines` table shows **current status** for website display
-- Updated by function `update_machines_from_latest_readings()`
-- If machine is **disconnected** (no reading in last 15 minutes):
-  - All readings set to **0**
-  - `is_connected` = `false`
-  - `overall_status` = `'offline'`
-
-### 7. Website Displays Data
-- Frontend queries `machines` table for current status
-- Frontend queries `cirrus`/`coolbreeze` tables for historical charts
-- Connection status based on last reading within **15 minutes**
+**Edge Function Actions:**
+1. Validates API key
+2. Verifies machine ownership
+3. Inserts into `readings_raw` table
+4. Returns success/error response
 
 ---
 
-## Why is `readings_raw` Empty?
+## 🔀 Step 2: Raw Data Processing
 
-**This is expected behavior!**
+### **Trigger: `trigger_process_{manufacturer}_reading`**
 
-The `readings_raw` table is designed to be a **temporary staging area**:
-1. ESP32 sends data → inserted into `readings_raw`
-2. Database trigger immediately processes it
-3. Processed data goes to `cirrus` or `coolbreeze` table
-4. Raw data is **deleted immediately** after successful processing
+**Triggered On:** `INSERT` into `readings_raw` table
 
-**You should see data in:**
-- ✅ `cirrus` table (for Cirrus machines)
-- ✅ `coolbreeze` table (for CoolBreeze machines)
-- ✅ `machines` table (current status)
+**Function:** `process_{manufacturer}_reading()`
 
-**You should NOT see data in:**
-- ❌ `readings_raw` table (empty is correct - data is processed and deleted)
+**Manufacturers:**
+- `process_cirrus_reading()` - For Cirrus evaporative coolers
+- `process_coolbreeze_reading()` - For CoolBreeze evaporative coolers
+- `process_alliance_reading()` - For Alliance heatpumps
 
----
+### **Processing Logic**
 
-## Connection Status
+Each processing function:
 
-### How It Works
-- Machine is **connected** if last reading was within **15 minutes**
-- Machine is **disconnected** if no reading in last **15 minutes**
+1. **Reads Machine Configuration:**
+   - Machine type (evaporative, heatpump, airconditioner)
+   - Manufacturer-specific voltage mappings
+   - Alert thresholds
+   - Temperature setpoints
 
-### When Disconnected
-- All sensor readings set to **0**:
-  - `motor_temp` = 0
-  - `outside_temp` = 0
-  - `inside_temp` = 0
-  - `delta_t` = 0
-  - `current` = 0
-  - `voltage` = 0
-  - `power` = 0
-- `is_connected` = `false`
-- `overall_status` = `'offline'`
-- `is_on` = `false`
-- `is_cooling` = `false`
-- `fan_active` = `false`
-- `has_water` = `false`
+2. **Maps Voltage Inputs:**
+   - Uses `{manufacturer}_voltage_config` table
+   - Maps `voltage_input_1-6` to `Custom_1-6` functions
+   - Determines sensor readings (motor temp, ambient temp, duct temp, etc.)
 
-### Updating Connection Status
-Run this function to update all machines:
+3. **Calculates Derived Values:**
+   - `fan_active` - Based on voltage thresholds
+   - `is_cooling` - Based on current and temperature
+   - `is_heating` - For heatpumps (current > 1A)
+   - `pump_active` - For heatpumps (GPIO5 relay)
+   - `has_water` - For evaporative coolers (GPIO5 float switch)
+   - `delta_t` - Temperature difference
+   - `power` - Voltage × Current
+   - `compressor_status` - For heatpumps (good/warning/failed)
+
+4. **Determines Connection Status:**
+   - `is_connected` = true if reading is recent (< 5 minutes old)
+
+5. **Inserts into Processing Table:**
+   - `cirrus` table (for Cirrus machines)
+   - `coolbreeze` table (for CoolBreeze machines)
+   - `alliance` table (for Alliance machines)
+
+### **Example: Cirrus Processing**
+
 ```sql
-SELECT public.update_machines_from_latest_readings();
+CREATE TRIGGER trigger_process_cirrus_reading
+  AFTER INSERT ON public.readings_raw
+  FOR EACH ROW
+  WHEN (NEW.machine_id IN (
+    SELECT id FROM machines 
+    WHERE manufacturer = 'Cirrus' OR (manufacturer IS NULL AND type = 'evaporative')
+  ))
+  EXECUTE FUNCTION public.process_cirrus_reading();
 ```
 
-Or set up a scheduled job to run it every minute (recommended).
+**Function Flow:**
+1. Get machine type and manufacturer
+2. Load voltage config (maps inputs to sensors)
+3. Calculate: fan_active, is_cooling, has_water, motor_temp, etc.
+4. Insert into `cirrus` table with calculated values
 
 ---
 
-## Tables Overview
+## 🔄 Step 3: Machine Table Updates
 
-### `readings_raw`
-- **Purpose:** Temporary staging for raw sensor data
-- **Lifespan:** Data deleted immediately after processing
-- **Expected State:** Usually empty (this is correct!)
+### **Trigger: `trigger_update_machine_on_{manufacturer}_insert`** (Optional)
 
-### `cirrus`
-- **Purpose:** Processed historical data for Cirrus machines
-- **Lifespan:** 1 year (auto-cleanup)
-- **Contains:** All calculated values, status indicators, timestamps
+**Triggered On:** `INSERT` into `{manufacturer}_calculated` table
 
-### `coolbreeze`
-- **Purpose:** Processed historical data for CoolBreeze machines
-- **Lifespan:** 1 year (auto-cleanup)
-- **Contains:** All calculated values, status indicators, timestamps
+**Function:** `trigger_update_machine_on_{manufacturer}_insert()`
 
-### `machines`
-- **Purpose:** Current status display for website
-- **Updated:** From latest reading in processing tables
-- **Contains:** Current sensor values, connection status, operational states
+**Purpose:** Keep `machines` table synchronized with latest readings
 
----
+**Updates:**
+- `machines.is_connected` - Based on latest timestamp
+- `machines.fan_active` - Latest fan status
+- `machines.is_cooling` - Latest cooling status
+- `machines.motor_temp` - Latest motor temperature
+- `machines.outside_temp` - Latest ambient temperature
+- `machines.inside_temp` - Latest duct temperature
+- `machines.current` - Latest current reading
+- `machines.voltage` - Latest voltage reading
+- `machines.power` - Calculated power
+- `machines.updated_at` - Timestamp of update
 
-## Troubleshooting
-
-### "readings_raw is empty - is data being received?"
-**Answer:** Yes! This is expected. Data is processed and deleted immediately.
-
-### "How do I check if data is being received?"
-1. Check `cirrus` or `coolbreeze` tables - they should have recent data
-2. Check Edge Function logs for insert errors
-3. Check `machines` table - `is_connected` should be `true` if receiving data
-
-### "Machine shows old readings after disconnecting"
-**Solution:** Run `update_machines_from_latest_readings()` function. This will:
-- Check if machine is connected (last reading within 15 minutes)
-- If disconnected, set all readings to 0
-- If connected, update with latest readings
-
-### "Connection status not updating"
-**Solution:** 
-1. Check that `update_machines_from_latest_readings()` is being called
-2. Verify timeout is set to 15 minutes (not 10)
-3. Check that processing tables (`cirrus`/`coolbreeze`) have recent data
+**Note:** Frontend calculates connection status independently, so this trigger is optional but recommended for consistency.
 
 ---
 
-## Key Functions
+## 📊 Step 4: Frontend Data Fetching
 
-### `process_cirrus_reading()`
-- Trigger function for Cirrus machines
-- Processes raw data into `cirrus` table
-- Deletes raw data after processing
+### **Connection Status Calculation**
 
-### `process_coolbreeze_reading()`
-- Trigger function for CoolBreeze machines
-- Processes raw data into `coolbreeze` table
-- Deletes raw data after processing
+Frontend calculates connection status in `src/hooks/useMachineData.tsx`:
 
-### `update_machines_from_latest_readings()`
-- Updates `machines` table with latest readings
-- Sets readings to 0 if disconnected
-- Should be called regularly (every minute recommended)
+1. **Fetches Latest Timestamps:**
+   ```typescript
+   // Check all processing tables
+   const latestReadingsRaw = await supabase
+     .from('readings_raw')
+     .select('machine_id, created_at')
+     .in('machine_id', machineIds)
+     .order('created_at', { ascending: false });
+   
+   const latestCirrus = await supabase
+     .from('cirrus')
+     .select('machine_id, timestamp')
+     .in('machine_id', machineIds)
+     .order('timestamp', { ascending: false });
+   
+   // ... similar for coolbreeze, alliance
+   ```
 
-### `calculate_machine_connection_status()`
-- Calculates if machine is connected
-- Uses 15-minute timeout
-- Checks both `cirrus` and `coolbreeze` tables
+2. **Finds Most Recent Reading:**
+   ```typescript
+   // Take most recent timestamp from any table
+   const readingsByMachine = new Map<string, Date>();
+   // Merge all timestamps, keeping most recent per machine
+   ```
+
+3. **Calculates Connection Status:**
+   ```typescript
+   const calculateConnectionStatus = (machineId: string, latestTimestamps: Map<string, Date>): boolean => {
+     const latestTimestamp = latestTimestamps.get(machineId);
+     if (!latestTimestamp) return false;
+     
+     const minutesSinceLastReading = (now.getTime() - latestTimestamp.getTime()) / (1000 * 60);
+     return minutesSinceLastReading <= 5; // 5-minute threshold
+   };
+   ```
+
+### **Historical Data Fetching**
+
+Frontend uses `get_historical_data()` function:
+
+```sql
+SELECT * FROM get_historical_data(
+  p_machine_id := 'uuid',
+  p_period := '24h',
+  p_table_name := 'cirrus'
+);
+```
+
+**Function Aggregates:**
+- `24h`: All readings (no aggregation)
+- `7d`: 10-minute averages
+- `30d`: 1-hour averages
+- `1y`: 1-day averages
 
 ---
 
-## Data Retention
+## 🔗 Complete Trigger Chain
 
-- **Raw Data:** Deleted immediately after processing
-- **Processed Data:** Kept for 1 year, then auto-deleted
-- **Machines Table:** Always shows current status (no historical data)
+### **Chain 1: Cirrus Data Flow**
+
+```
+readings_raw (INSERT)
+    │
+    ├─→ trigger_process_cirrus_reading
+    │       │
+    │       └─→ process_cirrus_reading()
+    │               │
+    │               └─→ cirrus (INSERT calculated values)
+    │                       │
+    │                       └─→ trigger_update_machine_on_cirrus_insert (optional)
+    │                               │
+    │                               └─→ machines (UPDATE latest values)
+```
+
+### **Chain 2: CoolBreeze Data Flow**
+
+```
+readings_raw (INSERT)
+    │
+    ├─→ trigger_process_coolbreeze_reading
+    │       │
+    │       └─→ process_coolbreeze_reading()
+    │               │
+    │               └─→ coolbreeze (INSERT calculated values)
+    │                       │
+    │                       └─→ trigger_update_machine_on_coolbreeze_insert (optional)
+    │                               │
+    │                               └─→ machines (UPDATE latest values)
+```
+
+### **Chain 3: Alliance Data Flow**
+
+```
+readings_raw (INSERT)
+    │
+    ├─→ trigger_process_alliance_reading
+    │       │
+    │       └─→ process_alliance_reading()
+    │               │
+    │               └─→ alliance (INSERT calculated values)
+    │                       │
+    │                       └─→ trigger_update_machine_on_alliance_insert (optional)
+    │                               │
+    │                               └─→ machines (UPDATE latest values)
+```
 
 ---
 
-## Summary
+## 🔧 Trigger Functions Reference
 
-1. ✅ ESP32 sends raw data → `readings_raw` (temporary)
-2. ✅ Trigger processes data → `cirrus`/`coolbreeze` (permanent, 1 year)
-3. ✅ Raw data deleted immediately
-4. ✅ `machines` table updated with latest readings
-5. ✅ If disconnected > 15 minutes, readings set to 0
-6. ✅ Website displays from `machines` table (current) and processing tables (historical)
+### **Processing Functions**
 
-**Empty `readings_raw` table = System working correctly!** 🎉
+#### **`process_cirrus_reading()`**
+- **Input:** `NEW` row from `readings_raw`
+- **Output:** Calculated row in `cirrus` table
+- **Logic:**
+  - Maps voltage inputs to sensors (motor temp, ambient temp, duct temp)
+  - Calculates fan_active, is_cooling, has_water
+  - Determines connection status
+  - Calculates power, delta_t
 
+#### **`process_coolbreeze_reading()`**
+- **Input:** `NEW` row from `readings_raw`
+- **Output:** Calculated row in `coolbreeze` table
+- **Logic:** Similar to Cirrus, with CoolBreeze-specific mappings
+
+#### **`process_alliance_reading()`**
+- **Input:** `NEW` row from `readings_raw`
+- **Output:** Calculated row in `alliance` table
+- **Logic:**
+  - Heatpump-specific logic
+  - GPIO5 = pump relay (like float switch)
+  - Current > 1A = heating active
+  - Compressor status with 5-minute delay
+  - Complex health check logic
+
+### **Machine Update Functions**
+
+#### **`trigger_update_machine_on_cirrus_insert()`**
+- **Input:** `NEW` row from `cirrus` table
+- **Output:** `UPDATE` to `machines` table
+- **Updates:** All machine status fields
+
+#### **`trigger_update_machine_on_coolbreeze_insert()`**
+- **Input:** `NEW` row from `coolbreeze` table
+- **Output:** `UPDATE` to `machines` table
+- **Updates:** All machine status fields
+
+#### **`trigger_update_machine_on_alliance_insert()`**
+- **Input:** `NEW` row from `alliance` table
+- **Output:** `UPDATE` to `machines` table
+- **Updates:** All machine status fields including compressor_status
+
+---
+
+## 📝 Trigger Definitions
+
+### **Processing Triggers**
+
+```sql
+-- Cirrus
+CREATE TRIGGER trigger_process_cirrus_reading
+  AFTER INSERT ON public.readings_raw
+  FOR EACH ROW
+  WHEN (NEW.machine_id IN (
+    SELECT id FROM machines 
+    WHERE manufacturer = 'Cirrus' OR (manufacturer IS NULL AND type = 'evaporative')
+  ))
+  EXECUTE FUNCTION public.process_cirrus_reading();
+
+-- CoolBreeze
+CREATE TRIGGER trigger_process_coolbreeze_reading
+  AFTER INSERT ON public.readings_raw
+  FOR EACH ROW
+  WHEN (NEW.machine_id IN (
+    SELECT id FROM machines 
+    WHERE manufacturer = 'CoolBreeze'
+  ))
+  EXECUTE FUNCTION public.process_coolbreeze_reading();
+
+-- Alliance
+CREATE TRIGGER trigger_process_alliance_reading
+  AFTER INSERT ON public.readings_raw
+  FOR EACH ROW
+  WHEN (NEW.machine_id IN (
+    SELECT id FROM machines 
+    WHERE manufacturer = 'Alliance' AND type = 'heatpump'
+  ))
+  EXECUTE FUNCTION public.process_alliance_reading();
+```
+
+### **Machine Update Triggers** (Optional)
+
+```sql
+-- Cirrus
+CREATE TRIGGER trigger_update_machine_on_cirrus_insert
+  AFTER INSERT ON public.cirrus
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_update_machine_on_cirrus_insert();
+
+-- CoolBreeze
+CREATE TRIGGER trigger_update_machine_on_coolbreeze_insert
+  AFTER INSERT ON public.coolbreeze
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_update_machine_on_coolbreeze_insert();
+
+-- Alliance
+CREATE TRIGGER trigger_update_machine_on_alliance_insert
+  AFTER INSERT ON public.alliance
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_update_machine_on_alliance_insert();
+```
+
+---
+
+## 🔍 Troubleshooting
+
+### **Issue: Data Not Appearing in Processing Tables**
+
+**Check:**
+1. Is trigger enabled?
+   ```sql
+   SELECT tgname, tgenabled FROM pg_trigger 
+   WHERE tgname LIKE '%process_%';
+   ```
+
+2. Is function defined?
+   ```sql
+   SELECT proname FROM pg_proc 
+   WHERE proname LIKE 'process_%_reading';
+   ```
+
+3. Check trigger conditions:
+   ```sql
+   -- Verify machine manufacturer matches trigger condition
+   SELECT id, name, type, manufacturer 
+   FROM machines 
+   WHERE id = 'YOUR_MACHINE_ID';
+   ```
+
+### **Issue: Machines Table Not Updating**
+
+**Check:**
+1. Are machine update triggers enabled?
+   ```sql
+   SELECT tgname, tgenabled FROM pg_trigger 
+   WHERE tgname LIKE '%update_machine%';
+   ```
+
+2. Check function permissions:
+   ```sql
+   SELECT proname, prosecdef 
+   FROM pg_proc 
+   WHERE proname LIKE 'trigger_update_machine%';
+   -- Should be SECURITY DEFINER
+   ```
+
+---
+
+## 📚 Related Documentation
+
+- **[CONNECTION_STATUS_TROUBLESHOOTING.md](./CONNECTION_STATUS_TROUBLESHOOTING.md)** - Connection status issues
+- **[SCHEMA.md](./SCHEMA.md)** - Complete database schema
+- **[MAINTENANCE.md](./MAINTENANCE.md)** - Database maintenance
+
+---
+
+## 🎯 Key Points
+
+1. **Data flows:** `readings_raw` → `{manufacturer}_calculated` → `machines` (optional)
+2. **Triggers are manufacturer-specific:** Each manufacturer has its own processing function
+3. **Connection status:** Calculated independently by frontend (5-minute threshold)
+4. **Historical data:** Aggregated by `get_historical_data()` function
+5. **Real-time updates:** Frontend uses Supabase real-time subscriptions
+
+---
+
+**Last Updated:** December 1, 2025  
+**Maintained By:** Development Team

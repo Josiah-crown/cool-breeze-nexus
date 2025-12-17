@@ -23,32 +23,14 @@ const Index = () => {
       (m.type === 'evaporative' && !m.manufacturer) // Fallback for machines without manufacturer set
     ) || machines.find(m => m.type === 'evaporative') || machines[0];
     
-    console.log('🔍 Index: Machines available:', machines.length);
-    console.log('🔍 Index: Found machine:', found ? {
-      id: found.id,
-      name: found.name,
-      type: found.type,
-      manufacturer: found.manufacturer,
-      fanActive: found.fanActive,
-    } : 'NONE');
-    
     return found;
   }, [machines]);
 
   // Sync state with machine data whenever it changes
   useEffect(() => {
     if (!cirrusMachine) {
-      console.log('🔍 Index: No Cirrus machine found');
       return;
     }
-
-    console.log('🔄 Index: Syncing with machine:', {
-      id: cirrusMachine.id,
-      name: cirrusMachine.name,
-      fanActive: cirrusMachine.fanActive,
-      isOn: cirrusMachine.isOn,
-      isCooling: cirrusMachine.isCooling,
-    });
 
     // Update state from machine data
     setSupabaseFanActive(cirrusMachine.fanActive || false);
@@ -59,8 +41,6 @@ const Index = () => {
   // Set up real-time subscription and polling
   useEffect(() => {
     if (!cirrusMachine) return;
-
-    console.log('📡 Index: Setting up real-time subscription for machine:', cirrusMachine.id);
 
     // Set up real-time subscription to machines table
     const channel = supabase
@@ -74,37 +54,30 @@ const Index = () => {
           filter: `id=eq.${cirrusMachine.id}`,
         },
         (payload) => {
-          console.log('📨 Index: Real-time update received:', payload.new);
           const updatedMachine = payload.new as any;
           setSupabaseFanActive(updatedMachine.fan_active || false);
           setSupabaseIsOn(updatedMachine.is_on || false);
           setSupabaseIsCooling(updatedMachine.is_cooling || false);
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Index: Subscription status:', status);
-      });
+      .subscribe();
 
     // Also poll periodically to catch any missed updates
     const pollInterval = setInterval(() => {
-      console.log('🔄 Index: Polling for updates...');
       refetch();
     }, 5000); // Poll every 5 seconds
 
     return () => {
-      console.log('🧹 Index: Cleaning up subscription and polling');
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
   }, [cirrusMachine?.id, refetch]);
 
   const handleHome = () => {
-    console.log('Navigate to home');
     // In a real app, this would use router navigation
   };
 
   const handleBack = () => {
-    console.log('Navigate back');
     window.history.back();
   };
 

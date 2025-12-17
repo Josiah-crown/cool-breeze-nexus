@@ -32,11 +32,6 @@ const Dashboard: React.FC = () => {
     if (selectedMachine && machines.length > 0) {
       const updatedMachine = machines.find(m => m.id === selectedMachine.id);
       if (updatedMachine) {
-        console.log('🔄 Dashboard: Updating selectedMachine with fresh data:', {
-          id: updatedMachine.id,
-          fanActive: updatedMachine.fanActive,
-          isCooling: updatedMachine.isCooling,
-        });
         setSelectedMachine(updatedMachine);
       }
     }
@@ -45,8 +40,6 @@ const Dashboard: React.FC = () => {
   // Set up real-time updates for machines
   useEffect(() => {
     if (!user) return;
-    
-    console.log('📡 Dashboard: Setting up real-time subscription for machines');
     
     // Subscribe to machines table updates
     const channel = supabase
@@ -59,23 +52,18 @@ const Dashboard: React.FC = () => {
           table: 'machines',
         },
         (payload) => {
-          console.log('📨 Dashboard: Machine update received:', payload.new);
           // Refetch machine data when any machine is updated
           refetch();
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Dashboard: Subscription status:', status);
-      });
+      .subscribe();
     
     // Also poll periodically to catch any missed updates
     const pollInterval = setInterval(() => {
-      console.log('🔄 Dashboard: Polling for machine updates...');
       refetch();
     }, 10000); // Poll every 10 seconds
     
     return () => {
-      console.log('🧹 Dashboard: Cleaning up subscription and polling');
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
@@ -120,17 +108,13 @@ const Dashboard: React.FC = () => {
 
   const handleChangeManufacturer = (machineId: string) => {
     try {
-      console.log('handleChangeManufacturer called with machineId:', machineId);
       const machine = machines.find(m => m.id === machineId);
       if (!machine) {
-        console.error('Machine not found:', machineId);
         toast.error('Machine not found');
         return;
       }
-      console.log('Setting changeManufacturerMachineId to:', machineId, 'Machine:', machine);
       setChangeManufacturerMachineId(machineId);
     } catch (error) {
-      console.error('Error in handleChangeManufacturer:', error);
       toast.error('Failed to open Change Manufacturer dialog');
     }
   };

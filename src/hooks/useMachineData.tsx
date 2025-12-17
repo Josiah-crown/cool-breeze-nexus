@@ -42,7 +42,7 @@ const useMachineData = (userId: string, userRole: string) => {
           isCooling: m.is_cooling ?? false,
           fanActive: m.fan_active ?? false,
           hasWater: m.has_water ?? false,
-          hasPump: m.has_pump ?? false,
+          // hasPump removed - using hasWater for heatpump pump status (GPIO5)
           hasHeat: m.has_heat ?? false,
           isConnected, // Calculated from latest reading timestamp
           motorTemp,
@@ -77,12 +77,6 @@ const useMachineData = (userId: string, userRole: string) => {
         supabase.from('machine_notification_preferences').select('*').eq('user_id', userId)
       ]);
 
-      console.log('👥 DEBUG: Profiles fetched:', profiles?.length);
-      console.log('👥 DEBUG: Roles fetched:', allRoles?.length);
-      console.log('👥 DEBUG: Installer assignments:', installerAssignments?.length);
-      console.log('👥 DEBUG: Client assignments:', clientAssignments?.length);
-      console.log('🔔 DEBUG: User notification prefs:', userNotificationPrefs?.length);
-
       // Create a Map for quick lookup of notification preferences
       const notifPrefsMap = new Map<string, boolean>();
       (userNotificationPrefs || []).forEach((pref: any) => {
@@ -93,9 +87,6 @@ const useMachineData = (userId: string, userRole: string) => {
       const { data: allMachines } = await supabase
         .from('machines')
         .select('*');
-
-      console.log('🔍 DEBUG: Total machines fetched:', allMachines?.length);
-      console.log('🔍 DEBUG: User role:', userRole);
 
       // Fetch latest reading timestamps for connection status calculation
       const machineIds = (allMachines || []).map(m => m.id);
@@ -245,37 +236,23 @@ const useMachineData = (userId: string, userRole: string) => {
         };
       });
       
-      console.log('✅ Transformed users sample:', transformedUsers.slice(0, 5));
-      console.log('✅ Companies:', transformedUsers.filter(u => u.role === 'company').length);
-      console.log('✅ Installers:', transformedUsers.filter(u => u.role === 'installer').length);
-      console.log('✅ Installers with parentIds:', transformedUsers.filter(u => u.role === 'installer').map(i => ({ name: i.name, parentId: i.parentId, companyId: i.companyId })));
-      console.log('✅ Clients:', transformedUsers.filter(u => u.role === 'client').length);
-
       // Transform machines
       let visibleMachines: MachineStatus[] = [];
       
       if (userRole === 'super_admin') {
         // Super admin sees all machines
-        console.log('✅ Super admin mode: showing ALL machines');
         visibleMachines = (allMachines || []).map((m: any) => mapMachine(m, notifPrefsMap, latestTimestamps));
-        console.log('✅ Super admin visible machines:', visibleMachines.length);
       } else if (userRole === 'company') {
         // Company sees their machines and all installer/client machines under them
-        console.log('🏢 Company mode - userId:', userId);
         const company = transformedUsers.find(u => u.id === userId);
-        console.log('🏢 Company found:', company);
         const installers = transformedUsers.filter(u => u.role === 'installer' && u.parentId === userId);
-        console.log('🏢 Installers under company:', installers.length, installers.map(i => ({ name: i.name, parentId: i.parentId })));
         const installerIds = installers.map(i => i.id);
         const clients = transformedUsers.filter(u => u.role === 'client' && installerIds.includes(u.parentId || ''));
-        console.log('🏢 Clients under installers:', clients.length);
         const clientIds = clients.map(c => c.id);
-        console.log('🏢 Looking for machines owned by:', { companyId: userId, installerIds, clientIds });
         
         const filteredMachines = (allMachines || []).filter(m => 
           m.owner_id === userId || installerIds.includes(m.owner_id) || clientIds.includes(m.owner_id)
         );
-        console.log('🏢 Company filtered machines:', filteredMachines.length, 'of', allMachines?.length);
 
         visibleMachines = filteredMachines.map((m: any) => mapMachine(m, notifPrefsMap, latestTimestamps));
       } else if (userRole === 'installer') {
@@ -297,10 +274,6 @@ const useMachineData = (userId: string, userRole: string) => {
       const visibleMachineIds = visibleMachines.map(m => m.id);
       const realHistoricalData = await fetchHistoricalDataForMachines(visibleMachineIds, '24h');
 
-      console.log('✅ Final transformedUsers:', transformedUsers.length);
-      console.log('✅ Final visibleMachines:', visibleMachines.length);
-      console.log('✅ Historical data fetched for machines:', Object.keys(realHistoricalData).length);
-      
       setMachines(visibleMachines);
       setUsers(transformedUsers);
       setHistoricalData(realHistoricalData);

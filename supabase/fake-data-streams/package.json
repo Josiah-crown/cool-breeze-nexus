@@ -1,0 +1,24 @@
+{
+  "name": "fake-data-streams",
+  "version": "1.0.0",
+  "description": "Fake data stream simulators for Alliance heatpump and CoolBreeze evaporative cooler",
+  "scripts": {
+    "alliance": "node alliance-heatpump-simulator.js",
+    "coolbreeze": "node coolbreeze-evaporative-simulator.js",
+    "help": "echo 'Available commands:\n  npm run alliance - Start Alliance heatpump simulator\n  npm run coolbreeze - Start CoolBreeze evaporative simulator'"
+  },
+  "keywords": [
+    "iot",
+    "simulator",
+    "esp32",
+    "heatpump",
+    "evaporative",
+    "supabase"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

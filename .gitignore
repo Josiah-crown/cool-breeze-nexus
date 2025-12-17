@@ -12,11 +12,31 @@ dist
 dist-ssr
 *.local
 
-# Email SMTP Configuration (contains sensitive credentials)
-EMAIL_SMTP_CONFIG.env
+# Documentation (all explanation files)
+docs/
+DAILY_LOGS/
+*.md
+!README.md
+!QUICK_START.md
 
-# ESP32/Arduino secrets (WiFi passwords, API keys)
+# Sensitive files
+.env
+.env.local
+.env.production
+EMAIL_SMTP_CONFIG.env
+*.env
 hardware/esp32/secrets.h
+
+# Temporary/Archive folders
+Drop folder/
+TODAY/
+Context_extracted/
+*.zip
+*.backup
+
+# Test files
+test-*.js
+test-*.sql
 
 # Editor directories and files
 .vscode/*

@@ -7,10 +7,8 @@ type Period = '24h' | '7d' | '30d' | '1y';
 /**
  * Determines which processing table to use based on machine type
  * 
- * NOTE: After migration to new Supabase instance, this will return:
- * - 'cirrus_calculated' instead of 'cirrus'
- * - 'coolbreeze_calculated' instead of 'coolbreeze'
- * Pattern: {manufacturer}_calculated
+ * Tables are simply named after the manufacturer (lowercase):
+ * - cirrus, coolbreeze, alliance
  */
 async function getMachineProcessingTable(machineId: string): Promise<'cirrus' | 'coolbreeze' | 'alliance' | null> {
   const { data: machine, error } = await supabase
@@ -23,12 +21,9 @@ async function getMachineProcessingTable(machineId: string): Promise<'cirrus' | 
     console.error('Error fetching machine type:', error);
     return null;
   }
-
-  console.log(`[Historical Data] Machine ${machineId}: type=${machine.type}, manufacturer=${machine.manufacturer}`);
   
   // Use centralized configuration to determine processing table
   const processingTable = getProcessingTable(machine.type as MachineType, machine.manufacturer);
-  console.log(`[Historical Data] Determined processing table: ${processingTable}`);
   
   return processingTable;
 }
@@ -36,11 +31,9 @@ async function getMachineProcessingTable(machineId: string): Promise<'cirrus' | 
 /**
  * Fetches historical data from device-specific processing tables
  * 
- * CURRENT: Fetches from 'cirrus' or 'coolbreeze' tables
- * AFTER MIGRATION: Will fetch from 'cirrus_calculated' or 'coolbreeze_calculated' tables
- * 
- * Raw data is stored in {manufacturer}_raw tables (2 weeks retention)
- * Processed data is stored in {manufacturer}_calculated tables (1 year retention)
+ * Tables: cirrus, coolbreeze, alliance (named after manufacturer)
+ * Raw data goes to readings_raw (2 weeks retention)
+ * Processed data stored in manufacturer tables (1 year retention)
  */
 export async function fetchHistoricalData(
   machineId: string,
@@ -84,6 +77,7 @@ export async function fetchHistoricalData(
       deltaT: [],
       fanActive: [],
       isCooling: [],
+        isHeating: [],
       hasWater: [],
       power: [],
     };
@@ -95,8 +89,6 @@ export async function fetchHistoricalData(
   // - 7d: 10-minute averages
   // - 30d: 1-hour averages
   // - 1y: 1-day averages
-  console.log(`[Historical Data] Fetching from ${processingTable} for machine ${machineId}, period: ${period} using get_historical_data() function`);
-  
   const { data: readings, error } = await supabase.rpc('get_historical_data', {
     p_machine_id: machineId,
     p_period: period,
@@ -121,6 +113,7 @@ export async function fetchHistoricalData(
         deltaT: [],
         fanActive: [],
         isCooling: [],
+        isHeating: [],
         hasWater: [],
         pumpActive: [],
         power: [],
@@ -128,8 +121,6 @@ export async function fetchHistoricalData(
       };
     }
   }
-
-  console.log(`[Historical Data] Fetched ${readings?.length || 0} readings from ${processingTable} using optimized function`);
 
   if (!readings || readings.length === 0) {
     console.warn(`[Historical Data] No readings found for machine ${machineId} in ${processingTable} for period ${period}`);
@@ -142,6 +133,7 @@ export async function fetchHistoricalData(
       deltaT: [],
       fanActive: [],
       isCooling: [],
+      isHeating: [],
       hasWater: [],
       power: [],
     };
@@ -155,6 +147,7 @@ export async function fetchHistoricalData(
   const deltaT: HistoricalDataPoint[] = [];
   const fanActive: HistoricalDataPoint[] = [];
   const isCooling: HistoricalDataPoint[] = [];
+  const isHeating: HistoricalDataPoint[] = [];
   const hasWater: HistoricalDataPoint[] = [];
   const pumpActive: HistoricalDataPoint[] = [];
   const power: HistoricalDataPoint[] = [];
@@ -229,6 +222,14 @@ export async function fetchHistoricalData(
       });
     }
 
+    // Is heating (from processing table - heatpumps only)
+    if (reading.is_heating != null) {
+      isHeating.push({
+        timestamp,
+        value: reading.is_heating ? 1 : 0,
+      });
+    }
+
     // Has water (from processing table)
     if (reading.has_water != null) {
       hasWater.push({
@@ -277,6 +278,7 @@ export async function fetchHistoricalData(
     deltaT,
     fanActive,
     isCooling,
+    isHeating,
     hasWater,
     pumpActive,
     power,
@@ -293,8 +295,6 @@ async function fetchHistoricalDataDirect(
   processingTable: string,
   startTime: Date
 ): Promise<MachineHistoricalData> {
-  console.log(`[Historical Data] Using direct table query fallback for ${processingTable}`);
-  
   const { data: readings, error } = await supabase
     .from(processingTable)
     .select('*')
@@ -312,6 +312,7 @@ async function fetchHistoricalDataDirect(
       deltaT: [],
       fanActive: [],
       isCooling: [],
+      isHeating: [],
       hasWater: [],
       power: [],
       fanSpeed: [],
@@ -326,6 +327,7 @@ async function fetchHistoricalDataDirect(
   const deltaT: HistoricalDataPoint[] = [];
   const fanActive: HistoricalDataPoint[] = [];
   const isCooling: HistoricalDataPoint[] = [];
+  const isHeating: HistoricalDataPoint[] = [];
   const hasWater: HistoricalDataPoint[] = [];
   const pumpActive: HistoricalDataPoint[] = [];
   const power: HistoricalDataPoint[] = [];
@@ -345,6 +347,7 @@ async function fetchHistoricalDataDirect(
     }
     if (reading.fan_active != null) fanActive.push({ timestamp, value: reading.fan_active ? 1 : 0 });
     if (reading.is_cooling != null) isCooling.push({ timestamp, value: reading.is_cooling ? 1 : 0 });
+    if (reading.is_heating != null) isHeating.push({ timestamp, value: reading.is_heating ? 1 : 0 });
     if (reading.has_water != null) hasWater.push({ timestamp, value: reading.has_water ? 1 : 0 });
     if (reading.pump_active != null) pumpActive.push({ timestamp, value: reading.pump_active ? 1 : 0 });
     if (reading.power != null) {
@@ -367,6 +370,7 @@ async function fetchHistoricalDataDirect(
     deltaT,
     fanActive,
     isCooling,
+    isHeating,
     hasWater,
     pumpActive,
     power,

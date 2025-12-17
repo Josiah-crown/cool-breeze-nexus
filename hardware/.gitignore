@@ -1,0 +1,5 @@
+# Hardware documentation and secrets
+*.md
+secrets.h
+*.env
+

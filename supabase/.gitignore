@@ -1,0 +1,6 @@
+# Supabase sensitive files
+Errors and warnings/
+*.env
+secrets.*
+config.local.toml
+

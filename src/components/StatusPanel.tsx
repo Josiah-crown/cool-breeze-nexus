@@ -4,16 +4,19 @@ import { StatusLight } from './StatusLight';
 interface StatusData {
   isOn: boolean;
   isConnected: boolean;
-  hasWater: boolean;
+  hasWater: boolean;  // For evaporative: water | For heatpumps: pump (GPIO5)
+  hasHeat?: boolean;  // For heatpumps: heating (current > 1A)
   isCooling: boolean;
   motorTemp: number;
   motorStatus: 'normal' | 'warning' | 'critical';
+  compressorStatus?: 'good' | 'warning' | 'failed';
   deltaT: number;
   outsideTemp: number;
   insideTemp: number;
   currentAmps: number;
   voltage: number;
   power: number;
+  machineType?: 'evaporative' | 'heatpump' | 'airconditioner';
 }
 
 interface StatusPanelProps {
@@ -28,11 +31,21 @@ const StatusPanel: React.FC<StatusPanelProps> = ({ data }) => {
     return 'active';
   };
 
+  const getCompressorStatus = () => {
+    if (data.compressorStatus === 'good') return 'active';
+    if (data.compressorStatus === 'warning') return 'warning';
+    if (data.compressorStatus === 'failed') return 'error';
+    return 'inactive';
+  };
+
   const getDeltaTStatus = () => {
     if (data.deltaT > 5) return 'active';
     if (data.deltaT > 3) return 'warning';
     return 'inactive';
   };
+
+  const isHeatpump = data.machineType === 'heatpump';
+  const isEvaporative = data.machineType === 'evaporative';
 
   return (
     <div className="space-y-6">
@@ -48,18 +61,38 @@ const StatusPanel: React.FC<StatusPanelProps> = ({ data }) => {
             status={data.isConnected ? 'active' : 'inactive'} 
             label="Connected" 
           />
-          <StatusLight 
-            status={data.hasWater ? 'active' : 'error'} 
-            label="Water Level" 
-          />
-          <StatusLight 
-            status={data.isCooling ? 'active' : 'inactive'} 
-            label="Cooling Active" 
-          />
-          <StatusLight 
-            status={getMotorStatus()} 
-            label="Motor Status" 
-          />
+          
+          {isHeatpump ? (
+            <>
+              <StatusLight 
+                status={data.hasWater ? 'active' : 'inactive'} 
+                label="Pump" 
+              />
+              <StatusLight 
+                status={data.hasHeat ? 'active' : 'inactive'} 
+                label="Heat" 
+              />
+              <StatusLight 
+                status={getCompressorStatus()} 
+                label="Compressor" 
+              />
+            </>
+          ) : (
+            <>
+              <StatusLight 
+                status={data.hasWater ? 'active' : 'error'} 
+                label="Water Level" 
+              />
+              <StatusLight 
+                status={data.isCooling ? 'active' : 'inactive'} 
+                label="Cooling Active" 
+              />
+              <StatusLight 
+                status={getMotorStatus()} 
+                label="Motor Status" 
+              />
+            </>
+          )}
         </div>
 
         {/* Delta T Display */}

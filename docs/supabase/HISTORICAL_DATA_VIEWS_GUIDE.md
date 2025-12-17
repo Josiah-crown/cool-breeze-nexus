@@ -170,3 +170,4 @@ const { data, error } = await supabase.rpc('get_historical_data', {
 - **Frontend Code**: `src/lib/historicalData.ts`
 - **Database Schema**: `DATABASE_SCHEMA.md`
 
+
