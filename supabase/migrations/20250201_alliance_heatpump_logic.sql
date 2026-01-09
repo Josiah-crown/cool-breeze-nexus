@@ -22,11 +22,20 @@ COMMENT ON COLUMN public.readings_raw.voltage_input_5 IS
   'GPIO5 - Float switch for evaporative coolers, Heat relay for heatpumps';
 
 -- ========================================
--- 2. CREATE alliance_calculated TABLE IF NOT EXISTS
+-- 2. SKIP - alliance TABLE ALREADY EXISTS
 -- ========================================
 
--- Create alliance_calculated table if it doesn't exist (matches schema from 000_COMPLETE_DATABASE_SCHEMA.sql)
-CREATE TABLE IF NOT EXISTS public.alliance_calculated (
+-- Note: The 'alliance' table is created in 000_COMPLETE_DATABASE_SCHEMA.sql
+-- We don't need to create alliance_calculated - we use 'alliance' table
+-- This section is kept for reference but does nothing
+DO $$ BEGIN
+  -- Table already exists from base schema
+  NULL;
+END $$;
+
+-- OLD CODE (commented out - table is 'alliance' not 'alliance_calculated'):
+/*
+CREATE TABLE IF NOT EXISTS public.alliance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   machine_id UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -94,88 +103,89 @@ CREATE TABLE IF NOT EXISTS public.alliance_calculated (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  CONSTRAINT unique_alliance_calculated_machine_timestamp UNIQUE (machine_id, timestamp)
+  CONSTRAINT unique_alliance_machine_timestamp UNIQUE (machine_id, timestamp)
 );
-
--- Create indexes if they don't exist
-CREATE INDEX IF NOT EXISTS idx_alliance_calc_machine_id ON public.alliance_calculated(machine_id);
-CREATE INDEX IF NOT EXISTS idx_alliance_calc_timestamp ON public.alliance_calculated(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_alliance_calc_machine_timestamp ON public.alliance_calculated(machine_id, timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_alliance_calc_status ON public.alliance_calculated(overall_status);
+*/
 
 -- ========================================
 -- 3. ADD COMPRESSOR STATUS FIELDS TO ALLIANCE (if not already added)
 -- ========================================
 
--- Add compressor_status to alliance_calculated table (if column doesn't exist)
+-- Add compressor_status to alliance table (if column doesn't exist)
+-- Note: These columns are added in 20251208_add_compressor_status_to_alliance.sql
+-- This is a safety check
 DO $$ 
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
     WHERE table_schema = 'public' 
-    AND table_name = 'alliance_calculated' 
+    AND table_name = 'alliance' 
     AND column_name = 'compressor_status'
   ) THEN
-    ALTER TABLE public.alliance_calculated
+    ALTER TABLE public.alliance
     ADD COLUMN compressor_status TEXT DEFAULT 'good'
       CHECK (compressor_status IN ('good', 'warning', 'failed'));
   END IF;
-END $$;
-
--- Add timestamp tracking for compressor issues (if column doesn't exist)
-DO $$ 
-BEGIN
+  
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
     WHERE table_schema = 'public' 
-    AND table_name = 'alliance_calculated' 
+    AND table_name = 'alliance' 
     AND column_name = 'compressor_issue_first_detected_at'
   ) THEN
-    ALTER TABLE public.alliance_calculated
+    ALTER TABLE public.alliance
     ADD COLUMN compressor_issue_first_detected_at TIMESTAMPTZ;
   END IF;
 END $$;
 
--- Add comment
-COMMENT ON COLUMN public.alliance_calculated.compressor_status IS 
+COMMENT ON COLUMN public.alliance.compressor_status IS 
   'Compressor health status: good (LED ON), warning (LED BLINK), failed (LED OFF). Never shows warning/failed when heat is off.';
 
-COMMENT ON COLUMN public.alliance_calculated.compressor_issue_first_detected_at IS 
+COMMENT ON COLUMN public.alliance.compressor_issue_first_detected_at IS 
   'Timestamp when compressor issue was first detected. Used for 5-minute delay before showing warning/failed status.';
 
 -- ========================================
--- 4. ADD HEATPUMP ALERT FIELDS TO NOTIFICATIONS
+-- 4. ADD HEATPUMP ALERT FIELDS TO MACHINE_ALERT_CONFIG
 -- ========================================
 
--- Add heatpump-specific alert fields to alliance_notifications
-ALTER TABLE public.alliance_notifications
-ADD COLUMN IF NOT EXISTS current_min_alert DECIMAL(6,2) DEFAULT 0.5,
-ADD COLUMN IF NOT EXISTS current_max_alert DECIMAL(6,2) DEFAULT 30.0,
-ADD COLUMN IF NOT EXISTS delta_t_min_heating DECIMAL(5,2) DEFAULT 2.0,
-ADD COLUMN IF NOT EXISTS delta_t_max_heating DECIMAL(5,2) DEFAULT 15.0,
-ADD COLUMN IF NOT EXISTS setpoint_tolerance DECIMAL(5,2) DEFAULT 5.0,
-ADD COLUMN IF NOT EXISTS duration_heating_failure INTEGER DEFAULT 5,
-ADD COLUMN IF NOT EXISTS duration_compressor_failure INTEGER DEFAULT 5;
+-- Add heatpump-specific alert fields to machine_alert_config (generic table for all manufacturers)
+-- Note: These columns already exist in machine_alert_config from 000_COMPLETE_DATABASE_SCHEMA.sql
+-- This migration ensures they exist if the base schema migration hasn't run yet
+DO $$ 
+BEGIN
+  -- Add columns if they don't exist (already in base schema, but safe to check)
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'machine_alert_config' 
+      AND column_name = 'current_min_alert'
+  ) THEN
+    ALTER TABLE public.machine_alert_config
+    ADD COLUMN current_min_alert DECIMAL(6,2) DEFAULT 0.5,
+    ADD COLUMN current_max_alert DECIMAL(6,2) DEFAULT 30.0,
+    ADD COLUMN delta_t_min_heating DECIMAL(5,2) DEFAULT 2.0,
+    ADD COLUMN delta_t_max_heating DECIMAL(5,2) DEFAULT 15.0,
+    ADD COLUMN setpoint_tolerance DECIMAL(5,2) DEFAULT 5.0,
+    ADD COLUMN duration_compressor_failure INTEGER DEFAULT 5;
+  END IF;
+END $$;
 
-COMMENT ON COLUMN public.alliance_notifications.current_min_alert IS 
+COMMENT ON COLUMN public.machine_alert_config.current_min_alert IS 
   'Minimum current threshold for compressor health check. Below this is considered abnormal.';
 
-COMMENT ON COLUMN public.alliance_notifications.current_max_alert IS 
+COMMENT ON COLUMN public.machine_alert_config.current_max_alert IS 
   'Maximum current threshold for compressor health check. Above this is considered abnormal.';
 
-COMMENT ON COLUMN public.alliance_notifications.delta_t_min_heating IS 
+COMMENT ON COLUMN public.machine_alert_config.delta_t_min_heating IS 
   'Minimum delta T for heating mode. Below this indicates inefficient heating.';
 
-COMMENT ON COLUMN public.alliance_notifications.delta_t_max_heating IS 
+COMMENT ON COLUMN public.machine_alert_config.delta_t_max_heating IS 
   'Maximum delta T for heating mode. Above this indicates excessive heating.';
 
-COMMENT ON COLUMN public.alliance_notifications.setpoint_tolerance IS 
+COMMENT ON COLUMN public.machine_alert_config.setpoint_tolerance IS 
   'Temperature tolerance from setpoint (in degrees). Used to determine if temps are within acceptable range.';
 
-COMMENT ON COLUMN public.alliance_notifications.duration_heating_failure IS 
-  'Duration (in minutes) before triggering heating failure alert.';
-
-COMMENT ON COLUMN public.alliance_notifications.duration_compressor_failure IS 
+COMMENT ON COLUMN public.machine_alert_config.duration_compressor_failure IS 
   'Duration (in minutes) before triggering compressor failure alert (5-minute delay).';
 
 -- ========================================
@@ -266,9 +276,9 @@ BEGIN
     v_delta_t := NULL;
   END IF;
   
-  -- Get voltage configuration for this machine (if exists)
+  -- Get voltage configuration for this machine (from generic machine_voltage_config table)
   SELECT * INTO v_voltage_config
-  FROM public.alliance_voltage_config
+  FROM public.machine_voltage_config
   WHERE machine_id = NEW.machine_id
   LIMIT 1;
   
@@ -277,9 +287,9 @@ BEGIN
     v_active_threshold := COALESCE(v_voltage_config.voltage_active_threshold, 6.0);
   END IF;
   
-  -- Get alert configuration for current limits
+  -- Get alert configuration for current limits (from generic machine_alert_config table)
   SELECT * INTO v_alert_config
-  FROM public.alliance_notifications
+  FROM public.machine_alert_config
   WHERE machine_id = NEW.machine_id
   LIMIT 1;
   
@@ -427,9 +437,9 @@ BEGIN
         v_previous_issue_timestamp := NULL;
       ELSE
         -- System has an issue, check for 5-minute delay
-        -- Get previous issue timestamp from the last reading
+        -- Get previous issue timestamp from the last reading (from alliance table)
         SELECT compressor_issue_first_detected_at INTO v_previous_issue_timestamp
-        FROM public.alliance_calculated
+        FROM public.alliance
         WHERE machine_id = NEW.machine_id
           AND compressor_status IN ('warning', 'failed')
         ORDER BY timestamp DESC
@@ -473,8 +483,8 @@ BEGIN
     'compressor_status', v_compressor_status
   );
   
-  -- Insert into alliance_calculated table
-  INSERT INTO public.alliance_calculated (
+  -- Insert into alliance table (NOT alliance_calculated!)
+  INSERT INTO public.alliance (
     machine_id,
     timestamp,
     ambient_temp,
@@ -584,24 +594,28 @@ COMMENT ON FUNCTION public.process_alliance_reading IS
 -- ========================================
 
 -- Update voltage config for Alliance machines to use voltage_input_5 for heat relay
-INSERT INTO public.alliance_voltage_config (machine_id, voltage_input_5_function, voltage_active_threshold)
-SELECT m.id, 'Custom_5', 6.0
+-- Use generic machine_voltage_config table (not alliance_voltage_config)
+INSERT INTO public.machine_voltage_config (machine_id, voltage_input_5_function, voltage_active_threshold)
+SELECT m.id, 'pump', 6.0  -- voltage_input_5 = pump relay for heatpumps
 FROM public.machines m
 WHERE m.manufacturer = 'Alliance' 
   AND m.type = 'heatpump'
   AND NOT EXISTS (
-    SELECT 1 FROM public.alliance_voltage_config avc WHERE avc.machine_id = m.id
-  );
+    SELECT 1 FROM public.machine_voltage_config mvc WHERE mvc.machine_id = m.id
+  )
+ON CONFLICT (machine_id) DO UPDATE SET
+  voltage_input_5_function = 'pump',
+  voltage_active_threshold = 6.0;
 
--- Create notification config for Alliance machines if not exists
-INSERT INTO public.alliance_notifications (
+-- Create alert config for Alliance machines if not exists
+-- Use generic machine_alert_config table (not alliance_notifications)
+INSERT INTO public.machine_alert_config (
   machine_id,
   current_min_alert,
   current_max_alert,
   delta_t_min_heating,
   delta_t_max_heating,
   setpoint_tolerance,
-  duration_heating_failure,
   duration_compressor_failure
 )
 SELECT 
@@ -611,19 +625,25 @@ SELECT
   2.0,   -- delta_t_min_heating
   15.0,  -- delta_t_max_heating
   5.0,   -- setpoint_tolerance
-  5,     -- duration_heating_failure (5 minutes)
   5      -- duration_compressor_failure (5 minutes)
 FROM public.machines m
 WHERE m.manufacturer = 'Alliance'
   AND m.type = 'heatpump'
   AND NOT EXISTS (
-    SELECT 1 FROM public.alliance_notifications an WHERE an.machine_id = m.id
-  );
+    SELECT 1 FROM public.machine_alert_config mac WHERE mac.machine_id = m.id
+  )
+ON CONFLICT (machine_id) DO UPDATE SET
+  current_min_alert = 0.5,
+  current_max_alert = 30.0,
+  delta_t_min_heating = 2.0,
+  delta_t_max_heating = 15.0,
+  setpoint_tolerance = 5.0,
+  duration_compressor_failure = 5;
 
 -- ========================================
 -- MIGRATION COMPLETE
 -- ========================================
 
-COMMENT ON TABLE public.alliance_calculated IS 
-  'Calculated data for Alliance heat pumps. GPIO5 = pump relay, heat = current>1A, compressor status with 5-min delay.';
+COMMENT ON TABLE public.alliance IS 
+  'Data for Alliance heat pumps. GPIO5 = pump relay, heat = current>1A, compressor status with 5-min delay.';
 

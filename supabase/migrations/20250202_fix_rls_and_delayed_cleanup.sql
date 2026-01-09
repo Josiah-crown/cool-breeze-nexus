@@ -3,7 +3,7 @@
 -- ============================================================================
 -- Date: December 2, 2025
 -- Purpose: 
---   1. Fix 403 errors by adding RLS policies for alliance_calculated
+--   1. Fix 403 errors by adding RLS policies for alliance
 --   2. Fix 400 errors (likely query issues)
 --   3. Update triggers to process immediately but keep raw data for 5 minutes
 -- ============================================================================
@@ -13,19 +13,19 @@
 -- ========================================
 
 -- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Users can view Alliance data for accessible machines" ON public.alliance_calculated;
-DROP POLICY IF EXISTS "Service role can insert Alliance data" ON public.alliance_calculated;
-DROP POLICY IF EXISTS "Service role can update Alliance data" ON public.alliance_calculated;
+DROP POLICY IF EXISTS "Users can view Alliance data for accessible machines" ON public.alliance;
+DROP POLICY IF EXISTS "Service role can insert Alliance data" ON public.alliance;
+DROP POLICY IF EXISTS "Service role can update Alliance data" ON public.alliance;
 
 -- Policy: Users can view Alliance data for machines they own or have access to
 -- (Exact copy of working Cirrus/CoolBreeze policy pattern)
 CREATE POLICY "Users can view Alliance data for accessible machines"
-  ON public.alliance_calculated
+  ON public.alliance
   FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM public.machines m
-      WHERE m.id = alliance_calculated.machine_id
+      WHERE m.id = alliance.machine_id
       AND (
         -- Super admin sees all
         EXISTS (
@@ -60,13 +60,13 @@ CREATE POLICY "Users can view Alliance data for accessible machines"
 
 -- Policy: Only service role can insert (via trigger)
 CREATE POLICY "Service role can insert Alliance data"
-  ON public.alliance_calculated
+  ON public.alliance
   FOR INSERT
   WITH CHECK (auth.role() = 'service_role');
 
 -- Policy: Only service role can update
 CREATE POLICY "Service role can update Alliance data"
-  ON public.alliance_calculated
+  ON public.alliance
   FOR UPDATE
   USING (auth.role() = 'service_role');
 
@@ -597,9 +597,9 @@ BEGIN
     v_delta_t := NULL;
   END IF;
   
-  -- Get voltage configuration
+  -- Get voltage configuration (from generic machine_voltage_config table)
   SELECT * INTO v_voltage_config
-  FROM public.alliance_voltage_config
+  FROM public.machine_voltage_config
   WHERE machine_id = NEW.machine_id
   LIMIT 1;
   
@@ -607,9 +607,9 @@ BEGIN
     v_active_threshold := COALESCE(v_voltage_config.voltage_active_threshold, 6.0);
   END IF;
   
-  -- Get alert configuration
+  -- Get alert configuration (from generic machine_alert_config table)
   SELECT * INTO v_alert_config
-  FROM public.alliance_notifications
+  FROM public.machine_alert_config
   WHERE machine_id = NEW.machine_id
   LIMIT 1;
   
@@ -650,7 +650,7 @@ BEGIN
     ELSE
       -- Check 5-minute delay logic (simplified)
       SELECT compressor_issue_first_detected_at INTO v_previous_issue_timestamp
-      FROM public.alliance_calculated
+      FROM public.alliance
       WHERE machine_id = NEW.machine_id
         AND compressor_status IN ('warning', 'failed')
       ORDER BY timestamp DESC
@@ -678,8 +678,8 @@ BEGIN
     'compressor_status', v_compressor_status
   );
   
-  -- Insert into alliance_calculated table
-  INSERT INTO public.alliance_calculated (
+  -- Insert into alliance table (NOT alliance_calculated!)
+  INSERT INTO public.alliance (
     machine_id, timestamp, ambient_temp, duct_temp, motor_temp, delta_t,
     voltage, current, power, voltage_1, voltage_2, voltage_3, voltage_4, voltage_5, voltage_6,
     fan_active, pump_active, is_heating, is_on, is_connected, has_water,

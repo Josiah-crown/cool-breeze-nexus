@@ -1,8 +1,8 @@
 -- ============================================================================
--- Fix get_historical_data function to support alliance_calculated table
+-- Fix get_historical_data function to support alliance table
 -- ============================================================================
--- The function was checking for table name 'alliance' but we use 'alliance_calculated'
 -- This fixes the fan_speed handling for heatpumps
+-- Note: We use 'alliance' table (not alliance_calculated)
 -- ============================================================================
 
 DROP FUNCTION IF EXISTS public.get_historical_data(UUID, TEXT, TEXT);
@@ -37,8 +37,8 @@ DECLARE
   v_interval INTERVAL;
   v_is_heatpump BOOLEAN;
 BEGIN
-  -- Check if this is a heatpump table (alliance or alliance_calculated)
-  v_is_heatpump := (p_table_name = 'alliance' OR p_table_name = 'alliance_calculated');
+  -- Check if this is a heatpump table (alliance)
+  v_is_heatpump := (p_table_name = 'alliance');
 
   -- Calculate start time and interval based on period
   CASE p_period
@@ -131,12 +131,12 @@ COMMENT ON FUNCTION public.get_historical_data IS
 - 30d: 1-hour averages
 - 1y: 1-day averages (365 data points)
 Returns: timestamp, motor_temp, current, ambient_temp, duct_temp, delta_t, fan_active, is_cooling, is_heating, has_water, pump_active, power, voltage, fan_speed (NULL for heatpumps)
-Note: fan_speed is NULL for alliance/alliance_calculated tables since heatpumps do not have variable speed fans
-Note: is_heating is only populated for heatpump tables (alliance_calculated)
-Parameters: machine_id, period (24h|7d|30d|1y), table_name (cirrus|coolbreeze|alliance_calculated)';
+Note: fan_speed is NULL for alliance table since heatpumps do not have variable speed fans
+Note: is_heating is only populated for heatpump tables (alliance)
+Parameters: machine_id, period (24h|7d|30d|1y), table_name (cirrus|coolbreeze|alliance)';
 
 -- ============================================================================
--- Update historical_data_summary view to include alliance_calculated
+-- Update historical_data_summary view to include alliance
 -- ============================================================================
 
 DROP VIEW IF EXISTS public.historical_data_summary;
@@ -163,13 +163,13 @@ FROM public.coolbreeze
 GROUP BY machine_id
 UNION ALL
 SELECT 
-  'alliance_calculated' AS table_name,
+  'alliance' AS table_name,
   machine_id,
   MIN(timestamp) AS earliest_data,
   MAX(timestamp) AS latest_data,
   COUNT(*) AS total_readings,
   COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '365 days') AS readings_last_year
-FROM public.alliance_calculated
+FROM public.alliance
 GROUP BY machine_id;
 
 -- Grant select on view
@@ -179,5 +179,5 @@ GRANT SELECT ON public.historical_data_summary TO service_role;
 COMMENT ON VIEW public.historical_data_summary IS 
 'Summary view showing data ranges for each machine in each processing table. 
 Use this to verify what data exists and date ranges.
-Updated to include alliance_calculated table.';
+Updated to include alliance table.';
 

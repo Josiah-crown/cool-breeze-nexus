@@ -16,6 +16,8 @@
 -- ========================================
 -- 1. ENUMS
 -- ========================================
+-- Drop if exists to allow re-running migrations
+DROP TYPE IF EXISTS public.app_role CASCADE;
 CREATE TYPE public.app_role AS ENUM ('super_admin', 'company', 'installer', 'client');
 
 -- ========================================
