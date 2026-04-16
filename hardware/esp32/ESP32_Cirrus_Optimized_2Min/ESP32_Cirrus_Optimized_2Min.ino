@@ -107,7 +107,8 @@ const int ADC_SAMPLE_DELAY_US = 150;
 // ============================================
 WiFiManager wifiManager;
 const char* AP_SSID = "Cirrus-Setup";
-const char* AP_PASSWORD = "cirrus123";
+// Avoid hardcoding passwords in firmware (set at provisioning time if required)
+const char* AP_PASSWORD = "";
 
 // ============================================
 // WiFi & Supabase Configuration
@@ -119,7 +120,8 @@ const char* PREF_API_KEY = "api_key";
 const char* PREF_UPTIME = "uptime";
 
 const char* SUPABASE_URL = "https://wjyanxstvbiqefmgpccb.supabase.co";
-const char* SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqeWFueHN0dmJpcWVmbWdwY2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMzI4NDUsImV4cCI6MjA3NzgwODg0NX0.r1xQG8HYHioH8_ALGQTRO2wM5F2tAOhM-xe_eh3VxhY";
+// Supabase credentials should be provisioned per device (do not hardcode secrets in firmware)
+const char* SUPABASE_ANON_KEY = "";
 
 String supabaseUrl = "";
 String supabaseAnonKey = "";

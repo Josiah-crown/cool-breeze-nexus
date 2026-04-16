@@ -29,6 +29,10 @@
  * NO MANUFACTURER-SPECIFIC CODE IN ARDUINO!
  * All manufacturer logic is in Supabase database triggers
  * 
+ * NOTE: No 6-month full reset (preferences.clear) - that would wipe
+ * machine_id/API key and WiFi, causing units to go "offline" until
+ * reconfigured. Only 6-hour ESP.restart() is used for reliability.
+ * 
  * ============================================
  */
 
@@ -67,10 +71,11 @@ const unsigned long WIFI_CONNECT_TIMEOUT = 30000;       // 30 seconds
 const unsigned long HTTP_POST_TIMEOUT = 10000;          // 10 seconds
 const unsigned long MAX_WIFI_ON_TIME = 60000;           // 1 minute (safety net)
 const unsigned long AUTO_RESET_INTERVAL = 21600000;     // 6 hours
-const unsigned long SIX_MONTH_RESET = 15552000000ULL;   // 180 days
 const unsigned long BOOT_BUTTON_HOLD_TIME = 10000;      // 10 seconds (WiFi reset only)
 const unsigned long WATCHDOG_TIMEOUT = 60;              // 60 seconds
 const unsigned long WIFI_STUCK_TIMEOUT = 120000;        // 2 minutes
+const unsigned long WIFI_INITIAL_CONNECT_TIMEOUT_MS = 15000;  // 15s per attempt before retry (boot until first connect)
+const unsigned long INITIAL_CONNECT_GIVE_UP_MS = 300000;      // 5 min total in initial phase → clear WiFi and restart to AP (only in initial phase)
 
 // ============================================
 // Pin Definitions - ALL 6 VOLTAGE INPUTS
@@ -118,7 +123,7 @@ const int ADC_SAMPLE_DELAY_US = 150;
 // WiFiManager Configuration
 // ============================================
 WiFiManager wifiManager;
-const char* AP_SSID = "HVACmonitor-Setup";
+const char* AP_SSID = "Crown_IOT-Setup";
 // No password - open access point for easy setup
 
 // ============================================
@@ -129,10 +134,12 @@ const char* PREF_NAMESPACE = "coolbreeze";
 const char* PREF_MACHINE_ID = "machine_id";
 const char* PREF_API_KEY = "api_key";
 const char* PREF_UPTIME = "uptime";
+const char* PREF_WIFI_SSID = "wifi_ssid";
+const char* PREF_WIFI_PASS = "wifi_pass";
 
-// HARDCODED Supabase credentials (same for all devices)
-const char* SUPABASE_URL = "https://wjyanxstvbiqefmgpccb.supabase.co";
-const char* SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqeWFueHN0dmJpcWVmbWdwY2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMzI4NDUsImV4cCI6MjA3NzgwODg0NX0.r1xQG8HYHioH8_ALGQTRO2wM5F2tAOhM-xe_eh3VxhY";
+// Supabase credentials should be provisioned per device (do not hardcode secrets in firmware)
+const char* SUPABASE_URL = "";
+const char* SUPABASE_ANON_KEY = "";
 
 // Per-device configuration
 String supabaseUrl = "";
@@ -145,12 +152,13 @@ String apiKey = "";
 // State Machine
 // ============================================
 enum SystemState {
+  STATE_INITIAL_WIFI_CONNECT,  // After boot: connect once (15s attempt, retry until success), then disconnect and run normal loop
   STATE_SENSOR_READING,
   STATE_WIFI_CONNECT,
   STATE_DATA_SEND,
   STATE_WIFI_DISCONNECT
 };
-SystemState currentState = STATE_SENSOR_READING;
+SystemState currentState = STATE_INITIAL_WIFI_CONNECT;
 
 // ============================================
 // State Variables
@@ -217,15 +225,7 @@ void setup() {
   initializeSensors();
   initializeWiFiManager();
   
-  unsigned long totalUptimeSeconds = preferences.getULong64(PREF_UPTIME, 0);
   bootTime = millis();
-  
-  if(totalUptimeSeconds * 1000ULL >= SIX_MONTH_RESET) {
-    Serial.println("6-month reset triggered");
-    preferences.clear();
-    delay(1000);
-    ESP.restart();
-  }
   
   lastAutoReset = millis();
   lastUptimeUpdate = millis();
@@ -246,7 +246,7 @@ void setup() {
   
   WiFi.mode(WIFI_OFF);
   wifiEnabled = false;
-  currentState = STATE_SENSOR_READING;
+  currentState = STATE_INITIAL_WIFI_CONNECT;
   
   Serial.println("Setup complete. Starting main loop...\n");
   Serial.println("Hold BOOT button for 10 seconds to reset WiFi (UUID/API key preserved)");
@@ -279,6 +279,9 @@ void loop() {
   checkWiFiStuck(currentMillis);
   
   switch(currentState) {
+    case STATE_INITIAL_WIFI_CONNECT:
+      stateInitialWiFiConnect(currentMillis);
+      break;
     case STATE_SENSOR_READING:
       stateSensorReading(currentMillis);
       break;
@@ -297,8 +300,50 @@ void loop() {
 }
 
 // ============================================
-// State Functions (abbreviated for space)
+// State Functions
 // ============================================
+void stateInitialWiFiConnect(unsigned long currentMillis) {
+  static bool attemptStarted = false;
+  static unsigned long attemptStart = 0;
+  static unsigned long phaseStartTime = 0;
+
+  if(!attemptStarted) {
+    Serial.println("Initial WiFi connection (15s attempt)...");
+    WiFi.mode(WIFI_STA);
+    WiFi.begin();
+    attemptStarted = true;
+    attemptStart = currentMillis;
+    phaseStartTime = currentMillis;
+  }
+
+  if(WiFi.status() == WL_CONNECTED) {
+    Serial.println("✓ Initial WiFi connected. Disconnecting; starting sensor readings.");
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
+    delay(200);
+    attemptStarted = false;
+    currentState = STATE_SENSOR_READING;
+    return;
+  }
+
+  if(currentMillis - attemptStart >= WIFI_INITIAL_CONNECT_TIMEOUT_MS) {
+    if(currentMillis - phaseStartTime >= INITIAL_CONNECT_GIVE_UP_MS) {
+      Serial.println("Initial connection failed after 5 minutes. Clearing WiFi; restarting to open config portal.");
+      preferences.remove(PREF_WIFI_SSID);
+      preferences.remove(PREF_WIFI_PASS);
+      WiFi.disconnect(true);
+      wifiManager.resetSettings();
+      delay(2000);
+      ESP.restart();
+    }
+    Serial.println("Initial connection failed (15s). Retrying...");
+    WiFi.disconnect();
+    delay(500);
+    WiFi.begin();
+    attemptStart = currentMillis;
+  }
+}
+
 void stateSensorReading(unsigned long currentMillis) {
   if(currentMillis - lastSensorRead >= SENSOR_READ_INTERVAL) {
     if(wifiEnabled) {
@@ -535,9 +580,12 @@ void checkBootButton(unsigned long currentMillis) {
     bootButtonPressed = true;
   } else if(buttonState && bootButtonPressed) {
     if(currentMillis - bootButtonPressTime >= BOOT_BUTTON_HOLD_TIME) {
-      Serial.println("Entering WiFi Config Mode (WiFi only - UUID/API key preserved)");
-      // Only reset WiFi credentials, NOT UUID/API key
-      WiFi.disconnect(true);  // Clear WiFi credentials
+      Serial.println("Manual reset triggered - clearing WiFi only (Machine ID/API Key preserved)");
+      // Clear our stored WiFi credentials and WiFiManager's NVS so config portal opens on next boot
+      preferences.remove(PREF_WIFI_SSID);
+      preferences.remove(PREF_WIFI_PASS);
+      WiFi.disconnect(true);
+      wifiManager.resetSettings();
       delay(2000);
       ESP.restart();
     }
@@ -614,8 +662,8 @@ void initializeWiFiManager() {
     "<h2>" + String(AP_SSID) + "</h2>"
     "</div>";
   
-  wifiManager.setCustomHeadElement(customHead);
-  wifiManager.setCustomMenuHTML(customMenu);
+  wifiManager.setCustomHeadElement(customHead.c_str());
+  wifiManager.setCustomMenuHTML(customMenu.c_str());
   
   WiFiManagerParameter custom_machine_id("machine_id", "Machine UUID", machineId.c_str(), 100);
   WiFiManagerParameter custom_api_key("api_key", "Machine API Key", apiKey.c_str(), 200);
@@ -623,15 +671,30 @@ void initializeWiFiManager() {
   wifiManager.addParameter(&custom_machine_id);
   wifiManager.addParameter(&custom_api_key);
   
-  String savedSSID = WiFi.SSID();
+  // Check for WiFi credentials: our namespace first, then WiFiManager's NVS (e.g. from Cirrus)
+  String savedSSID = preferences.getString(PREF_WIFI_SSID, "");
+  String savedPass = preferences.getString(PREF_WIFI_PASS, "");
+
+  if(savedSSID.length() == 0) {
+    savedSSID = WiFi.SSID();  // Fallback: WiFiManager/Cirrus stored in NVS
+  }
+
   if(savedSSID.length() == 0) {
     Serial.println("No WiFi credentials - starting config portal...");
     if(!wifiManager.autoConnect(AP_SSID, NULL)) {
       Serial.println("Config portal timed out");
     }
+    savedSSID = WiFi.SSID();
+    if(savedSSID.length() > 0) {
+      preferences.putString(PREF_WIFI_SSID, savedSSID);
+    }
+  } else {
+    // Have credentials: do not connect here; initial connection happens in loop (STATE_INITIAL_WIFI_CONNECT, 15s attempt, retry until success)
+    (void)savedSSID;
+    (void)savedPass;
   }
   
-  // Only update UUID/API key if they were actually changed (not empty)
+  // Only update UUID/API key
   String newMachineId = String(custom_machine_id.getValue());
   String newApiKey = String(custom_api_key.getValue());
   
@@ -640,6 +703,12 @@ void initializeWiFiManager() {
   }
   if(newApiKey.length() > 0 && newApiKey != apiKey) {
     apiKey = newApiKey;
+  }
+  
+  // Save current WiFi SSID to our namespace if different (for consistency)
+  String currentSSID = WiFi.SSID();
+  if(currentSSID.length() > 0 && currentSSID != savedSSID) {
+    preferences.putString(PREF_WIFI_SSID, currentSSID);
   }
   
   saveConfiguration();
@@ -660,10 +729,30 @@ void saveConfiguration() {
 }
 
 void updateUptime() {
-  unsigned long currentUptime = (millis() - bootTime) / 1000;
-  unsigned long totalUptime = preferences.getULong64(PREF_UPTIME, 0);
-  totalUptime += currentUptime;
-  preferences.putULong64(PREF_UPTIME, totalUptime);
-  bootTime = millis();
+  static unsigned long lastUptimeSave = 0;
+  unsigned long currentMillis = millis();
+  
+  // Handle millis() wrap (occurs after ~49.7 days)
+  unsigned long elapsed = 0;
+  if (lastUptimeSave == 0) {
+    // First call - initialize with bootTime
+    lastUptimeSave = bootTime > 0 ? bootTime : currentMillis;
+    return;
+  } else if (currentMillis >= lastUptimeSave) {
+    // Normal case - no wrap
+    elapsed = currentMillis - lastUptimeSave;
+  } else {
+    // millis() wrapped - calculate elapsed correctly
+    elapsed = (ULONG_MAX - lastUptimeSave) + currentMillis + 1;
+  }
+  
+  // Only update if at least 1 second has passed
+  if (elapsed >= 1000) {
+    unsigned long secondsToAdd = elapsed / 1000;
+    unsigned long totalUptime = preferences.getULong64(PREF_UPTIME, 0);
+    totalUptime += secondsToAdd;
+    preferences.putULong64(PREF_UPTIME, totalUptime);
+    lastUptimeSave = currentMillis;
+  }
 }
 

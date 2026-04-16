@@ -83,43 +83,51 @@ export async function fetchHistoricalData(
     };
   }
 
-  // Use the optimized database function for fetching historical data
+  // Use Edge Function to call the database function (bypasses RLS using service_role)
   // This function handles aggregation automatically based on period:
   // - 24h: All readings (no aggregation)
   // - 7d: 10-minute averages
   // - 30d: 1-hour averages
   // - 1y: 1-day averages
-  const { data: readings, error } = await supabase.rpc('get_historical_data', {
-    p_machine_id: machineId,
-    p_period: period,
-    p_table_name: processingTable,
+  console.log('[Historical Data] Calling Edge Function get-historical-data with:', { machineId, period, processingTable });
+  const { data: responseData, error } = await supabase.functions.invoke('get-historical-data', {
+    body: {
+      machine_id: machineId,
+      period: period,
+      table_name: processingTable,
+    },
   });
 
   if (error) {
-    // Check if it's a function-not-found error (might need to run migration)
-    if (error.code === '42883' || error.message?.includes('function') || error.message?.includes('does not exist')) {
-      console.error(`[Historical Data] Function 'get_historical_data' does not exist. Please run migration: 20250126000000_create_historical_data_views.sql`);
-      // Fallback to direct table query
-      console.warn('[Historical Data] Falling back to direct table query...');
-      return await fetchHistoricalDataDirect(machineId, period, processingTable, startTime);
-    } else {
-      // Other errors (permissions, network, etc.)
-      console.error('[Historical Data] Error fetching historical data:', error);
-      return {
-        motorTemp: [],
-        current: [],
-        outsideTemp: [],
-        insideTemp: [],
-        deltaT: [],
-        fanActive: [],
-        isCooling: [],
-        isHeating: [],
-        hasWater: [],
-        pumpActive: [],
-        power: [],
-        fanSpeed: [],
-      };
-    }
+    console.error('[Historical Data] Error calling Edge Function:', error);
+    // Fallback to direct table query
+    console.warn('[Historical Data] Falling back to direct table query...');
+    return await fetchHistoricalDataDirect(machineId, period, processingTable, startTime);
+  }
+
+  // Debug: Log the response to see what we're getting
+  console.log('[Historical Data] Edge Function response:', { responseData, hasData: !!responseData?.data, dataLength: responseData?.data?.length });
+
+  // Extract data from Edge Function response
+  // The Edge Function returns { data: [...] }, and supabase.functions.invoke automatically parses JSON
+  const readings = responseData?.data;
+  
+  if (!readings) {
+    console.warn('[Historical Data] No data returned from Edge Function');
+    return {
+      motorTemp: [],
+      current: [],
+      outsideTemp: [],
+      insideTemp: [],
+      deltaT: [],
+      fanActive: [],
+      isCooling: [],
+      isHeating: [],
+      hasWater: [],
+      pumpActive: [],
+      power: [],
+      fanSpeed: [],
+    };
   }
 
   if (!readings || readings.length === 0) {

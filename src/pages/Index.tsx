@@ -145,10 +145,10 @@ const Index = () => {
       <NavigationHeader onHome={handleHome} onBack={handleBack} />
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Control Panel */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 order-2 lg:order-1">
             <ControlPanel
               isOn={state.isOn}
               coolMode={state.coolMode}
@@ -166,16 +166,16 @@ const Index = () => {
           </div>
 
           {/* Right Side - Machine Container */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-1 lg:order-2">
             <div className="panel">
               <div className="panel-header">
-                <span className="text-lg">🏭</span>
-                <h3 className="panel-title">Machine Monitor</h3>
+                <span className="text-base sm:text-lg">🏭</span>
+                <h3 className="panel-title text-base sm:text-lg">Machine Monitor</h3>
               </div>
               
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                 {/* Left - Fan */}
-                <div className="flex items-center justify-center lg:col-span-2 relative">
+                <div className="flex items-center justify-center sm:col-span-2 relative">
                   <FanComponent 
                     isSpinning={cirrusMachine ? supabaseFanActive : (state.isOn && state.fanMode)}
                     speed={getFanSpeed()}
@@ -193,9 +193,9 @@ const Index = () => {
                 </div>
 
                 {/* Bottom Left - System Status */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-primary mb-3">System Status</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3 sm:space-y-4">
+                  <h4 className="text-xs sm:text-sm font-semibold text-primary mb-2 sm:mb-3">System Status</h4>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
                     <StatusLight 
                       status={cirrusMachine ? (supabaseIsOn ? 'active' : 'inactive') : (state.isOn ? 'active' : 'inactive')} 
                       label="Power" 
@@ -230,10 +230,10 @@ const Index = () => {
                 </div>
 
                 {/* Bottom Right - Temperature & Electrical */}
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Temperature Monitoring */}
                   <div>
-                    <h4 className="text-sm font-semibold text-primary mb-3">🌡️ Temperature</h4>
+                    <h4 className="text-xs sm:text-sm font-semibold text-primary mb-2 sm:mb-3">🌡️ Temperature</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Outside</span>
@@ -255,7 +255,7 @@ const Index = () => {
 
                   {/* Electrical Monitoring */}
                   <div>
-                    <h4 className="text-sm font-semibold text-primary mb-3">⚡ Electrical</h4>
+                    <h4 className="text-xs sm:text-sm font-semibold text-primary mb-2 sm:mb-3">⚡ Electrical</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center p-2 bg-status rounded-lg">
                         <span className="text-xs text-muted-foreground">Current</span>
@@ -278,13 +278,13 @@ const Index = () => {
         </div>
 
         {/* Keyboard Shortcuts Help */}
-        <div className="mt-12 panel max-w-4xl mx-auto">
+        <div className="mt-6 sm:mt-8 lg:mt-12 panel max-w-4xl mx-auto">
           <div className="panel-header">
-            <span className="text-lg">⌨️</span>
-            <h3 className="panel-title">Keyboard Shortcuts</h3>
+            <span className="text-base sm:text-lg">⌨️</span>
+            <h3 className="panel-title text-base sm:text-lg">Keyboard Shortcuts</h3>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
+          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Power Toggle</span>
@@ -329,7 +329,7 @@ const Index = () => {
       <footer className="bg-panel border-t border-border mt-12">
         <div className="container mx-auto px-6 py-6 text-center">
           <p className="text-sm text-muted-foreground">
-            IoT Nexus © 2025 | Engineered for Precision Control
+            Crown Technologies © 2025 | Engineered for Precision Control
           </p>
         </div>
       </footer>

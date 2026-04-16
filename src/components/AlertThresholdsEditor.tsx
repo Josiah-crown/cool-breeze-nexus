@@ -113,9 +113,9 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
 
   if (loading) {
     return (
-      <Card className="bg-card border-[3px] border-[#8FB83D]">
-        <CardHeader className="border-b-[3px] border-[#8FB83D]">
-          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
+      <Card className="bg-card border-[3px] border-accent">
+        <CardHeader className="border-b-[3px] border-accent">
+          <CardTitle className="text-lg flex items-center gap-2 text-accent">
             <AlertTriangle className="h-5 w-5" />
             Alert Thresholds
           </CardTitle>
@@ -129,9 +129,9 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
 
   if (!config) {
     return (
-      <Card className="bg-card border-[3px] border-[#8FB83D]">
-        <CardHeader className="border-b-[3px] border-[#8FB83D]">
-          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
+      <Card className="bg-card border-[3px] border-accent">
+        <CardHeader className="border-b-[3px] border-accent">
+          <CardTitle className="text-lg flex items-center gap-2 text-accent">
             <AlertTriangle className="h-5 w-5" />
             Alert Thresholds
           </CardTitle>
@@ -144,9 +144,9 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
   }
 
   return (
-    <Card className="bg-card border-[3px] border-[#8FB83D]">
-      <CardHeader className="border-b-[3px] border-[#8FB83D] py-3">
-        <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
+    <Card className="bg-card border-[3px] border-accent">
+      <CardHeader className="border-b-[3px] border-accent py-3">
+        <CardTitle className="text-lg flex items-center gap-2 text-accent">
           <AlertTriangle className="h-5 w-5" />
           Alert Thresholds
         </CardTitle>
@@ -156,7 +156,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
       </CardHeader>
       <CardContent className="p-3">
         {/* 2-Column Grid on Wide Screens */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:divide-x xl:divide-[#8FB83D]/30">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:divide-x xl:divide-accent/30">
           {/* LEFT COLUMN */}
           <div className="space-y-3 xl:pr-4">
             {/* TEMPERATURE ALERTS */}
@@ -182,7 +182,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     step="1"
                     value={config.motor_temp_critical}
                     onChange={(e) => setConfig({ ...config, motor_temp_critical: parseFloat(e.target.value) })}
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                    className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                   />
                 </div>
                 <div>
@@ -191,7 +191,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="number"
                     value={config.duration_motor_temp_critical}
                     onChange={(e) => setConfig({ ...config, duration_motor_temp_critical: parseInt(e.target.value) })}
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                    className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                   />
                 </div>
               </div>
@@ -211,7 +211,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                   step="1"
                   value={config.compressor_temp_critical}
                   onChange={(e) => setConfig({ ...config, compressor_temp_critical: parseFloat(e.target.value) })}
-                  className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                  className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                 />
               </div>
               <div>
@@ -220,7 +220,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                   type="number"
                   value={config.duration_motor_temp_critical}
                   onChange={(e) => setConfig({ ...config, duration_motor_temp_critical: parseInt(e.target.value) })}
-                  className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                  className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                 />
               </div>
             </div>
@@ -251,7 +251,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     ...config, 
                     [machineType === 'evaporative' ? 'motor_amps_warning' : 'compressor_amps_warning']: parseFloat(e.target.value) 
                   })}
-                  className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                  className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                 />
               </div>
               <div>
@@ -260,7 +260,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                   type="number"
                   value={config.duration_motor_overcurrent}
                   onChange={(e) => setConfig({ ...config, duration_motor_overcurrent: parseInt(e.target.value) })}
-                  className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                  className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                 />
               </div>
             </div>
@@ -276,7 +276,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                   type="number"
                   value="0"
                   disabled
-                  className="h-8 text-sm border-2 border-[#8FB83D] bg-muted/20 px-2 text-muted-foreground"
+                  className="h-8 text-sm border-2 border-accent bg-muted/20 px-2 text-muted-foreground"
                 />
               </div>
               <div>
@@ -285,7 +285,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                   type="number"
                   value={config.duration_fan_failure}
                   onChange={(e) => setConfig({ ...config, duration_fan_failure: parseInt(e.target.value) })}
-                  className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                  className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                 />
               </div>
             </div>
@@ -321,7 +321,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     step="0.5"
                     value={config.delta_t_min_cooling}
                     onChange={(e) => setConfig({ ...config, delta_t_min_cooling: parseFloat(e.target.value) })}
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                    className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                   />
                 </div>
                 <div>
@@ -330,7 +330,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="number"
                     value={config.duration_cooling_ineffective}
                     onChange={(e) => setConfig({ ...config, duration_cooling_ineffective: parseInt(e.target.value) })}
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                    className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                   />
                 </div>
               </div>
@@ -349,7 +349,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                       step="0.5"
                       value={config.delta_t_min_heating}
                       onChange={(e) => setConfig({ ...config, delta_t_min_heating: parseFloat(e.target.value) })}
-                      className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                      className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                     />
                   </div>
                   <div>
@@ -358,7 +358,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                       type="number"
                       value={config.duration_heating_failure}
                       onChange={(e) => setConfig({ ...config, duration_heating_failure: parseInt(e.target.value) })}
-                      className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                      className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                     />
                   </div>
                 </div>
@@ -374,7 +374,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                       step="0.5"
                       value={config.delta_t_max_heating}
                       onChange={(e) => setConfig({ ...config, delta_t_max_heating: parseFloat(e.target.value) })}
-                      className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                      className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                     />
                   </div>
                   <div>
@@ -383,7 +383,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                       type="number"
                       value={config.duration_heating_excessive}
                       onChange={(e) => setConfig({ ...config, duration_heating_excessive: parseInt(e.target.value) })}
-                      className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                      className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                     />
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                       step="0.5"
                       value={config.setpoint_tolerance}
                       onChange={(e) => setConfig({ ...config, setpoint_tolerance: parseFloat(e.target.value) })}
-                      className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                      className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                     />
                   </div>
                   <div>
@@ -408,7 +408,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                       type="number"
                       value={config.duration_setpoint_deviation}
                       onChange={(e) => setConfig({ ...config, duration_setpoint_deviation: parseInt(e.target.value) })}
-                      className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                      className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                     />
                   </div>
                 </div>
@@ -442,7 +442,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="text"
                     value="< Full"
                     disabled
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-muted/20 px-2 text-muted-foreground"
+                    className="h-8 text-sm border-2 border-accent bg-muted/20 px-2 text-muted-foreground"
                   />
                 </div>
                 <div>
@@ -451,7 +451,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="number"
                     value={config.duration_low_water}
                     onChange={(e) => setConfig({ ...config, duration_low_water: parseInt(e.target.value) })}
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                    className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                   />
                 </div>
               </div>
@@ -467,7 +467,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="text"
                     value="OFF"
                     disabled
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-muted/20 px-2 text-muted-foreground"
+                    className="h-8 text-sm border-2 border-accent bg-muted/20 px-2 text-muted-foreground"
                   />
                 </div>
                 <div>
@@ -476,7 +476,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="number"
                     value={config.duration_dump_valve}
                     onChange={(e) => setConfig({ ...config, duration_dump_valve: parseInt(e.target.value) })}
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                    className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                   />
                 </div>
               </div>
@@ -492,7 +492,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="text"
                     value="OFF"
                     disabled
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-muted/20 px-2 text-muted-foreground"
+                    className="h-8 text-sm border-2 border-accent bg-muted/20 px-2 text-muted-foreground"
                   />
                 </div>
                 <div>
@@ -501,7 +501,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
                     type="number"
                     value={config.duration_pump_failure}
                     onChange={(e) => setConfig({ ...config, duration_pump_failure: parseInt(e.target.value) })}
-                    className="h-8 text-sm border-2 border-[#8FB83D] bg-accent/10 px-2"
+                    className="h-8 text-sm border-2 border-accent bg-accent/10 px-2"
                   />
                 </div>
             </div>
@@ -515,15 +515,15 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
     {/* END 2-COLUMN GRID */}
 
     {/* EMAIL SETTINGS (Full Width at Bottom) */}
-    <div className="space-y-3 pt-4 mt-4 border-t-2 border-[#8FB83D]/30">
+    <div className="space-y-3 pt-4 mt-4 border-t-2 border-accent/30">
       <div className="flex items-center gap-2 text-xs font-semibold text-foreground uppercase">
-        <Mail className="h-3.5 w-3.5 text-[#8FB83D]" />
+        <Mail className="h-3.5 w-3.5 text-accent" />
         Email Notification Settings
       </div>
       <Separator className="my-1" />
       
       {/* Reminder Interval */}
-      <div className="bg-accent/5 border-2 border-[#8FB83D] rounded-lg p-3 space-y-2">
+      <div className="bg-accent/5 border-2 border-accent rounded-lg p-3 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <Label className="text-sm font-medium">⏰ Reminder Emails</Label>
@@ -536,7 +536,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
               type="number"
               value={config.reminder_interval_hours}
               onChange={(e) => setConfig({ ...config, reminder_interval_hours: parseInt(e.target.value) })}
-              className="h-8 w-16 text-sm border-2 border-[#8FB83D] bg-white px-2 text-center"
+              className="h-8 w-16 text-sm border-2 border-accent bg-background px-2 text-center"
             />
             <span className="text-xs text-muted-foreground">hours</span>
           </div>
@@ -565,7 +565,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
     </div>
 
     {/* Save Buttons */}
-    <div className="flex justify-end gap-2 pt-2 border-t border-[#8FB83D]">
+    <div className="flex justify-end gap-2 pt-2 border-t border-accent">
       <Button
         variant="outline"
         onClick={fetchConfig}
@@ -577,10 +577,7 @@ export const AlertThresholdsEditor: React.FC<AlertThresholdsEditorProps> = ({ ma
       <Button
         onClick={handleSave}
         disabled={saving}
-        className="h-8 text-xs text-white"
-        style={{ backgroundColor: '#8FB83D', border: '2px solid #8FB83D' }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7aa332'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8FB83D'}
+        className="h-8 text-xs bg-accent text-accent-foreground border-2 border-accent hover:bg-accent/90"
       >
         {saving ? 'Saving...' : 'Save'}
       </Button>

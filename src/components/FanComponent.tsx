@@ -35,13 +35,13 @@ const FanComponent: React.FC<FanComponentProps> = ({
   const sizeClass = typeof size === 'string' && size.includes('w-') ? size : sizeClasses[size as 'sm' | 'md' | 'lg'];
 
   return (
-    <div className="flex items-center justify-center p-8">
+    <div className="flex items-center justify-center p-[2rem]">
       <div className={`relative ${sizeClass}`}>
         {/* Outer Fan Housing */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-panel to-control border-4 border-green-500/60 shadow-xl">
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-panel to-control border-[0.25rem] border-green-500/60 shadow-xl">
           {/* Concentric Circles */}
-          <div className="absolute inset-4 rounded-full border border-border/30"></div>
-          <div className="absolute inset-8 rounded-full border border-border/20"></div>
+          <div className="absolute inset-[1rem] rounded-full border border-border/30"></div>
+          <div className="absolute inset-[2rem] rounded-full border border-border/20"></div>
           
           {/* Fan Blades Container */}
           <div 
@@ -71,8 +71,8 @@ const FanComponent: React.FC<FanComponentProps> = ({
             ))}
             
             {/* Center Hub */}
-            <div className="absolute top-1/2 left-1/2 w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-primary to-primary-glow border-2 border-background shadow-lg">
-              <div className="absolute inset-1 rounded-full bg-gradient-to-br from-control to-background"></div>
+            <div className="absolute top-1/2 left-1/2 w-[2rem] h-[2rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-primary to-primary-glow border-[0.125rem] border-background shadow-lg">
+              <div className="absolute inset-[0.25rem] rounded-full bg-gradient-to-br from-control to-background"></div>
             </div>
           </div>
           
@@ -102,10 +102,10 @@ const FanComponent: React.FC<FanComponentProps> = ({
         
         {/* Cooling Snowflake Indicator - Bottom Left */}
         {showCooling && (
-          <div className="absolute -bottom-2 -left-2 z-10">
+          <div className="absolute -bottom-[0.5rem] -left-[0.5rem] z-10">
             <div className="relative">
               <Snowflake 
-                className="w-10 h-10 text-cyan-400 animate-pulse drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" 
+                className="w-[2.5rem] h-[2.5rem] text-cyan-400 animate-pulse drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" 
                 strokeWidth={2}
               />
               {/* Glow effect behind snowflake */}

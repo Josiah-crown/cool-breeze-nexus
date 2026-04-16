@@ -1,5 +1,5 @@
 // ========================================
-// IOT NEXUS - CREATE DEMO USERS
+// CROWN TECHNOLOGIES - CREATE DEMO USERS
 // ========================================
 // Supabase Edge Function to create all demo users
 // This uses the Admin API to create auth users programmatically

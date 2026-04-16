@@ -18,12 +18,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { LogOut, Users, UserPlus, Plus, Settings, Lock, Unlock } from 'lucide-react';
+import { Home as HomeIcon, LogOut, Users, UserPlus, Plus, Settings, Lock, Unlock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import TopTaskbar from '@/components/TopTaskbar';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { machines, historicalData, users, refetch } = useMachineData(user?.id || '', user?.role || 'client');
   const [selectedMachine, setSelectedMachine] = useState<MachineStatus | null>(null);
   
@@ -80,6 +83,11 @@ const Dashboard: React.FC = () => {
   
   const handleRefresh = () => {
     refetch();
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
   };
 
   const handleDeleteMachine = async (machineId: string) => {
@@ -179,51 +187,41 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border backdrop-blur-sm relative overflow-hidden flex" style={{ backgroundColor: '#8FB83D' }}>
-        {/* Logo section - entire left section #303329 */}
-        <div className="flex items-center flex-shrink-0" style={{ backgroundColor: '#303329', padding: '16px 24px', minWidth: '200px' }}>
-          <img src="/3.png" alt="IOTnexus Logo" className="h-24 w-auto object-contain" />
-        </div>
-        {/* Rest of header content */}
-        <div className="flex-1 px-[80px] py-4 flex items-center justify-between gap-4">
-          {/* Centered heading */}
-          <div className="flex-1 flex justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-accent-foreground">Machine Monitor Dashboard</h1>
-              <p className="text-sm text-accent-foreground/80">
-                Welcome, {user.name} ({user.role.replace('_', ' ')})
-              </p>
-            </div>
-          </div>
-          {/* Buttons on the right */}
-          <div className="flex gap-2 flex-shrink-0">
-          {(user.role === 'installer' || user.role === 'company' || user.role === 'super_admin') && (
-            <>
-              <Button variant="outline" className="btn-nav" onClick={() => setShowAddUserDialog(true)}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                {user.role === 'company' ? 'Add Installer' : 'Add Client'}
-              </Button>
-              <Button variant="outline" className="btn-nav" onClick={() => setShowAddMachineDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Machine
-              </Button>
-            </>
-          )}
-          <Button variant="outline" className="btn-nav" onClick={() => setShowDeleteOwnAccount(true)}>
-            <Settings className="mr-2 h-4 w-4" />
-            Account
-          </Button>
-          <Button variant="outline" className="btn-nav" onClick={logout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-        </div>
-        </div>
-      </header>
+      <TopTaskbar
+        title="Machine Monitor Dashboard"
+        subtitle={`Welcome, ${user.name} (${user.role.replace('_', ' ')})`}
+        rightActions={
+          <>
+            <Button variant="outline" className="btn-nav" onClick={() => navigate('/')}>
+              <HomeIcon className="mr-2 h-4 w-4" />
+              Home
+            </Button>
+            {(user.role === 'installer' || user.role === 'company' || user.role === 'super_admin') && (
+              <>
+                <Button variant="outline" className="btn-nav" onClick={() => setShowAddUserDialog(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {user.role === 'company' ? 'Add Installer' : 'Add Client'}
+                </Button>
+                <Button variant="outline" className="btn-nav" onClick={() => setShowAddMachineDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Machine
+                </Button>
+              </>
+            )}
+            <Button variant="outline" className="btn-nav" onClick={() => setShowDeleteOwnAccount(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              Account
+            </Button>
+            <Button variant="outline" className="btn-nav" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </>
+        }
+      />
 
       {/* Machine Grid */}
-      <main className="w-full px-[80px] py-8">
+      <main className="w-full px-4 sm:px-6 lg:px-[80px] py-4 sm:py-6 lg:py-8">
         {user.role === 'super_admin' ? (
           <div>
             {/* Responsive Layout Container */}
@@ -231,7 +229,7 @@ const Dashboard: React.FC = () => {
               {/* Main Content Area - Analytics, Companies and Machines */}
               <div className="flex-1 w-full min-w-0">
                 {/* Analytics Section */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
               <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden backdrop-blur-sm before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/40 before:via-white/10 before:to-transparent before:pointer-events-none">
                 <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
@@ -278,22 +276,22 @@ const Dashboard: React.FC = () => {
               </div>
                 </div>
 
-                <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-foreground mb-2">
+                <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-3 sm:gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-foreground mb-1 sm:mb-2">
                       {selectedUserId === 'all' ? 'All Companies & Their Machines' : 'Your Machines'}
                     </h2>
-                    <p className="text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {selectedUserId === 'all' 
                         ? 'Expand each company to view their machines, installers and clients'
                         : `${filteredMachines.length} ${filteredMachines.length === 1 ? 'machine' : 'machines'} assigned to you`
                       }
                     </p>
                   </div>
-                  <div className="flex gap-3 items-center">
-                    <Users className="h-5 w-5 text-muted-foreground" />
+                  <div className="flex gap-2 sm:gap-3 items-center w-full sm:w-auto">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
                     <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                      <SelectTrigger className="w-[200px]">
+                      <SelectTrigger className="w-full sm:w-[200px]">
                         <SelectValue placeholder="Filter machines" />
                       </SelectTrigger>
                       <SelectContent>
@@ -315,7 +313,7 @@ const Dashboard: React.FC = () => {
                 {filteredMachines.filter(m => m.ownerId === user.id).length > 0 && (
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold text-foreground mb-4">Your Machines</h3>
-                     <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                     <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                       {filteredMachines.filter(m => m.ownerId === user.id).map((machine) => {
                         const owner = users.find(u => u.id === machine.ownerId);
                         return (
@@ -353,7 +351,7 @@ const Dashboard: React.FC = () => {
               </>
             ) : (
               <div>
-                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                   {filteredMachines.map((machine) => {
                     const owner = users.find(u => u.id === machine.ownerId);
                     return (
@@ -448,10 +446,10 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">Your Organization</h2>
-                <p className="text-muted-foreground">
+            <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1 sm:mb-2">Your Organization</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {selectedUserId === 'all' 
                     ? 'View all installers, clients, and machines'
                     : `${filteredMachines.length} unassigned ${filteredMachines.length === 1 ? 'machine' : 'machines'}`
@@ -459,10 +457,10 @@ const Dashboard: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex gap-3 items-center">
-                <Users className="h-5 w-5 text-muted-foreground" />
+              <div className="flex gap-2 sm:gap-3 items-center w-full sm:w-auto">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
                 <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-full sm:w-[200px]">
                     <SelectValue placeholder="Select view" />
                   </SelectTrigger>
                   <SelectContent>
@@ -479,7 +477,7 @@ const Dashboard: React.FC = () => {
                 {machines.filter(m => m.ownerId === user.id).length > 0 && (
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold text-foreground mb-4">Your Machines</h3>
-                    <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 15.625rem), 1fr))' }}>
                       {machines.filter(m => m.ownerId === user.id).map((machine) => (
                         <MachineCard
                           key={machine.id}
@@ -520,7 +518,7 @@ const Dashboard: React.FC = () => {
               </>
             ) : (
               <>
-                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 15.625rem), 1fr))' }}>
                   {filteredMachines.map((machine) => (
                     <MachineCard
                       key={machine.id}
@@ -596,10 +594,10 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">Your Clients & Machines</h2>
-                <p className="text-muted-foreground">
+            <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1 sm:mb-2">Your Clients & Machines</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {selectedUserId === 'all' 
                     ? 'View all clients and their machines'
                     : `${filteredMachines.length} unassigned ${filteredMachines.length === 1 ? 'machine' : 'machines'}`
@@ -607,10 +605,10 @@ const Dashboard: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex gap-3 items-center">
-                <Users className="h-5 w-5 text-muted-foreground" />
+              <div className="flex gap-2 sm:gap-3 items-center w-full sm:w-auto">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
                 <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-full sm:w-[200px]">
                     <SelectValue placeholder="Select view" />
                   </SelectTrigger>
                   <SelectContent>
@@ -627,7 +625,7 @@ const Dashboard: React.FC = () => {
                 {machines.filter(m => m.ownerId === user.id).length > 0 && (
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold text-foreground mb-4">Your Machines</h3>
-                    <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 15.625rem), 1fr))' }}>
                       {machines.filter(m => m.ownerId === user.id).map((machine) => (
                         <MachineCard
                           key={machine.id}
@@ -660,7 +658,7 @@ const Dashboard: React.FC = () => {
               </>
             ) : (
               <>
-                <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 15.625rem), 1fr))' }}>
                   {filteredMachines.map((machine) => (
                     <MachineCard
                       key={machine.id}
@@ -689,7 +687,7 @@ const Dashboard: React.FC = () => {
         ) : (
           <div>
             {/* Analytics Section */}
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
               <div className="hud-button bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] border-2 border-[hsl(var(--control-border))] p-3 shadow-md relative overflow-hidden">
                 <div className="absolute inset-0 hud-button border border-primary/20 pointer-events-none" style={{ margin: '2px' }} />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
@@ -736,14 +734,14 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-foreground mb-2">Your Machines</h2>
-              <p className="text-muted-foreground">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1 sm:mb-2">Your Machines</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {machines.length} {machines.length === 1 ? 'machine' : 'machines'} available
               </p>
             </div>
 
-            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
               {machines.map((machine) => (
                 <MachineCard
                   key={machine.id}

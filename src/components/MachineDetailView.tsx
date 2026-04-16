@@ -578,7 +578,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   }, [machine.location, machine.ownerId]);
 
   const getMachineComponent = () => {
-    const size = 'w-[480px] h-[480px]';
+    // Use rem units so it scales with zoom (30rem = 480px at 16px base)
+    const size = 'w-[30rem] h-[30rem] max-w-[90vw] max-h-[90vw]';
     switch (machine.type) {
       case 'evaporative':
         return (
@@ -1032,12 +1033,12 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
         <X className="h-8 w-8" />
       </Button>
       
-      <Card className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-card border-[3px] border-[#8FB83D]">
-        <CardHeader className="flex flex-row items-center justify-between border-b-[3px] border-[#8FB83D] hud-header">
+      <Card className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-card border-[0.1875rem] border-[#8FB83D]">
+        <CardHeader className="flex flex-row items-center justify-between border-b-[0.1875rem] border-[#8FB83D] hud-header">
           <div>
-            <CardTitle className="text-2xl" style={{ color: '#8FB83D' }}>{machine.name}</CardTitle>
+            <CardTitle className="text-[1.5rem] font-semibold" style={{ color: '#8FB83D' }}>{machine.name}</CardTitle>
               {(machine.location || locationFallback) && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-[0.875rem] text-muted-foreground mt-[0.25rem]">
                   {machine.location || locationFallback}
                 </p>
               )}
@@ -1048,7 +1049,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 setNewLocation(machine.location || '');
                 setShowLocationDialog(true);
               }}
-              className="p-0 h-auto text-xs"
+              className="p-0 h-auto text-[0.75rem]"
               style={{ color: '#8FB83D' }}
             >
               Change Location
@@ -1056,10 +1057,10 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
           </div>
         </CardHeader>
         
-        <CardContent className="p-6">
-          <div className="space-y-6">
+        <CardContent className="p-[1.5rem]">
+          <div className="space-y-[1.5rem]">
             {/* Machine Visual & API Key - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-[1.5rem]">
               <div className="flex justify-center items-start">
                 {getMachineComponent()}
               </div>
@@ -1069,13 +1070,13 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
             </div>
             
             {/* System Status & Current Readings - Side by Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[1.5rem]">
               {/* System Status */}
-              <Card className="bg-card h-full border-[3px] border-[#8FB83D]">
-                <CardHeader className="border-b-[3px] border-[#8FB83D]">
-                  <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>System Status</CardTitle>
+              <Card className="bg-card h-full border-[0.1875rem] border-[#8FB83D]">
+                <CardHeader className="border-b-[0.1875rem] border-[#8FB83D]">
+                  <CardTitle className="text-[1.125rem] font-semibold" style={{ color: '#8FB83D' }}>System Status</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 pt-4">
+                <CardContent className="space-y-[0.75rem] pt-[1rem]">
                   <StatusLight status={machine.isConnected ? 'active' : 'inactive'} label="Connected" />
                   
                   {machine.type === 'evaporative' && (
@@ -1122,11 +1123,11 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               </Card>
 
               {/* Current Readings */}
-              <Card className="bg-card h-full border-[3px] border-[#8FB83D]">
-                <CardHeader className="border-b-[3px] border-[#8FB83D]">
-                  <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>Current Readings</CardTitle>
+              <Card className="bg-card h-full border-[0.1875rem] border-[#8FB83D]">
+                <CardHeader className="border-b-[0.1875rem] border-[#8FB83D]">
+                  <CardTitle className="text-[1.125rem] font-semibold" style={{ color: '#8FB83D' }}>Current Readings</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 pt-4">
+                <CardContent className="space-y-[0.5rem] pt-[1rem]">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{labels.outside}:</span>
                     <span className="font-semibold text-foreground">
@@ -1200,9 +1201,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
             </div>
 
             {/* Historical Graph */}
-            <Card className="bg-card border-[3px] border-[#8FB83D]">
-              <CardHeader className="border-b-[3px] border-[#8FB83D] flex flex-row items-center justify-between">
-                <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>Historical Data</CardTitle>
+            <Card className="bg-card border-[0.1875rem] border-[#8FB83D]">
+              <CardHeader className="border-b-[0.1875rem] border-[#8FB83D] flex flex-row items-center justify-between">
+                <CardTitle className="text-[1.125rem] font-semibold" style={{ color: '#8FB83D' }}>Historical Data</CardTitle>
                 <div className="flex gap-2">
                   {(['24h', '7d', '30d', '1y'] as Period[]).map(period => (
                     <Button
@@ -1259,9 +1260,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
       {/* Location Change Confirmation Dialog */}
       <AlertDialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
-        <AlertDialogContent className="bg-card border-[3px] border-[#8FB83D]">
-          <AlertDialogHeader className="border-b-[3px] border-[#8FB83D] pb-4">
-            <AlertDialogTitle className="text-xl" style={{ color: '#8FB83D' }}>Change Machine Location</AlertDialogTitle>
+        <AlertDialogContent className="bg-card border-[0.1875rem] border-[#8FB83D]">
+          <AlertDialogHeader className="border-b-[0.1875rem] border-[#8FB83D] pb-[1rem]">
+            <AlertDialogTitle className="text-[1.25rem] font-semibold" style={{ color: '#8FB83D' }}>Change Machine Location</AlertDialogTitle>
             <AlertDialogDescription className="text-foreground">
               Are you sure you want to change the location information for this machine?
             </AlertDialogDescription>

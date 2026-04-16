@@ -1,5 +1,5 @@
 // ========================================
-// IOT NEXUS - CREATE ALL 34 DEMO USERS
+// CROWN TECHNOLOGIES - CREATE ALL 34 DEMO USERS
 // ========================================
 // Node.js script using Supabase Admin SDK
 // Creates demo users for testing the platform
@@ -7,9 +7,15 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// Your Supabase credentials
-const SUPABASE_URL = 'https://wjyanxstvbiqefmgpccb.supabase.co'
-const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqeWFueHN0dmJpcWVmbWdwY2NiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjIzMjg0NSwiZXhwIjoyMDc3ODA4ODQ1fQ.LkSilEK_DT2SFfJb57R1QuDOHj3amYB46e1xu4UIBoQ' // Get from Supabase Dashboard > Settings > API
+// Supabase credentials (DO NOT hardcode secrets)
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wjyanxstvbiqefmgpccb.supabase.co'
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error(
+    'Missing SUPABASE_SERVICE_ROLE_KEY. Set it in your environment before running this script.'
+  )
+}
 
 // Create admin client
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -51,7 +57,7 @@ for (let i = 1; i <= 20; i++) {
 
 async function createUsers() {
   console.log('========================================')
-  console.log('IOT NEXUS - CREATING DEMO USERS')
+  console.log('CROWN TECHNOLOGIES - CREATING DEMO USERS')
   console.log('========================================')
   console.log(`Creating ${users.length} users...`)
   console.log('Password for all: Demo123!')

@@ -2,13 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="icon" type="image/png" href="/4.png" />
-    <title>IOTnexus - Crown IoT Platform</title>
+    <title>Crown Technologies - IoT Platform</title>
     <meta name="description" content="Professional IoT Monitoring System for HVAC Control and Management" />
-    <meta name="author" content="IOTnexus" />
+    <meta name="author" content="Crown Technologies" />
 
-    <meta property="og:title" content="IOTnexus - Crown IoT Platform" />
+    <meta property="og:title" content="Crown Technologies - IoT Platform" />
     <meta property="og:description" content="Professional IoT Monitoring System for HVAC Control and Management" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/3.png" />
@@ -19,6 +19,65 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Fix outer container to window width - app-style zoom handled by React
+      try {
+        (function() {
+          let containerWidth = null;
+          let resizeTimer = null;
+          const DEBOUNCE_DELAY = 300;
+          
+          const setContainerWidth = function(width) {
+            try {
+              const root = document.getElementById('root');
+              if (!root) return;
+              
+              containerWidth = width;
+              root.style.setProperty('width', width + 'px', 'important');
+              root.style.setProperty('max-width', width + 'px', 'important');
+              root.style.setProperty('margin', '0 auto', 'important');
+              root.style.setProperty('box-sizing', 'border-box', 'important');
+            } catch (e) {
+              console.error('Error setting container width:', e);
+            }
+          };
+          
+          const updateContainerWidth = function() {
+            try {
+              const currentWidth = window.innerWidth;
+              if (containerWidth === null || Math.abs(currentWidth - containerWidth) > 10) {
+                setContainerWidth(currentWidth);
+              }
+            } catch (e) {
+              console.error('Error updating container width:', e);
+            }
+          };
+          
+          function init() {
+            setTimeout(function() {
+              updateContainerWidth();
+            }, 100);
+          }
+          
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+          } else {
+            init();
+          }
+          
+          window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(updateContainerWidth, DEBOUNCE_DELAY);
+          });
+          
+          window.addEventListener('orientationchange', function() {
+            setTimeout(updateContainerWidth, DEBOUNCE_DELAY + 100);
+          });
+        })();
+      } catch (e) {
+        console.error('Error initializing container width:', e);
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

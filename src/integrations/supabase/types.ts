@@ -262,6 +262,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sites: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          address: string | null
+          lat: number | null
+          lng: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          name: string
+          address?: string | null
+          lat?: number | null
+          lng?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          name?: string
+          address?: string | null
+          lat?: number | null
+          lng?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

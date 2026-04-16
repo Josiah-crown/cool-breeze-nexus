@@ -121,7 +121,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
 
 
   const getMachineComponent = () => {
-    const size = 'w-32 h-32';
+    // Use rem units so it scales with zoom (8rem = 128px at 16px base)
+    const size = 'w-[8rem] h-[8rem]';
     switch (machine.type) {
       case 'fan':
       case 'evaporative':
@@ -151,7 +152,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
     <>
       <Card
         className={cn(
-          "relative p-4 cursor-pointer hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm border-2",
+          "relative p-[1rem] cursor-pointer hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm border-2 w-full",
           machine.overallStatus === 'error' ? 'border-destructive' : 'border-[#8FB83D]'
         )}
         onClick={onClick}
@@ -295,13 +296,13 @@ const MachineCard: React.FC<MachineCardProps> = ({
         )}
 
         {/* Machine Visual and Status Lights - Side by Side */}
-        <div className="flex items-start justify-start gap-4 mb-3 px-3 pt-3">
-          <div className="flex-shrink-0 w-32 h-32 flex items-center justify-center">
+        <div className="flex items-start justify-start gap-2 sm:gap-4 mb-3 px-2 sm:px-3 pt-2 sm:pt-3 w-full">
+          <div className="flex-shrink-0 w-[8rem] h-[8rem] flex items-center justify-center aspect-square">
             {getMachineComponent()}
           </div>
           
           {/* Status Column - Different per machine type */}
-          <div className="flex flex-col gap-1.5 justify-start">
+          <div className="flex flex-col gap-[0.375rem] justify-start flex-1 min-w-0">
             {machine.type === 'evaporative' && (
               <>
                 <StatusLight
@@ -394,9 +395,9 @@ const MachineCard: React.FC<MachineCardProps> = ({
                   label="Compressor"
                   size="sm"
                 />
-                <div className="text-center p-1.5 bg-panel-bg rounded-md">
-                  <div className="text-xs text-muted-foreground">Setpoint</div>
-                  <div className="text-sm font-semibold" style={{ color: '#8FB83D' }}>
+                <div className="text-center p-[0.375rem] bg-panel-bg rounded-md">
+                  <div className="text-[0.75rem] text-muted-foreground">Setpoint</div>
+                  <div className="text-[0.875rem] font-semibold" style={{ color: '#8FB83D' }}>
                     {machine.temperatureSetpoint?.toFixed(0) || 55}°C
                   </div>
                 </div>
@@ -406,46 +407,46 @@ const MachineCard: React.FC<MachineCardProps> = ({
         </div>
 
         {/* Machine Info Section - Consistent spacing and alignment */}
-        <div className="flex flex-col items-center px-3 justify-between flex-1 py-2">
+        <div className="flex flex-col items-center px-[0.75rem] justify-between flex-1 py-[0.5rem] w-full min-w-0">
           {/* Top Section: Name and metadata */}
-          <div className="flex flex-col items-center gap-1 w-full">
-            <h3 className="text-base font-semibold text-center text-foreground leading-tight">
+          <div className="flex flex-col items-center gap-[0.25rem] w-full min-w-0">
+            <h3 className="text-[1rem] font-semibold text-center text-foreground leading-tight break-words w-full px-[0.25rem]">
               {machine.name}
             </h3>
             {!machine.apiKey && (
-              <span className="text-[10px] font-medium px-2 py-0.5 bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 rounded-full">
+              <span className="text-[0.625rem] font-medium px-[0.5rem] py-[0.125rem] bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 rounded-full">
                 No API Key
               </span>
             )}
             
             {/* Location */}
             {machine.location && (
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-[0.75rem] text-muted-foreground text-center break-words w-full px-[0.25rem]">
                 {machine.location}
               </p>
             )}
             
             {/* Owner Name */}
             {ownerName && (
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-[0.75rem] text-muted-foreground text-center break-words w-full px-[0.25rem]">
                 Owner: {ownerName}
               </p>
             )}
             
             {/* Manufacturer */}
             {machine.manufacturer && (
-              <p className="text-[13px] text-muted-foreground text-center leading-none">
+              <p className="text-[0.8125rem] text-muted-foreground text-center leading-none break-words w-full px-[0.25rem]">
                 {machine.manufacturer}
               </p>
             )}
           </div>
 
           {/* Bottom Section: Delta T */}
-          <div className="text-center mt-2">
-            <div className="text-2xl font-bold leading-tight" style={{ color: '#8FB83D' }}>
+          <div className="text-center mt-[0.5rem]">
+            <div className="text-[1.5rem] font-bold leading-tight" style={{ color: '#8FB83D' }}>
               {Math.abs(machine.deltaT).toFixed(1)}°C
             </div>
-            <div className="text-xs text-muted-foreground">Delta T</div>
+            <div className="text-[0.75rem] text-muted-foreground">Delta T</div>
           </div>
         </div>
       </Card>

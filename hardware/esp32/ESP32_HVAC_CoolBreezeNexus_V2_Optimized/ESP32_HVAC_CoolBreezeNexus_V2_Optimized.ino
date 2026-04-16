@@ -127,7 +127,8 @@ WiFiManager wifiManager;
 Preferences preferences;
 
 const char* SUPABASE_URL = "https://wjyanxstvbiqefmgpccb.supabase.co";
-const char* SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqeWFueHN0dmJpcWVmbWdwY2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMzI4NDUsImV4cCI6MjA3NzgwODg0NX0.r1xQG8HYHioH8_ALGQTRO2wM5F2tAOhM-xe_eh3VxhY";
+// Supabase credentials should be provisioned per device (do not hardcode secrets in firmware)
+const char* SUPABASE_ANON_KEY = "";
 
 String supabaseUrl = "";
 String supabaseAnonKey = "";

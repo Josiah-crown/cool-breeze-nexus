@@ -15,9 +15,9 @@ const StatusLight: React.FC<StatusLightProps> = ({
   showLabel = true 
 }) => {
   const sizeClasses = {
-    sm: 'w-3 h-3',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5'
+    sm: 'w-[0.75rem] h-[0.75rem]',
+    md: 'w-[1rem] h-[1rem]',
+    lg: 'w-[1.25rem] h-[1.25rem]'
   };
 
   const getStatusClasses = () => {
@@ -34,10 +34,10 @@ const StatusLight: React.FC<StatusLightProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-[0.5rem]">
       <div className={cn(getStatusClasses(), sizeClasses[size])} />
       {showLabel && (
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-[0.875rem] font-medium text-muted-foreground">
           {label}
         </span>
       )}

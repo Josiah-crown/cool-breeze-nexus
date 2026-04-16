@@ -90,7 +90,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
   if (companies.length === 0 && topLevelInstallers.length === 0 && topLevelClients.length > 0) {
 
     return (
-      <div className="grid gap-4 items-start transition-all duration-700 ease-in-out" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+      <div className="grid gap-4 items-start transition-all duration-700 ease-in-out" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 18.75rem), 1fr))' }}>
         {displayClients.map(client => {
           const isExpanded = expandedClient === client.id;
           const clientMachines = machines.filter(m => m.ownerId === client.id);
@@ -186,7 +186,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                   
                   <AccordionContent className="px-1 pb-1">
                     {clientMachines.length > 0 ? (
-                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                         {clientMachines.map(machine => (
                           <MachineCard
                             key={machine.id}
@@ -220,7 +220,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
   // If no companies (i.e., logged in as company), show installers at top level
   if (companies.length === 0 && topLevelInstallers.length > 0) {
     return (
-      <div className="grid gap-4 items-start transition-all duration-700 ease-in-out" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}>
+      <div className="grid gap-4 items-start transition-all duration-700 ease-in-out" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 21.875rem), 1fr))' }}>
         {displayInstallers.map(installer => {
           const isExpanded = expandedInstaller === installer.id;
           const installerMachines = machines.filter(m => m.ownerId === installer.id);
@@ -342,7 +342,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="px-1 pb-1">
-                              <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                              <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                                 {installerMachines.map(machine => (
                                   <MachineCard
                                     key={machine.id}
@@ -363,7 +363,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                       </Accordion>
 
                       {/* Clients under this installer - Grid Layout */}
-                      <div className="grid gap-2 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                      <div className="grid gap-2 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 18.75rem), 1fr))' }}>
                         {clients.sort((a, b) => (a.id === expandedClient ? -1 : b.id === expandedClient ? 1 : 0)).map(client => {
                           const clientMachines = machines.filter(m => m.ownerId === client.id);
                           const clientHasFailing = clientHasFailingMachines(client.id);
@@ -456,7 +456,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                   
                                   <AccordionContent className="px-1 pb-1">
                                     {clientMachines.length > 0 ? (
-                                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                                         {clientMachines.map(machine => (
                                           <MachineCard
                                             key={machine.id}
@@ -502,7 +502,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
 
   // Standard company hierarchy view (for super_admin)
   return (
-    <div className="grid gap-4 items-start transition-all duration-700 ease-in-out" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
+    <div className="grid gap-4 items-start transition-all duration-700 ease-in-out" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 25rem), 1fr))' }}>
       {displayCompanies.map(company => {
         const isExpanded = expandedCompany === company.id;
         const companyMachines = machines.filter(m => m.ownerId === company.id);
@@ -618,7 +618,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-1 pb-1">
-                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                         {companyMachines.map(machine => (
                           <MachineCard
                             key={machine.id}
@@ -641,7 +641,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
 
                 {/* Installers under this company - Grid Layout */}
                 </Accordion>
-                <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}>
+                <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 21.875rem), 1fr))' }}>
                 {installers.sort((a, b) => (a.id === expandedInstaller ? -1 : b.id === expandedInstaller ? 1 : 0)).map(installer => {
                   const installerMachines = machines.filter(m => m.ownerId === installer.id);
                   const clients = users.filter(u => u.role === 'client' && u.parentId === installer.id);
@@ -761,7 +761,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                   </div>
                                 </AccordionTrigger>
                                 <AccordionContent className="px-1 pb-1">
-                                  <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                                  <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                                     {installerMachines.map(machine => (
                                       <MachineCard
                                         key={machine.id}
@@ -782,7 +782,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
 
                             {/* Clients under this installer - Grid Layout */}
                             </Accordion>
-                            <div className="grid gap-2 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                            <div className="grid gap-2 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 18.75rem), 1fr))' }}>
                             {clients.sort((a, b) => (a.id === expandedClient ? -1 : b.id === expandedClient ? 1 : 0)).map(client => {
                               const clientMachines = machines.filter(m => m.ownerId === client.id);
                               const clientHasFailing = clientHasFailingMachines(client.id);
@@ -875,7 +875,7 @@ const UserHierarchyView: React.FC<UserHierarchyViewProps> = ({ users, machines, 
                                   
                                   <AccordionContent className="px-1 pb-1">
                                     {clientMachines.length > 0 ? (
-                                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                                      <div className="grid gap-3 mt-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))' }}>
                                         {clientMachines.map(machine => (
                                           <MachineCard
                                             key={machine.id}

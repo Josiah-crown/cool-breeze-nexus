@@ -83,7 +83,7 @@ For the complete documentation index, see: [docs/README.md](docs/README.md)
 
 ## 🔧 Quick Reference
 
-**Production URL:** https://iotnexus.site  
+**Production URL:** https://Crowntechnologies.online  
 **Database:** Supabase (project: lkvnhskxbxzeohopqjcr)  
 **Hosting:** cPanel (domains.co.za)
 

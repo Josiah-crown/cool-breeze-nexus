@@ -82,10 +82,10 @@ const HeatPumpComponent: React.FC<HeatPumpComponentProps> = ({
       
       {/* Heating Flame Indicator - Bottom Left */}
       {actuallyHeating && (
-        <div className="absolute -bottom-2 -left-2 z-10">
+        <div className="absolute -bottom-[0.5rem] -left-[0.5rem] z-10">
           <div className="relative">
             <Flame 
-              className="w-10 h-10 text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]" 
+              className="w-[2.5rem] h-[2.5rem] text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]" 
               strokeWidth={2}
               fill="rgba(249,115,22,0.3)"
               style={{ animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}

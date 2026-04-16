@@ -201,15 +201,15 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'super_admin':
-        return <Shield className="h-4 w-4 text-purple-500" />;
+        return <Shield className="h-[1rem] w-[1rem] text-purple-500" />;
       case 'company':
-        return <Building2 className="h-4 w-4 text-blue-500" />;
+        return <Building2 className="h-[1rem] w-[1rem] text-blue-500" />;
       case 'installer':
-        return <Users className="h-4 w-4 text-[#8FB83D]" />;
+        return <Users className="h-[1rem] w-[1rem] text-[#8FB83D]" />;
       case 'client':
-        return <User className="h-4 w-4 text-orange-500" />;
+        return <User className="h-[1rem] w-[1rem] text-orange-500" />;
       default:
-        return <User className="h-4 w-4" />;
+        return <User className="h-[1rem] w-[1rem]" />;
     }
   };
 
@@ -234,15 +234,15 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
 
   if (loading) {
     return (
-      <Card className="bg-card border-[3px] border-[#8FB83D]">
+      <Card className="bg-card border-[0.1875rem] border-[#8FB83D]">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
-            <Bell className="h-5 w-5" />
+          <CardTitle className="text-[1.125rem] font-semibold flex items-center gap-[0.5rem]" style={{ color: '#8FB83D' }}>
+            <Bell className="h-[1.25rem] w-[1.25rem]" />
             Notification Recipients
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-[0.875rem] text-muted-foreground">Loading...</p>
         </CardContent>
       </Card>
     );
@@ -250,15 +250,15 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
 
   if (recipients.length === 0) {
     return (
-      <Card className="bg-card border-[3px] border-[#8FB83D]">
+      <Card className="bg-card border-[0.1875rem] border-[#8FB83D]">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
-            <Bell className="h-5 w-5" />
+          <CardTitle className="text-[1.125rem] font-semibold flex items-center gap-[0.5rem]" style={{ color: '#8FB83D' }}>
+            <Bell className="h-[1.25rem] w-[1.25rem]" />
             Notification Recipients
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[0.875rem] text-muted-foreground">
             No notification recipients configured for this machine.
           </p>
         </CardContent>
@@ -267,75 +267,80 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
   }
 
   return (
-    <Card className="bg-card border-[3px] border-[#8FB83D]">
+    <Card className="bg-card border-[0.1875rem] border-[#8FB83D]">
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#8FB83D' }}>
-          <Bell className="h-5 w-5" />
+        <CardTitle className="text-[1.125rem] font-semibold flex items-center gap-[0.5rem]" style={{ color: '#8FB83D' }}>
+          <Bell className="h-[1.25rem] w-[1.25rem]" />
           Notification Recipients
         </CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-[0.875rem] text-muted-foreground mt-[0.25rem]">
           Manage who receives notifications from {machineName}
         </p>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-[0.75rem]">
           {recipients.map((recipient) => (
             <div
               key={recipient.userId}
               className={cn(
-                "flex items-center justify-between p-3 rounded-lg border transition-all",
+                "flex items-center justify-between p-[0.75rem] rounded-lg border transition-all w-full min-w-0",
                 recipient.enabled
                   ? "bg-[#8FB83D]/5 border-[#8FB83D]/20"
                   : "bg-red-500/5 border-red-500/20"
               )}
             >
-              <div className="flex items-center gap-3 flex-1">
-                {getRoleIcon(recipient.userRole)}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm truncate">{recipient.userName}</p>
+              <div className="flex items-center gap-[0.75rem] flex-1 min-w-0 overflow-hidden">
+                <div className="flex-shrink-0">
+                  {getRoleIcon(recipient.userRole)}
+                </div>
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <div className="flex items-center gap-[0.5rem] flex-wrap">
+                    <p className="font-medium text-[0.875rem] break-words min-w-0">{recipient.userName}</p>
                     <span
                       className={cn(
-                        "text-xs px-2 py-0.5 rounded-full border",
+                        "text-[0.75rem] px-[0.5rem] py-[0.125rem] rounded-full border flex-shrink-0",
                         getRoleBadgeColor(recipient.userRole)
                       )}
                     >
                       {getRoleLabel(recipient.userRole)}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-[0.75rem] text-muted-foreground break-words min-w-0 mt-[0.125rem]">
                     {recipient.userEmail}
                   </p>
                 </div>
               </div>
 
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2">
-                      {recipient.enabled ? (
-                        <Bell className="h-4 w-4 text-[#8FB83D]" />
-                      ) : (
-                        <BellOff className="h-4 w-4 text-red-600" />
-                      )}
-                      <Switch
-                        checked={recipient.enabled}
-                        onCheckedChange={() => handleToggle(recipient.userId, recipient.enabled)}
-                        disabled={!recipient.canEdit}
-                        className={cn(
-                          !recipient.canEdit && "opacity-50 cursor-not-allowed"
+              <div className="flex-shrink-0 ml-[0.5rem]">
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-[0.5rem]">
+                        {recipient.enabled ? (
+                          <Bell className="h-[1rem] w-[1rem] text-[#8FB83D] flex-shrink-0" />
+                        ) : (
+                          <BellOff className="h-[1rem] w-[1rem] text-red-600 flex-shrink-0" />
                         )}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {recipient.canEdit
-                      ? `Click to ${recipient.enabled ? 'disable' : 'enable'} notifications for ${recipient.userName}`
-                      : 'You do not have permission to change this setting'
-                    }
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                        <Switch
+                          checked={recipient.enabled}
+                          onCheckedChange={() => handleToggle(recipient.userId, recipient.enabled)}
+                          disabled={!recipient.canEdit}
+                          className={cn(
+                            "flex-shrink-0",
+                            !recipient.canEdit && "opacity-50 cursor-not-allowed"
+                          )}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {recipient.canEdit
+                        ? `Click to ${recipient.enabled ? 'disable' : 'enable'} notifications for ${recipient.userName}`
+                        : 'You do not have permission to change this setting'
+                      }
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
           ))}
         </div>

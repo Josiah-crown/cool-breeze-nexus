@@ -10,8 +10,8 @@
 
 -- Super Admin Profile
 INSERT INTO public.profiles (id, name, email, cell_number, country, state, city, street, suburb, full_name_business)
-SELECT id, 'Super Admin', email, '+27000000000', 'South Africa', 'Gauteng', 'Johannesburg', '1 Admin Street', 'Central', 'IOT Nexus Admin'
-FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@IOTnexus.site')
+SELECT id, 'Super Admin', email, '+27000000000', 'South Africa', 'Gauteng', 'Johannesburg', '1 Admin Street', 'Central', 'Crown Technologies Admin'
+FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@Crowntechnologies.online')
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 -- Crown Technologies Profile
@@ -38,7 +38,7 @@ ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 -- Super Admin role
 INSERT INTO public.user_roles (user_id, role)
-SELECT id, 'super_admin' FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@IOTnexus.site')
+SELECT id, 'super_admin' FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@Crowntechnologies.online')
 ON CONFLICT (user_id, role) DO NOTHING;
 
 -- Company role
@@ -65,7 +65,7 @@ INSERT INTO public.installer_company_assignments (installer_id, company_id, assi
 SELECT 
   (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('Blessing@crowntechnologies.co.za')),
   (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('headoffice@crowntechnologies.co.za')),
-  (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@IOTnexus.site'))
+  (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@Crowntechnologies.online'))
 WHERE EXISTS (SELECT 1 FROM auth.users WHERE LOWER(email) = LOWER('Blessing@crowntechnologies.co.za'))
 ON CONFLICT DO NOTHING;
 
@@ -74,7 +74,7 @@ INSERT INTO public.client_admin_assignments (client_id, admin_id, assigned_by)
 SELECT 
   (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('Neil@crowntechnologies.co.za')),
   (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('Blessing@crowntechnologies.co.za')),
-  (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@IOTnexus.site'))
+  (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('Superadmin@Crowntechnologies.online'))
 WHERE EXISTS (SELECT 1 FROM auth.users WHERE LOWER(email) = LOWER('Neil@crowntechnologies.co.za'))
 ON CONFLICT (client_id) DO NOTHING;
 

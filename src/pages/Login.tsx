@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,15 +18,25 @@ const Login: React.FC = () => {
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { login, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Replace with your actual reCAPTCHA site key
   const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Test key
+  const from = (location.state as any)?.from as string | undefined;
+  const searchParams = new URLSearchParams(location.search);
+  const allowLoginAccess = searchParams.get('source') === 'home' || Boolean(from);
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate(from || '/dashboard', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, from]);
+
+  useEffect(() => {
+    if (!user && !allowLoginAccess) {
+      navigate('/', { replace: true });
+    }
+  }, [user, allowLoginAccess, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +57,7 @@ const Login: React.FC = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/dashboard`,
             captchaToken: recaptchaToken || undefined,
           },
         });
@@ -88,7 +98,7 @@ const Login: React.FC = () => {
       } else {
         await login(email, password);
         toast.success('Login successful!');
-        navigate('/');
+        navigate(from || '/dashboard', { replace: true });
       }
     } catch (error: any) {
       const errorMessage = isSignup 
@@ -110,21 +120,21 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center p-4" style={{ justifyContent: 'center' }}>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-6">
       {/* Logo above the card */}
-      <div className="mb-2 flex justify-center">
-        <img src="/6.png" alt="IOTnexus Logo" className="h-48 w-auto object-contain" />
+      <div className="mb-6 sm:mb-8 flex justify-center">
+        <img src="/6.png" alt="Crown Technologies Logo" className="h-32 sm:h-40 lg:h-48 w-auto object-contain" />
       </div>
-      <Card className="w-full max-w-md bg-card border-2 border-border -mt-12" style={{ marginTop: '-3rem' }}>
-        <CardHeader className="text-center space-y-2 border-b border-border pb-4">
-          <CardTitle className="text-3xl font-bold" style={{ color: '#8fb73d' }}>
+      <Card className="w-full max-w-md bg-card border-2 border-border">
+        <CardHeader className="text-center space-y-2 border-b border-border pb-3 sm:pb-4 px-4 sm:px-6">
+          <CardTitle className="text-2xl sm:text-3xl font-bold" style={{ color: '#8fb73d' }}>
             Machine Monitor
           </CardTitle>
-          <CardDescription className="text-muted-foreground">
+          <CardDescription className="text-xs sm:text-sm text-muted-foreground">
             {isSignup ? 'Create a new account' : 'Sign in to access your dashboard'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 px-4 sm:px-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignup && (
               <div className="space-y-2">
@@ -200,6 +210,11 @@ const Login: React.FC = () => {
             >
               {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </Button>
+            <div className="pt-1 text-center">
+              <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Back to Home
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

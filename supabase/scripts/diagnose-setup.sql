@@ -22,7 +22,7 @@ SELECT id, key, machine_id, is_active FROM public.api_keys;
 -- 6. Check if emails match (case sensitive!)
 SELECT 
   email,
-  CASE WHEN email = 'Superadmin@IOTnexus.site' THEN '✅ Match' ELSE '❌ No match' END as superadmin_check,
+  CASE WHEN email = 'Superadmin@Crowntechnologies.online' THEN '✅ Match' ELSE '❌ No match' END as superadmin_check,
   CASE WHEN email = 'headoffice@crowntechnologies.co.za' THEN '✅ Match' ELSE '❌ No match' END as company_check,
   CASE WHEN email = 'Blessing@crowntechnologies.co.za' THEN '✅ Match' ELSE '❌ No match' END as installer_check,
   CASE WHEN email = 'Neil@crowntechnologies.co.za' THEN '✅ Match' ELSE '❌ No match' END as client_check

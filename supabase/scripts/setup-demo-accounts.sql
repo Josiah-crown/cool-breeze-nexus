@@ -4,7 +4,7 @@
 -- Run this AFTER creating users in Supabase Authentication
 --
 -- Users to create first:
--- 1. Superadmin@IOTnexus.site (Super Admin)
+-- 1. Superadmin@Crowntechnologies.online (Super Admin)
 -- 2. headoffice@crowntechnologies.co.za (Company - Crown Technologies)
 -- 3. Blessing@crowntechnologies.co.za (Installer)
 -- 4. Neil@crowntechnologies.co.za (Customer)
@@ -28,9 +28,9 @@ SELECT
   'Johannesburg',
   '1 Admin Street',
   'Central',
-  'IOT Nexus Admin'
+  'Crown Technologies Admin'
 FROM auth.users
-WHERE email = 'Superadmin@IOTnexus.site'
+WHERE email = 'Superadmin@Crowntechnologies.online'
 ON CONFLICT (id) DO NOTHING;
 
 -- Crown Technologies (Company) Profile
@@ -98,7 +98,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'super_admin'
 FROM auth.users
-WHERE email = 'Superadmin@IOTnexus.site'
+WHERE email = 'Superadmin@Crowntechnologies.online'
 ON CONFLICT (user_id, role) DO NOTHING;
 
 -- Crown Technologies - Company role
@@ -131,7 +131,7 @@ INSERT INTO public.installer_company_assignments (installer_id, company_id, assi
 SELECT 
   (SELECT id FROM auth.users WHERE email = 'Blessing@crowntechnologies.co.za'),
   (SELECT id FROM auth.users WHERE email = 'headoffice@crowntechnologies.co.za'),
-  (SELECT id FROM auth.users WHERE email = 'Superadmin@IOTnexus.site')
+  (SELECT id FROM auth.users WHERE email = 'Superadmin@Crowntechnologies.online')
 WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'Blessing@crowntechnologies.co.za')
   AND EXISTS (SELECT 1 FROM auth.users WHERE email = 'headoffice@crowntechnologies.co.za')
 ON CONFLICT DO NOTHING;
@@ -145,7 +145,7 @@ INSERT INTO public.client_admin_assignments (client_id, admin_id, assigned_by)
 SELECT 
   (SELECT id FROM auth.users WHERE email = 'Neil@crowntechnologies.co.za'),
   (SELECT id FROM auth.users WHERE email = 'Blessing@crowntechnologies.co.za'),
-  (SELECT id FROM auth.users WHERE email = 'Superadmin@IOTnexus.site')
+  (SELECT id FROM auth.users WHERE email = 'Superadmin@Crowntechnologies.online')
 WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'Neil@crowntechnologies.co.za')
   AND EXISTS (SELECT 1 FROM auth.users WHERE email = 'Blessing@crowntechnologies.co.za')
 ON CONFLICT (client_id) DO NOTHING;
@@ -341,7 +341,7 @@ ORDER BY m.manufacturer;
 -- ========================================
 -- 
 -- Demo Accounts Created:
--- 👑 Superadmin@IOTnexus.site (Super Admin)
+-- 👑 Superadmin@Crowntechnologies.online (Super Admin)
 -- 🏢 headoffice@crowntechnologies.co.za (Company)
 -- 🔧 Blessing@crowntechnologies.co.za (Installer)
 -- 👤 Neil@crowntechnologies.co.za (Customer)

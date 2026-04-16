@@ -236,67 +236,137 @@ CREATE TABLE public.machine_connection_status (
 );
 
 -- ========================================
--- 7. MANUFACTURER DATA TABLES
+-- 7. MANUFACTURER-SPECIFIC ALERT TABLES
 -- ========================================
--- These are the ONLY manufacturer-specific tables needed!
--- All config comes from the generic tables above.
+-- Each manufacturer has unique alert types and thresholds
+-- Generic machine_alert_config handles basic thresholds
+-- These tables handle manufacturer-specific alert logic and history
+
+-- ----------------------------------------
+-- CIRRUS ALERTS
+-- ----------------------------------------
+-- Frontend LEDs: "connected", "fan", "cool", "water"
+CREATE TABLE public.cirrus_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  machine_id UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
+  alert_type TEXT NOT NULL CHECK (alert_type IN ('fan_failure', 'water_empty', 'motor_temp_critical', 'cooling_inefficient', 'connection_lost')),
+  severity TEXT NOT NULL CHECK (severity IN ('warning', 'critical')),
+  message TEXT NOT NULL,
+  triggered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ,
+  acknowledged_at TIMESTAMPTZ,
+  acknowledged_by UUID REFERENCES auth.users(id),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ----------------------------------------
+-- COOLBREEZE ALERTS
+-- ----------------------------------------
+-- Frontend LEDs: "connected", "fan", "cool", "water"
+CREATE TABLE public.coolbreeze_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  machine_id UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
+  alert_type TEXT NOT NULL CHECK (alert_type IN ('fan_failure', 'water_empty', 'motor_temp_critical', 'cooling_inefficient', 'connection_lost', 'water_level_low')),
+  severity TEXT NOT NULL CHECK (severity IN ('warning', 'critical')),
+  message TEXT NOT NULL,
+  triggered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ,
+  acknowledged_at TIMESTAMPTZ,
+  acknowledged_by UUID REFERENCES auth.users(id),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ----------------------------------------
+-- ALLIANCE ALERTS
+-- ----------------------------------------
+-- Frontend LEDs: "connected", "pump", "heat", "compressor"
+CREATE TABLE public.alliance_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  machine_id UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
+  alert_type TEXT NOT NULL CHECK (alert_type IN ('compressor_failure', 'compressor_warning', 'pump_failure', 'heating_inefficient', 'connection_lost', 'setpoint_deviation')),
+  severity TEXT NOT NULL CHECK (severity IN ('warning', 'critical')),
+  message TEXT NOT NULL,
+  triggered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ,
+  acknowledged_at TIMESTAMPTZ,
+  acknowledged_by UUID REFERENCES auth.users(id),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ========================================
+-- 8. MANUFACTURER DATA TABLES
+-- ========================================
+-- These tables store processed data for historical graphs
+-- Each manufacturer has unique datapoints for frontend display
+-- Data flows: readings_raw → trigger → manufacturer table → frontend
 
 -- ----------------------------------------
 -- CIRRUS (Evaporative Cooler)
 -- ----------------------------------------
+-- Frontend LEDs: "connected", "fan", "cool", "water"
+-- Historical Graph Datapoints: motorTemp, current, outsideTemp, insideTemp, deltaT, fanSpeed, fanActive, pumpActive, isCooling, hasWater
 CREATE TABLE public.cirrus (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   machine_id UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  -- Temperatures
-  ambient_temp NUMERIC(5,2),    -- Outside/inlet
-  duct_temp NUMERIC(5,2),       -- Inside/outlet
-  motor_temp NUMERIC(5,2),      -- Fan motor temp
-  delta_t NUMERIC(5,2),         -- Temperature difference
+  -- Temperatures (for historical graphs)
+  ambient_temp NUMERIC(5,2),    -- Outside/inlet (historical: outsideTemp)
+  duct_temp NUMERIC(5,2),       -- Inside/outlet (historical: insideTemp)
+  motor_temp NUMERIC(5,2),      -- Fan motor temp (historical: motorTemp)
+  delta_t NUMERIC(5,2),         -- Temperature difference (historical: deltaT) - ABS(ambient - duct)
   
-  -- Electrical
+  -- Electrical (for historical graphs)
   voltage NUMERIC(6,2),
-  current NUMERIC(6,2),
-  power NUMERIC(7,2),
+  current NUMERIC(6,2),          -- Historical: current
+  power NUMERIC(7,2),            -- Historical: power
   
-  -- Voltage pickups (stored for reference)
-  fan_voltage NUMERIC(5,2),
-  pump_voltage NUMERIC(5,2),
-  drain_voltage NUMERIC(5,2),
-  exhaust_voltage NUMERIC(5,2),
+  -- Voltage pickups (stored for reference and migration compatibility)
+  fan_voltage NUMERIC(5,2),      -- voltage_input_1
+  pump_voltage NUMERIC(5,2),     -- voltage_input_2
+  drain_voltage NUMERIC(5,2),     -- voltage_input_3
+  exhaust_voltage NUMERIC(5,2),  -- voltage_input_4
   
-  -- Operational states
-  fan_active BOOLEAN DEFAULT false,
-  pump_active BOOLEAN DEFAULT false,
+  -- Operational states (for historical graphs and frontend LEDs)
+  fan_active BOOLEAN DEFAULT false,      -- LED: "fan" (ON/OFF)
+  pump_active BOOLEAN DEFAULT false,     -- For cooling logic
   drain_active BOOLEAN DEFAULT false,
   exhaust_active BOOLEAN DEFAULT false,
-  is_cooling BOOLEAN DEFAULT false,
+  is_cooling BOOLEAN DEFAULT false,     -- LED: "cool" (ON when fan AND pump active)
   is_on BOOLEAN DEFAULT false,
-  is_connected BOOLEAN DEFAULT true,
-  has_water BOOLEAN DEFAULT true,
+  is_connected BOOLEAN DEFAULT true,    -- LED: "connected" (based on last reading time)
+  has_water BOOLEAN DEFAULT true,       -- LED: "water" (ON when water present)
   
   -- Status strings (for frontend display)
-  fan_status TEXT DEFAULT 'OFF',
+  fan_status TEXT DEFAULT 'OFF',         -- 'ON' or 'OFF'
   pump_status TEXT DEFAULT 'OFF',
   drain_status TEXT DEFAULT 'OFF',
   exhaust_status TEXT DEFAULT 'OFF',
-  fan_speed INTEGER DEFAULT 0,
+  fan_speed INTEGER DEFAULT 0,           -- Historical: fanSpeed (0-100)
   
   -- Calculated status
   overall_status TEXT DEFAULT 'unknown',
   motor_status TEXT DEFAULT 'normal',
-  water_status TEXT DEFAULT 'ok',
-  cooling_status TEXT DEFAULT 'idle',
+  water_status TEXT DEFAULT 'ok',        -- 'ok', 'low', 'empty'
+  cooling_status TEXT DEFAULT 'idle',    -- 'idle', 'active', 'inefficient'
   
-  -- Compliance flags
+  -- Compliance flags (for alert logic)
   motor_temp_within_parameters BOOLEAN,
   current_within_parameters BOOLEAN,
   voltage_within_parameters BOOLEAN,
   power_within_parameters BOOLEAN,
   water_within_parameters BOOLEAN,
   
-  -- Details
+  -- Details (JSONB for flexible storage)
   status_details JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -307,40 +377,42 @@ CREATE TABLE public.cirrus (
 -- ----------------------------------------
 -- COOLBREEZE (Evaporative Cooler)
 -- ----------------------------------------
+-- Frontend LEDs: "connected", "fan", "cool", "water"
+-- Historical Graph Datapoints: Same as Cirrus + waterLevel
 CREATE TABLE public.coolbreeze (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   machine_id UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  -- Temperatures
-  ambient_temp NUMERIC(5,2),
-  duct_temp NUMERIC(5,2),
-  motor_temp NUMERIC(5,2),
-  delta_t NUMERIC(5,2),
+  -- Temperatures (for historical graphs)
+  ambient_temp NUMERIC(5,2),    -- Outside/inlet
+  duct_temp NUMERIC(5,2),       -- Inside/outlet
+  motor_temp NUMERIC(5,2),      -- Fan motor temp
+  delta_t NUMERIC(5,2),         -- Temperature difference - ABS(ambient - duct)
   
-  -- Electrical
+  -- Electrical (for historical graphs)
   voltage NUMERIC(6,2),
   current NUMERIC(6,2),
   power NUMERIC(7,2),
   
-  -- Voltage pickups
+  -- Voltage pickups (stored for reference)
   fan_voltage NUMERIC(5,2),
   pump_voltage NUMERIC(5,2),
   drain_voltage NUMERIC(5,2),
   exhaust_voltage NUMERIC(5,2),
   
-  -- Operational states
-  fan_active BOOLEAN DEFAULT false,
+  -- Operational states (for historical graphs and frontend LEDs)
+  fan_active BOOLEAN DEFAULT false,      -- LED: "fan"
   pump_active BOOLEAN DEFAULT false,
   drain_active BOOLEAN DEFAULT false,
   exhaust_active BOOLEAN DEFAULT false,
-  is_cooling BOOLEAN DEFAULT false,
+  is_cooling BOOLEAN DEFAULT false,      -- LED: "cool"
   is_on BOOLEAN DEFAULT false,
-  is_connected BOOLEAN DEFAULT true,
-  has_water BOOLEAN DEFAULT true,
-  water_level NUMERIC(5,2) DEFAULT 100.0,
+  is_connected BOOLEAN DEFAULT true,     -- LED: "connected"
+  has_water BOOLEAN DEFAULT true,        -- LED: "water"
+  water_level NUMERIC(5,2) DEFAULT 100.0, -- Historical: waterLevel (0-100%)
   
-  -- Status strings
+  -- Status strings (for frontend display)
   fan_status TEXT DEFAULT 'OFF',
   pump_status TEXT DEFAULT 'OFF',
   drain_status TEXT DEFAULT 'OFF',
@@ -371,59 +443,63 @@ CREATE TABLE public.coolbreeze (
 -- ----------------------------------------
 -- ALLIANCE (Heat Pump)
 -- ----------------------------------------
+-- Frontend LEDs: "connected", "pump", "heat", "compressor"
+-- Historical Graph Datapoints: motorTemp, current, outsideTemp, insideTemp, deltaT, pumpActive, isHeating, compressorStatus
+-- Note: Delta T = duct_temp - ambient_temp (can be negative, positive = heating)
 CREATE TABLE public.alliance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   machine_id UUID NOT NULL REFERENCES public.machines(id) ON DELETE CASCADE,
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  -- Temperatures
-  ambient_temp NUMERIC(5,2),    -- Inlet/outside
-  duct_temp NUMERIC(5,2),       -- Outlet/duct
-  motor_temp NUMERIC(5,2),      -- Compressor temp (not fan motor!)
-  delta_t NUMERIC(5,2),
+  -- Temperatures (for historical graphs)
+  ambient_temp NUMERIC(5,2),    -- Inlet/outside (historical: outsideTemp)
+  duct_temp NUMERIC(5,2),       -- Outlet/duct (historical: insideTemp)
+  motor_temp NUMERIC(5,2),      -- Compressor temp (historical: motorTemp) - NOT fan motor!
+  delta_t NUMERIC(5,2),         -- Historical: deltaT (duct - ambient, positive = heating)
   
-  -- Electrical
+  -- Electrical (for historical graphs)
   voltage NUMERIC(6,2),
-  current NUMERIC(6,2),
-  power NUMERIC(7,2),
+  current NUMERIC(6,2),          -- Historical: current (used to determine heating)
+  power NUMERIC(7,2),            -- Historical: power
   
   -- Voltage pickups (GPIO5 = pump relay for heatpumps)
-  voltage_1 NUMERIC(5,2),
-  voltage_2 NUMERIC(5,2),
-  voltage_3 NUMERIC(5,2),
-  voltage_4 NUMERIC(5,2),
-  voltage_5 NUMERIC(5,2),  -- GPIO5: Pump relay
-  voltage_6 NUMERIC(5,2),
+  -- Stored as voltage_1 through voltage_6 for migration compatibility
+  voltage_1 NUMERIC(5,2),        -- Reserved for future use
+  voltage_2 NUMERIC(5,2),        -- Reserved for future use
+  voltage_3 NUMERIC(5,2),        -- Reserved for future use
+  voltage_4 NUMERIC(5,2),        -- Reserved for future use
+  voltage_5 NUMERIC(5,2),        -- GPIO5: Pump relay (LED: "pump")
+  voltage_6 NUMERIC(5,2),        -- Reserved for future use
   
-  -- Operational states
-  fan_active BOOLEAN DEFAULT false,
-  pump_active BOOLEAN DEFAULT false,  -- GPIO5 relay status
-  drain_active BOOLEAN DEFAULT false,
-  exhaust_active BOOLEAN DEFAULT false,
-  is_cooling BOOLEAN DEFAULT false,
-  is_heating BOOLEAN DEFAULT false,   -- Current > 1A
-  is_on BOOLEAN DEFAULT false,
-  is_connected BOOLEAN DEFAULT true,
-  has_water BOOLEAN DEFAULT true,     -- Repurposed: pump status for heatpumps
+  -- Operational states (for historical graphs and frontend LEDs)
+  fan_active BOOLEAN DEFAULT false,      -- Not used for heatpumps (no separate fan status)
+  pump_active BOOLEAN DEFAULT false,     -- LED: "pump" (GPIO5 relay status)
+  drain_active BOOLEAN DEFAULT false,    -- Not used for heatpumps
+  exhaust_active BOOLEAN DEFAULT false,  -- Not used for heatpumps
+  is_cooling BOOLEAN DEFAULT false,      -- Not used for heatpumps (heating only)
+  is_heating BOOLEAN DEFAULT false,      -- LED: "heat" (current > 1A = compressor running)
+  is_on BOOLEAN DEFAULT false,           -- Same as pump_active for heatpumps
+  is_connected BOOLEAN DEFAULT true,     -- LED: "connected" (based on last reading time)
+  has_water BOOLEAN DEFAULT true,         -- Repurposed: stores pump status for frontend compatibility
   
   -- Calculated status
   overall_status TEXT DEFAULT 'unknown',
-  motor_status TEXT DEFAULT 'normal',
-  water_status TEXT DEFAULT 'ok',
-  cooling_status TEXT DEFAULT 'idle',
-  heating_status TEXT DEFAULT 'idle',
-  compressor_status TEXT DEFAULT 'good',  -- Heatpump: good/warning/failed
-  compressor_issue_first_detected_at TIMESTAMPTZ,
+  motor_status TEXT DEFAULT 'normal',     -- Compressor motor status
+  water_status TEXT DEFAULT 'ok',         -- Not used for heatpumps (repurposed field)
+  cooling_status TEXT DEFAULT 'idle',     -- Not used for heatpumps
+  heating_status TEXT DEFAULT 'idle',     -- 'idle', 'active', 'inefficient', 'excessive'
+  compressor_status TEXT DEFAULT 'good',  -- LED: "compressor" (good/warning/failed)
+  compressor_issue_first_detected_at TIMESTAMPTZ,  -- For 5-minute delay logic
   
-  -- Compliance flags
-  motor_temp_within_parameters BOOLEAN,
-  current_within_parameters BOOLEAN,
+  -- Compliance flags (for alert logic)
+  motor_temp_within_parameters BOOLEAN,   -- Compressor temp within limits
+  current_within_parameters BOOLEAN,      -- Current within acceptable range
   voltage_within_parameters BOOLEAN,
   power_within_parameters BOOLEAN,
-  water_within_parameters BOOLEAN,
-  setpoint_within_parameters BOOLEAN,
+  water_within_parameters BOOLEAN,       -- Not used for heatpumps
+  setpoint_within_parameters BOOLEAN,     -- Temperature within setpoint tolerance
   
-  -- Details
+  -- Details (JSONB for flexible storage)
   status_details JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -432,7 +508,7 @@ CREATE TABLE public.alliance (
 );
 
 -- ========================================
--- 8. INDEXES
+-- 9. INDEXES
 -- ========================================
 
 -- User tables
@@ -476,8 +552,21 @@ CREATE INDEX idx_alliance_machine_id ON public.alliance(machine_id);
 CREATE INDEX idx_alliance_timestamp ON public.alliance(timestamp DESC);
 CREATE INDEX idx_alliance_machine_timestamp ON public.alliance(machine_id, timestamp DESC);
 
+-- Manufacturer Alert Tables
+CREATE INDEX idx_cirrus_alerts_machine_id ON public.cirrus_alerts(machine_id);
+CREATE INDEX idx_cirrus_alerts_active ON public.cirrus_alerts(is_active) WHERE is_active = true;
+CREATE INDEX idx_cirrus_alerts_triggered_at ON public.cirrus_alerts(triggered_at DESC);
+
+CREATE INDEX idx_coolbreeze_alerts_machine_id ON public.coolbreeze_alerts(machine_id);
+CREATE INDEX idx_coolbreeze_alerts_active ON public.coolbreeze_alerts(is_active) WHERE is_active = true;
+CREATE INDEX idx_coolbreeze_alerts_triggered_at ON public.coolbreeze_alerts(triggered_at DESC);
+
+CREATE INDEX idx_alliance_alerts_machine_id ON public.alliance_alerts(machine_id);
+CREATE INDEX idx_alliance_alerts_active ON public.alliance_alerts(is_active) WHERE is_active = true;
+CREATE INDEX idx_alliance_alerts_triggered_at ON public.alliance_alerts(triggered_at DESC);
+
 -- ========================================
--- 9. ROW LEVEL SECURITY
+-- 10. ROW LEVEL SECURITY
 -- ========================================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -494,9 +583,12 @@ ALTER TABLE public.machine_connection_status ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cirrus ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coolbreeze ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.alliance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cirrus_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coolbreeze_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.alliance_alerts ENABLE ROW LEVEL SECURITY;
 
 -- ========================================
--- 10. HELPER FUNCTIONS
+-- 11. HELPER FUNCTIONS
 -- ========================================
 
 -- Check user role
@@ -557,6 +649,15 @@ CREATE TRIGGER update_coolbreeze_updated_at BEFORE UPDATE ON public.coolbreeze
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE TRIGGER update_alliance_updated_at BEFORE UPDATE ON public.alliance
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_cirrus_alerts_updated_at BEFORE UPDATE ON public.cirrus_alerts
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_coolbreeze_alerts_updated_at BEFORE UPDATE ON public.coolbreeze_alerts
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_alliance_alerts_updated_at BEFORE UPDATE ON public.alliance_alerts
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ========================================
@@ -637,6 +738,21 @@ CREATE POLICY "Users can view own alliance data" ON public.alliance FOR SELECT
   USING (machine_id IN (SELECT id FROM public.machines WHERE owner_id = auth.uid()) OR public.has_role(auth.uid(), 'super_admin'));
 CREATE POLICY "Service role full access alliance" ON public.alliance FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+-- Cirrus Alerts
+CREATE POLICY "Users can view own cirrus alerts" ON public.cirrus_alerts FOR SELECT
+  USING (machine_id IN (SELECT id FROM public.machines WHERE owner_id = auth.uid()) OR public.has_role(auth.uid(), 'super_admin'));
+CREATE POLICY "Service role full access cirrus_alerts" ON public.cirrus_alerts FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- CoolBreeze Alerts
+CREATE POLICY "Users can view own coolbreeze alerts" ON public.coolbreeze_alerts FOR SELECT
+  USING (machine_id IN (SELECT id FROM public.machines WHERE owner_id = auth.uid()) OR public.has_role(auth.uid(), 'super_admin'));
+CREATE POLICY "Service role full access coolbreeze_alerts" ON public.coolbreeze_alerts FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- Alliance Alerts
+CREATE POLICY "Users can view own alliance alerts" ON public.alliance_alerts FOR SELECT
+  USING (machine_id IN (SELECT id FROM public.machines WHERE owner_id = auth.uid()) OR public.has_role(auth.uid(), 'super_admin'));
+CREATE POLICY "Service role full access alliance_alerts" ON public.alliance_alerts FOR ALL TO service_role USING (true) WITH CHECK (true);
+
 -- ========================================
 -- 13. GRANTS
 -- ========================================
@@ -675,6 +791,14 @@ GRANT ALL ON public.coolbreeze TO service_role;
 GRANT SELECT ON public.alliance TO authenticated;
 GRANT ALL ON public.alliance TO service_role;
 
+-- Manufacturer alert tables (read-only for users, full for service)
+GRANT SELECT ON public.cirrus_alerts TO authenticated;
+GRANT ALL ON public.cirrus_alerts TO service_role;
+GRANT SELECT ON public.coolbreeze_alerts TO authenticated;
+GRANT ALL ON public.coolbreeze_alerts TO service_role;
+GRANT SELECT ON public.alliance_alerts TO authenticated;
+GRANT ALL ON public.alliance_alerts TO service_role;
+
 -- Function permissions
 GRANT EXECUTE ON FUNCTION public.has_role TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.get_user_admin TO authenticated, service_role;
@@ -684,12 +808,15 @@ GRANT EXECUTE ON FUNCTION public.get_user_admin TO authenticated, service_role;
 -- ========================================
 
 COMMENT ON TABLE public.machines IS 'Machine registry - shared by all manufacturers';
-COMMENT ON TABLE public.readings_raw IS 'Universal raw data table - ALL ESP32 data enters here';
-COMMENT ON TABLE public.machine_voltage_config IS 'Generic voltage config - ONE table for ALL manufacturers';
-COMMENT ON TABLE public.machine_alert_config IS 'Generic alert config - ONE table for ALL manufacturers';
-COMMENT ON TABLE public.cirrus IS 'Processed data for Cirrus evaporative coolers';
-COMMENT ON TABLE public.coolbreeze IS 'Processed data for CoolBreeze evaporative coolers';
-COMMENT ON TABLE public.alliance IS 'Processed data for Alliance heat pumps';
+COMMENT ON TABLE public.readings_raw IS 'Universal raw data table - ALL ESP32 data enters here. Data flows: readings_raw → trigger → manufacturer table → frontend';
+COMMENT ON TABLE public.machine_voltage_config IS 'Generic voltage config - ONE table for ALL manufacturers. Maps voltage inputs to functions.';
+COMMENT ON TABLE public.machine_alert_config IS 'Generic alert config - ONE table for ALL manufacturers. Basic thresholds shared across all types.';
+COMMENT ON TABLE public.cirrus IS 'Processed data for Cirrus evaporative coolers. Frontend LEDs: connected, fan, cool, water. Historical: motorTemp, current, outsideTemp, insideTemp, deltaT, fanSpeed, fanActive, pumpActive, isCooling, hasWater';
+COMMENT ON TABLE public.coolbreeze IS 'Processed data for CoolBreeze evaporative coolers. Frontend LEDs: connected, fan, cool, water. Historical: Same as Cirrus + waterLevel';
+COMMENT ON TABLE public.alliance IS 'Processed data for Alliance heat pumps. Frontend LEDs: connected, pump, heat, compressor. Historical: motorTemp, current, outsideTemp, insideTemp, deltaT, pumpActive, isHeating, compressorStatus';
+COMMENT ON TABLE public.cirrus_alerts IS 'Manufacturer-specific alerts for Cirrus machines. Alert types: fan_failure, water_empty, motor_temp_critical, cooling_inefficient, connection_lost';
+COMMENT ON TABLE public.coolbreeze_alerts IS 'Manufacturer-specific alerts for CoolBreeze machines. Alert types: fan_failure, water_empty, motor_temp_critical, cooling_inefficient, connection_lost, water_level_low';
+COMMENT ON TABLE public.alliance_alerts IS 'Manufacturer-specific alerts for Alliance heat pumps. Alert types: compressor_failure, compressor_warning, pump_failure, heating_inefficient, connection_lost, setpoint_deviation';
 
 -- ========================================
 -- SCHEMA COMPLETE
@@ -702,16 +829,34 @@ COMMENT ON TABLE public.alliance IS 'Processed data for Alliance heat pumps';
 -- ✅ machines - Machine registry
 -- ✅ api_keys - ESP32 authentication
 -- ✅ machine_voltage_config - Voltage mappings (ONE table for all)
--- ✅ machine_alert_config - Alert thresholds (ONE table for all)
+-- ✅ machine_alert_config - Basic alert thresholds (ONE table for all)
+-- ✅ machine_notification_preferences - User notification settings
+-- ✅ machine_connection_status - Connection tracking
 -- 
--- Per Manufacturer (ONLY the data table):
--- ✅ cirrus
--- ✅ coolbreeze
--- ✅ alliance
+-- Per Manufacturer:
+-- ✅ Data Table: cirrus, coolbreeze, alliance (processed data for historical graphs)
+-- ✅ Alert Table: cirrus_alerts, coolbreeze_alerts, alliance_alerts (manufacturer-specific alerts)
+-- 
+-- DATA FLOW:
+-- ESP32 → readings_raw → trigger (checks manufacturer) → cirrus/coolbreeze/alliance → frontend
+-- 
+-- FRONTEND LEDS:
+-- Cirrus/CoolBreeze: "connected", "fan", "cool", "water"
+-- Alliance: "connected", "pump", "heat", "compressor"
+-- 
+-- HISTORICAL GRAPH DATAPOINTS:
+-- Cirrus/CoolBreeze: motorTemp, current, outsideTemp, insideTemp, deltaT, fanSpeed, fanActive, pumpActive, isCooling, hasWater
+-- Alliance: motorTemp, current, outsideTemp, insideTemp, deltaT, pumpActive, isHeating, compressorStatus
+-- 
+-- MIGRATION COMPATIBILITY:
+-- All data tables designed to accept data from old tables (alliance_calculated, etc.)
+-- Fields match old structure for easy data migration
 -- 
 -- To add NEW manufacturer:
--- 1. CREATE TABLE newbrand (...)
--- 2. CREATE FUNCTION process_newbrand_reading()
--- 3. CREATE TRIGGER
+-- 1. CREATE TABLE newbrand (...) - Data table with manufacturer-specific fields
+-- 2. CREATE TABLE newbrand_alerts (...) - Alert table with manufacturer-specific alert types
+-- 3. CREATE FUNCTION process_newbrand_reading() - Processing logic
+-- 4. CREATE TRIGGER trigger_process_newbrand_reading - Trigger on readings_raw
+-- 5. Add RLS policies and grants
 -- That's it!
 -- ========================================
