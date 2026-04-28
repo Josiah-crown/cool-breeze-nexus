@@ -33,6 +33,10 @@ export const PROCESSING_TABLE_MAP: Record<Manufacturer | string, 'cirrus' | 'coo
   'Cirrus': 'cirrus',
   'CoolBreeze': 'coolbreeze',
   'Alliance': 'alliance',
+  // Common lowercase variants (DB often stores lowercase manufacturer)
+  'cirrus': 'cirrus',
+  'coolbreeze': 'coolbreeze',
+  'alliance': 'alliance',
   // Add new manufacturers here:
   // 'NewManufacturer': 'newmanufacturer',
 };
@@ -45,8 +49,13 @@ export function getProcessingTable(
   manufacturer: string | null | undefined
 ): 'cirrus' | 'coolbreeze' | 'alliance' | null {
   // If manufacturer is specified, use it
-  if (manufacturer && PROCESSING_TABLE_MAP[manufacturer]) {
-    return PROCESSING_TABLE_MAP[manufacturer] as 'cirrus' | 'coolbreeze' | 'alliance';
+  if (manufacturer) {
+    const direct = PROCESSING_TABLE_MAP[manufacturer];
+    if (direct) return direct as 'cirrus' | 'coolbreeze' | 'alliance';
+
+    const normalized = manufacturer.trim().toLowerCase();
+    const normalizedMap = PROCESSING_TABLE_MAP[normalized];
+    if (normalizedMap) return normalizedMap as 'cirrus' | 'coolbreeze' | 'alliance';
   }
 
   // Fallback to type-based mapping

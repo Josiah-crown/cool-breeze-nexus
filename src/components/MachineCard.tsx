@@ -379,12 +379,12 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 />
                 <StatusLight
                   status={machine.hasWater ? 'active' : 'inactive'}
-                  label="Pump"
+                  label="Contactor (GPIO5)"
                   size="sm"
                 />
                 <StatusLight
                   status={machine.hasHeat ? 'active' : 'inactive'}
-                  label="Heat"
+                  label="Heating"
                   size="sm"
                 />
                 <StatusLight

@@ -86,6 +86,7 @@ export async function fetchHistoricalData(
   // Use Edge Function to call the database function (bypasses RLS using service_role)
   // This function handles aggregation automatically based on period:
   // - 24h: All readings (no aggregation)
+  // - 7d_3m: 3-minute averages (used by 24h wide-page slider)
   // - 7d: 10-minute averages
   // - 30d: 1-hour averages
   // - 1y: 1-day averages
@@ -106,11 +107,38 @@ export async function fetchHistoricalData(
   }
 
   // Debug: Log the response to see what we're getting
-  console.log('[Historical Data] Edge Function response:', { responseData, hasData: !!responseData?.data, dataLength: responseData?.data?.length });
+  console.log('[Historical Data] Edge Function response:', { hasData: !!responseData?.data, dataLength: responseData?.data?.length });
 
   // Extract data from Edge Function response
   // The Edge Function returns { data: [...] }, and supabase.functions.invoke automatically parses JSON
   const readings = responseData?.data;
+
+  // Diagnostic: summarise timestamp range + counts so we can see at a glance
+  // whether the server is returning a full buffer or only a partial slice.
+  if (Array.isArray(readings) && readings.length > 0) {
+    const tsValues = readings
+      .map((r: any) => new Date(r.timestamp || r.created_at).getTime())
+      .filter((t: number) => Number.isFinite(t))
+      .sort((a: number, b: number) => a - b);
+    const first = tsValues[0];
+    const last = tsValues[tsValues.length - 1];
+    const firstWithMotor = readings.find((r: any) => r.motor_temp != null);
+    const lastWithMotor = [...readings].reverse().find((r: any) => r.motor_temp != null);
+    console.log('[Historical Data] Response summary:', {
+      period,
+      processingTable,
+      count: readings.length,
+      firstTimestamp: first ? new Date(first).toISOString() : null,
+      lastTimestamp: last ? new Date(last).toISOString() : null,
+      spanHours: first && last ? Math.round((last - first) / 3600000) : null,
+      firstMotorTempRow: firstWithMotor?.timestamp,
+      lastMotorTempRow: lastWithMotor?.timestamp,
+      sampleFirst: readings[0],
+      sampleLast: readings[readings.length - 1],
+    });
+  } else {
+    console.log('[Historical Data] Response summary: EMPTY', { period, processingTable });
+  }
   
   if (!readings) {
     console.warn('[Historical Data] No data returned from Edge Function');

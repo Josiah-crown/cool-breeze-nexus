@@ -66,11 +66,11 @@ const StatusPanel: React.FC<StatusPanelProps> = ({ data }) => {
             <>
               <StatusLight 
                 status={data.hasWater ? 'active' : 'inactive'} 
-                label="Pump" 
+                label="Contactor (GPIO5)" 
               />
               <StatusLight 
                 status={data.hasHeat ? 'active' : 'inactive'} 
-                label="Heat" 
+                label="Heating" 
               />
               <StatusLight 
                 status={getCompressorStatus()} 

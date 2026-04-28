@@ -57,9 +57,13 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Call the RPC function using the service role (bypasses RLS)
+    // Call the JSONB wrapper RPC. This returns a single JSONB value (an
+    // array of row objects) so PostgREST's default row limit (~1000) can't
+    // truncate our 7d_3m / 30d_10m / 1y_1h buffers. The wrapper delegates
+    // to get_historical_data() internally, so all aggregation logic is
+    // still defined in one place.
     console.log('Calling RPC with params:', { machineId, period, tableName });
-    const { data, error } = await supabaseAdmin.rpc('get_historical_data', {
+    const { data, error } = await supabaseAdmin.rpc('get_historical_data_json', {
       p_machine_id: machineId,
       p_period: period || '24h',
       p_table_name: tableName || 'cirrus',
@@ -76,10 +80,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('RPC returned data, length:', data?.length || 0);
+    // `data` is already a JSON array (Postgres JSONB -> JS array), so we
+    // can forward it directly without reshaping.
+    const rows = Array.isArray(data) ? data : [];
+    console.log('RPC returned data, length:', rows.length);
     
     return new Response(
-      JSON.stringify({ data }),
+      JSON.stringify({ data: rows }),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

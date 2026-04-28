@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, memo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, memo, useCallback, useLayoutEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { MachineStatus, MachineHistoricalData } from '@/types/machine';
 import { StatusLight } from './StatusLight';
@@ -8,7 +8,7 @@ import { AirConditionerComponent } from './AirConditionerComponent';
 import ApiKeyManager from './ApiKeyManager';
 import { NotificationRecipientsPanel } from './NotificationRecipientsPanel';
 import { AlertThresholdsEditor } from './AlertThresholdsEditor';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { X } from 'lucide-react';
 import { Switch } from './ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Slider } from './ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getProcessingTable, type MachineType } from '@/lib/machineConfig';
@@ -65,11 +66,11 @@ const CustomTooltip = memo(({ active, payload, machineType }: { active?: boolean
             <span className="font-semibold text-foreground">{formatValue(data.motorTemp, '°C')}</span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Ambient Temp:</span>
+            <span className="text-muted-foreground">{machineType === 'heatpump' ? 'Geyser:' : 'Ambient Temp:'}</span>
             <span className="font-semibold text-foreground">{formatValue(data.outsideTemp, '°C')}</span>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Duct Temp:</span>
+            <span className="text-muted-foreground">{machineType === 'heatpump' ? 'Outlet:' : 'Duct Temp:'}</span>
             <span className="font-semibold text-foreground">{formatValue(data.insideTemp, '°C')}</span>
           </div>
           <div className="flex justify-between gap-4">
@@ -83,22 +84,41 @@ const CustomTooltip = memo(({ active, payload, machineType }: { active?: boolean
             </div>
           )}
           <div className="border-t border-border pt-1 mt-1">
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Fan:</span>
-              <span className={`font-semibold ${data.fanStatus === 'ON' ? 'text-red-500' : 'text-muted-foreground'}`}>{data.fanStatus}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Cool:</span>
-              <span className={`font-semibold ${data.coolStatus === 'ON' ? 'text-blue-500' : 'text-muted-foreground'}`}>{data.coolStatus}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Pump:</span>
-              <span className={`font-semibold ${data.pumpStatus === 'ON' ? 'text-green-500' : 'text-muted-foreground'}`}>{data.pumpStatus}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Water:</span>
-              <span className={`font-semibold ${data.waterStatus === 'FULL' ? 'text-[#8FB83D]' : 'text-muted-foreground'}`}>{data.waterStatus}</span>
-            </div>
+            {machineType === 'heatpump' ? (
+              <>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Heating:</span>
+                  <span className={`font-semibold ${data.isHeating != null ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                    {data.isHeating != null ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Contactor (GPIO5):</span>
+                  <span className={`font-semibold ${data.hasWater != null ? 'text-[#8FB83D]' : 'text-muted-foreground'}`}>
+                    {data.hasWater != null ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Fan:</span>
+                  <span className={`font-semibold ${data.fanStatus === 'ON' ? 'text-red-500' : 'text-muted-foreground'}`}>{data.fanStatus}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Cool:</span>
+                  <span className={`font-semibold ${data.coolStatus === 'ON' ? 'text-blue-500' : 'text-muted-foreground'}`}>{data.coolStatus}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Pump:</span>
+                  <span className={`font-semibold ${data.pumpStatus === 'ON' ? 'text-green-500' : 'text-muted-foreground'}`}>{data.pumpStatus}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Water:</span>
+                  <span className={`font-semibold ${data.waterStatus === 'FULL' ? 'text-[#8FB83D]' : 'text-muted-foreground'}`}>{data.waterStatus}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -109,37 +129,65 @@ const CustomTooltip = memo(({ active, payload, machineType }: { active?: boolean
 CustomTooltip.displayName = 'CustomTooltip';
 
 // Memoized Historical Chart Component to prevent re-renders on hover
-const HistoricalChart = memo(({ 
-  chartData, 
-  machineType, 
-  temperatureSetpoint 
-}: { 
-  chartData: any[]; 
-  machineType: string; 
+const HistoricalChart = memo(({
+  chartData,
+  machineType,
+  temperatureSetpoint,
+  selectedPeriod,
+  hiddenLines,
+}: {
+  chartData: any[];
+  machineType: string;
   temperatureSetpoint?: number;
+  selectedPeriod: Period;
+  hiddenLines: Set<string>;
 }) => {
-  const [hiddenLines, setHiddenLines] = useState<Set<string>>(new Set());
-  
   const tooltipContent = useCallback((props: any) => {
     return <CustomTooltip {...props} machineType={machineType} />;
   }, [machineType]);
 
-  const handleLegendClick = useCallback((e: any) => {
-    // Recharts Legend onClick provides the dataKey in the event
-    // The event structure can vary, so we check multiple possible properties
-    const dataKey = e?.dataKey || e?.value || e?.payload?.dataKey;
-    if (dataKey) {
-      setHiddenLines(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(dataKey)) {
-          newSet.delete(dataKey);
-        } else {
-          newSet.add(dataKey);
-        }
-        return newSet;
-      });
+  const formatXAxisTick = useCallback((value: number) => {
+    const d = new Date(value);
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    const year = d.getFullYear().toString().slice(-2);
+
+    // 24h mode is a 7-day wide page.
+    // - show time-only on regular ticks
+    // - show date-only at day boundaries (00:00)
+    if (selectedPeriod === '24h') {
+      if (hh === '00' && mm === '00') return `${month}/${day}`;
+      return `${hh}:${mm}`;
     }
-  }, []);
+    if (selectedPeriod === '7d') return `${month}/${day} ${hh}:${mm}`;
+    if (selectedPeriod === '30d') return `${month}/${day}`;
+    return `${month}/${day}/${year}`;
+  }, [selectedPeriod]);
+
+  const xTicks = useMemo(() => {
+    if (!chartData.length) return undefined;
+    if (selectedPeriod !== '24h') return undefined;
+    // 3-hour ticks across the full 7-day wide page, aligned to local time boundaries.
+    const min = chartData[0].timestamp;
+    const max = chartData[chartData.length - 1].timestamp;
+    const step = 3 * 60 * 60 * 1000;
+    const startDate = new Date(min);
+    startDate.setMinutes(0, 0, 0);
+    // move to the next hour boundary if we're not already exactly on one
+    if (startDate.getTime() < min) {
+      startDate.setHours(startDate.getHours() + 1);
+    }
+    // then move to the next 3-hour boundary
+    while (startDate.getHours() % 3 !== 0) {
+      startDate.setHours(startDate.getHours() + 1);
+    }
+    const start = startDate.getTime();
+    const ticks: number[] = [];
+    for (let t = start; t <= max; t += step) ticks.push(t);
+    return ticks;
+  }, [chartData, selectedPeriod]);
 
   return (
     <>
@@ -166,9 +214,16 @@ const HistoricalChart = memo(({
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
-            dataKey="time" 
+            dataKey="timestamp"
+            type="number"
+            domain={['dataMin', 'dataMax'] as any}
             stroke="hsl(var(--muted-foreground))"
-            interval="preserveStartEnd"
+            // Never allow 24h mode to fall back to "every tick" (too dense).
+            // If custom ticks aren't ready yet, preserveStartEnd.
+            interval={selectedPeriod === '24h' ? 'preserveStartEnd' : 'preserveStartEnd'}
+            ticks={selectedPeriod === '24h' ? (xTicks as any) : undefined}
+            minTickGap={selectedPeriod === '24h' ? 8 : 8}
+            tickFormatter={formatXAxisTick}
           />
           <YAxis 
             yAxisId="temp"
@@ -196,11 +251,6 @@ const HistoricalChart = memo(({
             hide={true}
           />
           <RechartsTooltip content={tooltipContent} />
-          <Legend 
-            onClick={handleLegendClick}
-            wrapperStyle={{ cursor: 'pointer' }}
-            iconType="line"
-          />
         
         {/* Free Flow Lines - With fill areas like 24h view */}
         <Line 
@@ -319,7 +369,7 @@ const HistoricalChart = memo(({
             yAxisId="temp"
             type="stepAfter" 
             dataKey="isHeating" 
-            name="Heat"
+            name="Heating"
             stroke="#F59E0B" 
             strokeWidth={9}
             dot={false}
@@ -329,24 +379,26 @@ const HistoricalChart = memo(({
         )}
         
         {/* Pump Line - Just Below Cool/Fan (at 115°C) */}
-        <Line 
-          yAxisId="temp"
-          type="stepAfter" 
-          dataKey="pumpActive" 
-          name="Pump"
-          stroke="#10B981" 
-          strokeWidth={9}
-          dot={false}
-          connectNulls={false}
-          hide={hiddenLines.has('pumpActive')}
-        />
+        {machineType !== 'heatpump' && (
+          <Line 
+            yAxisId="temp"
+            type="stepAfter" 
+            dataKey="pumpActive" 
+            name="Pump"
+            stroke="#10B981" 
+            strokeWidth={9}
+            dot={false}
+            connectNulls={false}
+            hide={hiddenLines.has('pumpActive')}
+          />
+        )}
         {/* Tank/Pump Line - At Base of Graph (300% thicker) */}
         {/* For evaporative: shows water level, For heatpump: shows pump status (GPIO5) */}
         <Line 
           yAxisId="temp"
           type="stepAfter" 
           dataKey="hasWater" 
-          name={machineType === 'heatpump' ? 'Pump (GPIO5)' : 'Tank'}
+          name={machineType === 'heatpump' ? 'Contactor (GPIO5)' : 'Tank'}
           stroke="#4B5563" 
           strokeWidth={9}
           dot={false}
@@ -371,17 +423,40 @@ const HistoricalChart = memo(({
 });
 HistoricalChart.displayName = 'HistoricalChart';
 
-const MachineDetailView: React.FC<MachineDetailViewProps> = ({ 
+const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   machine: initialMachine, 
   historicalData: initialHistoricalData,
   onClose 
 }) => {
   const { toast } = useToast();
+  const toastRef = useRef(toast);
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
   const { user } = useAuth();
+
+  // Diagnostic: confirm the component is actually mounting and getting the right machine.
+  const didLogMountRef = useRef(false);
+  if (!didLogMountRef.current) {
+    didLogMountRef.current = true;
+    console.warn('[MachineDetailView] MOUNTED for machine', {
+      id: initialMachine?.id,
+      type: initialMachine?.type,
+      manufacturer: initialMachine?.manufacturer,
+      initialHistoricalDataKeys: initialHistoricalData ? Object.keys(initialHistoricalData) : null,
+      initialMotorCount: initialHistoricalData?.motorTemp?.length ?? null,
+    });
+  }
+
   const [machine, setMachine] = useState<MachineStatus>(initialMachine);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('24h');
   const [historicalData, setHistoricalData] = useState<MachineHistoricalData>(initialHistoricalData);
   const [loadingHistoricalData, setLoadingHistoricalData] = useState(false);
+  // When in 24h mode, allow shifting the 24h window back across the last 7 days (max 6 days back)
+  const [hoursBack, setHoursBack] = useState(0); // 0 = ends "now", 144 = ends 6 days ago
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [hiddenLines, setHiddenLines] = useState<Set<string>>(new Set());
   const [editingSetpoint, setEditingSetpoint] = useState(false);
   const [newSetpoint, setNewSetpoint] = useState(initialMachine.temperatureSetpoint?.toString() || '55');
   const [showLocationDialog, setShowLocationDialog] = useState(false);
@@ -468,71 +543,53 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     fetchLatestReading();
   }, [machine.id, machine.type, machine.manufacturer]);
   
-  // Set up real-time subscription to processing table (same source as historical graph)
-  useEffect(() => {
-    const processingTable = getProcessingTable(machine.type as MachineType, machine.manufacturer);
-    if (!processingTable) {
-      return; // No processing table for this machine type/manufacturer
-    }
-    
-    // Subscribe to processing table updates (same source as historical graph)
-    const channel = supabase
-      .channel(`machine-detail-${processingTable}-${machine.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: processingTable,
-          filter: `machine_id=eq.${machine.id}`,
-        },
-        (payload) => {
-          const newReading = payload.new as any;
-          setMachine(prev => ({
-            ...prev,
-            fanActive: newReading.fan_active ?? prev.fanActive,
-            isCooling: newReading.is_cooling ?? prev.isCooling,
-            hasHeat: newReading.is_heating ?? prev.hasHeat,  // Heat = current > 1A
-            hasWater: newReading.has_water ?? prev.hasWater,  // For heatpumps: Pump from GPIO5
-            compressorStatus: newReading.compressor_status as 'good' | 'warning' | 'failed' | undefined ?? prev.compressorStatus,
-            isOn: newReading.is_on ?? prev.isOn,
-            motorTemp: newReading.motor_temp ?? prev.motorTemp,
-            outsideTemp: newReading.ambient_temp ?? prev.outsideTemp,
-            insideTemp: newReading.duct_temp ?? prev.insideTemp,
-            current: newReading.current ?? prev.current,
-            voltage: newReading.voltage ?? prev.voltage,
-            power: newReading.power ?? prev.power,
-            deltaT: Math.abs((newReading.ambient_temp ?? prev.outsideTemp) - (newReading.duct_temp ?? prev.insideTemp)),
-          }));
-        }
-      )
-      .subscribe();
-    
-    // Also poll every 5 seconds to catch any missed updates
-    const pollInterval = setInterval(() => {
-      fetchLatestReading();
-    }, 5000);
-    
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(pollInterval);
-    };
-  }, [machine.id, machine.type, machine.manufacturer]);
+  // Note: Expanded machine view fetches latest reading once on open.
+  // We intentionally do NOT subscribe/poll here to avoid network spam.
 
   // Load historical data when period changes
   useEffect(() => {
     let ignore = false;
     const loadHistoricalData = async () => {
+      // Map display view -> buffer period we fetch from the RPC.
+      // - 24h view: 7 days @ 3-minute buckets
+      // - 7d view: 30 days @ 10-minute buckets
+      // - 30d view: 1 year @ 1-hour buckets
+      const effectivePeriod =
+        selectedPeriod === '24h'
+          ? ('7d_3m' as any)
+          : selectedPeriod === '7d'
+            ? ('30d_10m' as any)
+            : selectedPeriod === '30d'
+              ? ('1y_1h' as any)
+              : selectedPeriod;
+
+      console.warn('[MachineDetailView] ▶ Fetching historical buffer', {
+        machineId: machine.id,
+        selectedPeriod,
+        effectivePeriod,
+      });
+
       setLoadingHistoricalData(true);
       try {
-        const data = await fetchHistoricalData(machine.id, selectedPeriod);
-        if (!ignore) {
-          setHistoricalData(data);
-        }
+        const data = await fetchHistoricalData(machine.id, effectivePeriod);
+        if (ignore) return;
+
+        const motorCount = data.motorTemp?.length ?? 0;
+        const first = data.motorTemp?.[0]?.timestamp;
+        const last = data.motorTemp?.[motorCount - 1]?.timestamp;
+        console.warn('[MachineDetailView] ◀ Buffer loaded', {
+          machineId: machine.id,
+          effectivePeriod,
+          motorCount,
+          firstMotorTs: first ? new Date(first).toISOString() : null,
+          lastMotorTs: last ? new Date(last).toISOString() : null,
+        });
+
+        setHistoricalData(data);
       } catch (error) {
-        console.error('Error loading historical data:', error);
+        console.error('[MachineDetailView] Error loading historical data:', error);
         if (!ignore) {
-          toast({
+          toastRef.current({
             title: 'Error',
             description: 'Failed to load historical data',
             variant: 'destructive',
@@ -549,7 +606,37 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     return () => {
       ignore = true;
     };
-  }, [machine.id, selectedPeriod, toast]);
+  }, [machine.id, selectedPeriod]);
+
+  // Reset slider when switching away from 24h, and keep it in bounds.
+  useEffect(() => {
+    if (selectedPeriod !== '24h' && selectedPeriod !== '7d' && selectedPeriod !== '30d') {
+      setHoursBack(0);
+      return;
+    }
+    // When switching views, snap back to "Now" so the graph doesn't appear stale.
+    setHoursBack(0);
+    const max = selectedPeriod === '24h' ? 144 : selectedPeriod === '7d' ? 23 * 24 : 335 * 24;
+    setHoursBack((h) => Math.max(0, Math.min(max, h)));
+  }, [selectedPeriod]);
+
+  // When opening a different machine, always start at "Now".
+  useEffect(() => {
+    setHoursBack(0);
+  }, [machine.id]);
+
+  // Track viewport width so we can size the wide 7-day page.
+  useLayoutEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const update = () => setViewportWidth(el.clientWidth || 0);
+    update();
+
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -606,10 +693,10 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   const getTemperatureLabels = () => {
     if (machine.type === 'heatpump') {
       return {
-        motor: 'Compressor Temp',
-        outside: 'Inlet Temp',
-        inside: 'Outlet Temp',
-        current: 'Compressor Amps',
+        motor: 'Motor Temp',
+        outside: 'Geyser',
+        inside: 'Outlet',
+        current: 'Motor Amps',
       };
     }
     return {
@@ -622,8 +709,64 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
   const labels = getTemperatureLabels();
 
+  const historicalRangeSummary = useMemo(() => {
+    const series = [
+      historicalData.motorTemp || [],
+      historicalData.outsideTemp || [],
+      historicalData.insideTemp || [],
+      historicalData.current || [],
+      historicalData.deltaT || [],
+    ];
+    let minTs: number | null = null;
+    let maxTs: number | null = null;
+    let total = 0;
+    for (const arr of series) {
+      for (const p of arr) {
+        const t = (p as any)?.timestamp;
+        if (typeof t === 'number' && Number.isFinite(t)) {
+          if (maxTs == null || t > maxTs) maxTs = t;
+          if (minTs == null || t < minTs) minTs = t;
+          total++;
+        }
+      }
+    }
+    return { minTs, maxTs, total };
+  }, [historicalData]);
+
+  const newestHistoricalTimestamp = historicalRangeSummary.maxTs;
+  const oldestHistoricalTimestamp = historicalRangeSummary.minTs;
+
+  const seriesLegendItems = useMemo(() => {
+    const items: { key: string; label: string; color: string; visibleWhen?: (t: string) => boolean }[] = [
+      { key: 'outsideTemp', label: selectedPeriod === '24h' || machine.type === 'heatpump' ? labels.outside : 'Ambient Temp', color: '#000000' },
+      { key: 'motorTemp', label: selectedPeriod === '24h' || machine.type === 'heatpump' ? labels.motor : 'Motor Temp', color: '#EAB308' },
+      { key: 'insideTemp', label: selectedPeriod === '24h' || machine.type === 'heatpump' ? labels.inside : 'Duct Temp', color: '#F97316' },
+      { key: 'current', label: selectedPeriod === '24h' || machine.type === 'heatpump' ? labels.current : 'Motor Amps', color: '#EC4899' },
+      { key: 'fanSpeed', label: 'Fan Speed', color: '#166534', visibleWhen: (t) => t !== 'heatpump' },
+      { key: 'fanActive', label: 'Fan', color: '#EF4444', visibleWhen: (t) => t !== 'heatpump' },
+      { key: 'isCooling', label: 'Cool', color: '#3B82F6', visibleWhen: (t) => t !== 'heatpump' },
+      { key: 'fanAndCool', label: 'Fan+Cool', color: '#9333EA', visibleWhen: (t) => t !== 'heatpump' },
+      { key: 'isHeating', label: 'Heating', color: '#F59E0B', visibleWhen: (t) => t === 'heatpump' },
+      { key: 'pumpActive', label: 'Pump', color: '#10B981', visibleWhen: (t) => t !== 'heatpump' },
+      { key: 'hasWater', label: machine.type === 'heatpump' ? 'Contactor (GPIO5)' : 'Tank', color: '#4B5563' },
+    ];
+    return items.filter((i) => (i.visibleWhen ? i.visibleWhen(machine.type) : true));
+  }, [machine.type, labels, selectedPeriod]);
+
+  const toggleSeries = useCallback((key: string) => {
+    setHiddenLines((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
   // Memoize chart data to prevent graph resets when hovering
   const chartData = useMemo(() => {
+    // We use the server's ACTUAL timestamps as the chart grid, not a client-generated
+    // grid. This avoids any rounding/alignment/timezone mismatches that were causing
+    // the recent part of the chart to appear empty even when data existed.
     const motorTempData = historicalData.motorTemp || [];
     const currentData = historicalData.current || [];
     const outsideTempData = historicalData.outsideTemp || [];
@@ -635,282 +778,161 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     const hasWaterData = historicalData.hasWater || [];
     const pumpActiveData = historicalData.pumpActive || [];
     const fanSpeedData = historicalData.fanSpeed || [];
-    
-    // Always use current time as the rightmost point (end of graph)
-    const now = Date.now();
-    let startTime: number;
-    let intervalMs: number; // Interval between data points
-    
-    switch (selectedPeriod) {
-      case '24h':
-        startTime = now - 24 * 60 * 60 * 1000;
-        intervalMs = 3 * 60 * 1000; // 3 minute intervals
-        break;
-      case '7d':
-        startTime = now - 7 * 24 * 60 * 60 * 1000;
-        intervalMs = 10 * 60 * 1000; // 10 minute intervals
-        break;
-      case '30d':
-        startTime = now - 30 * 24 * 60 * 60 * 1000;
-        intervalMs = 60 * 60 * 1000; // 1 hour intervals (FIXED: was showing daily)
-        break;
-      case '1y':
-        startTime = now - 365 * 24 * 60 * 60 * 1000;
-        intervalMs = 24 * 60 * 60 * 1000; // 1 day intervals
-        break;
-      default:
-        startTime = now - 24 * 60 * 60 * 1000;
-        intervalMs = 3 * 60 * 1000;
-    }
-    
-    // Generate complete date range from startTime to now (always full period)
-    const completeTimestamps: number[] = [];
-    let currentTime = startTime;
-    const endTime = now;
-    
-    while (currentTime <= endTime) {
-      completeTimestamps.push(currentTime);
-      currentTime += intervalMs;
-    }
-    
-    // Ensure latest timestamp is included
-    if (completeTimestamps[completeTimestamps.length - 1] !== endTime) {
-      completeTimestamps.push(endTime);
-    }
-    
-    // Create maps for quick lookup by timestamp (round to nearest interval for matching)
-    const roundToInterval = (ts: number) => {
-      return Math.round(ts / intervalMs) * intervalMs;
-    };
-    
-    const motorTempMap = new Map(motorTempData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const currentMap = new Map(currentData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const outsideTempMap = new Map(outsideTempData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const insideTempMap = new Map(insideTempData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const deltaTMap = new Map(deltaTData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const fanActiveMap = new Map(fanActiveData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const isCoolingMap = new Map(isCoolingData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const isHeatingMap = new Map(isHeatingData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const hasWaterMap = new Map(hasWaterData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const pumpActiveMap = new Map(pumpActiveData.map(p => [roundToInterval(p.timestamp), p.value]));
-    const fanSpeedMap = new Map(fanSpeedData.map(p => [roundToInterval(p.timestamp), p.value]));
-    
-    // Format time based on selected period
-    const formatTime = (timestamp: number): string => {
-      const date = new Date(timestamp);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      
-      if (selectedPeriod === '24h') {
-        return `${hours}:${minutes}`;
-      } else if (selectedPeriod === '7d') {
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${month}/${day} ${hours}:${minutes}`;
-      } else if (selectedPeriod === '30d') {
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${month}/${day} ${hours}:${minutes}`; // Show hours for 30d
-      } else { // 1y
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const year = date.getFullYear().toString().slice(-2);
-        return `${month}/${day}/${year}`;
-      }
-    };
-    
-    // Helper function to interpolate missing numeric values between known data points
-    // Only interpolates if gap is within reasonable threshold (e.g., 5 minutes for 24h view)
-    const getInterpolatedValue = (
-      map: Map<number, number>,
-      timestamp: number,
-      sortedTimestamps: number[],
-      maxGapMs: number
-    ): number | null => {
-      // First check if we have an exact match
-      const roundedTs = roundToInterval(timestamp);
-      const exactValue = map.get(roundedTs);
-      if (exactValue != null) {
-        return exactValue;
-      }
 
-      // Find the previous and next known values
-      let prevTs: number | null = null;
-      let prevValue: number | null = null;
-      let nextTs: number | null = null;
-      let nextValue: number | null = null;
-
-      // Search backwards for previous value
-      for (let i = sortedTimestamps.length - 1; i >= 0; i--) {
-        const ts = sortedTimestamps[i];
-        if (ts < timestamp) {
-          const value = map.get(roundToInterval(ts));
-          if (value != null) {
-            prevTs = ts;
-            prevValue = value;
-            break;
-          }
-        }
-      }
-
-      // Search forwards for next value
-      for (let i = 0; i < sortedTimestamps.length; i++) {
-        const ts = sortedTimestamps[i];
-        if (ts > timestamp) {
-          const value = map.get(roundToInterval(ts));
-          if (value != null) {
-            nextTs = ts;
-            nextValue = value;
-            break;
-          }
-        }
-      }
-
-      // If we have both previous and next values, check if gap is reasonable
-      if (prevTs != null && nextTs != null && prevValue != null && nextValue != null) {
-        const gapToPrev = timestamp - prevTs;
-        const gapToNext = nextTs - timestamp;
-        const totalGap = nextTs - prevTs;
-
-        // Only interpolate if total gap is within threshold
-        if (totalGap <= maxGapMs) {
-          // Linear interpolation
-          const ratio = gapToPrev / totalGap;
-          const interpolated = prevValue + (nextValue - prevValue) * ratio;
-          return interpolated;
-        }
-      }
-
-      // If we only have previous value and gap is reasonable, use forward-fill
-      if (prevTs != null && prevValue != null) {
-        const gapToPrev = timestamp - prevTs;
-        if (gapToPrev <= maxGapMs) {
-          return prevValue;
-        }
-      }
-
-      // If we only have next value and gap is reasonable, use backward-fill
-      if (nextTs != null && nextValue != null) {
-        const gapToNext = nextTs - timestamp;
-        if (gapToNext <= maxGapMs) {
-          return nextValue;
-        }
-      }
-
-      return null; // Gap too large, don't interpolate
-    };
-
-    // Helper function for forward-filling boolean/status values (carry last known value forward)
-    const getForwardFilledValue = (
-      map: Map<number, number>,
-      timestamp: number,
-      sortedTimestamps: number[],
-      maxGapMs: number
-    ): number | null => {
-      // First check if we have an exact match
-      const roundedTs = roundToInterval(timestamp);
-      const exactValue = map.get(roundedTs);
-      if (exactValue != null) {
-        return exactValue;
-      }
-
-      // Find the previous known value
-      for (let i = sortedTimestamps.length - 1; i >= 0; i--) {
-        const ts = sortedTimestamps[i];
-        if (ts < timestamp) {
-          const value = map.get(roundToInterval(ts));
-          if (value != null) {
-            const gapToPrev = timestamp - ts;
-            // Only forward-fill if gap is reasonable
-            if (gapToPrev <= maxGapMs) {
-              return value;
-            }
-            break;
-          }
-        }
-      }
-
-      return null; // No previous value or gap too large
-    };
-
-    // Determine max gap threshold based on period (5 minutes for 24h, proportionally longer for others)
+    // Gap threshold: dropped posts bridged up to this many ms, longer gaps become breaks.
     let maxGapMs: number;
     switch (selectedPeriod) {
       case '24h':
-        maxGapMs = 5 * 60 * 1000; // 5 minutes
-        break;
+        maxGapMs = 20 * 60 * 1000; break;
       case '7d':
-        maxGapMs = 20 * 60 * 1000; // 20 minutes
-        break;
+        maxGapMs = 20 * 60 * 1000; break;
       case '30d':
-        maxGapMs = 2 * 60 * 60 * 1000; // 2 hours
-        break;
+        maxGapMs = 2 * 60 * 60 * 1000; break;
       case '1y':
-        maxGapMs = 12 * 60 * 60 * 1000; // 12 hours
-        break;
+        maxGapMs = 12 * 60 * 60 * 1000; break;
       default:
-        maxGapMs = 5 * 60 * 1000;
+        maxGapMs = 20 * 60 * 1000;
     }
 
-    // Get sorted timestamps from all data sources for interpolation lookup
-    const allTimestamps = new Set<number>();
-    [motorTempData, currentData, outsideTempData, insideTempData, deltaTData].forEach(data => {
-      data.forEach(p => allTimestamps.add(roundToInterval(p.timestamp)));
-    });
-    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+    // Build per-field maps keyed by actual server timestamp (no rounding).
+    const motorTempMap = new Map(motorTempData.map(p => [p.timestamp, p.value]));
+    const currentMap = new Map(currentData.map(p => [p.timestamp, p.value]));
+    const outsideTempMap = new Map(outsideTempData.map(p => [p.timestamp, p.value]));
+    const insideTempMap = new Map(insideTempData.map(p => [p.timestamp, p.value]));
+    const deltaTMap = new Map(deltaTData.map(p => [p.timestamp, p.value]));
+    const fanActiveMap = new Map(fanActiveData.map(p => [p.timestamp, p.value]));
+    const isCoolingMap = new Map(isCoolingData.map(p => [p.timestamp, p.value]));
+    const isHeatingMap = new Map(isHeatingData.map(p => [p.timestamp, p.value]));
+    const hasWaterMap = new Map(hasWaterData.map(p => [p.timestamp, p.value]));
+    const pumpActiveMap = new Map(pumpActiveData.map(p => [p.timestamp, p.value]));
+    const fanSpeedMap = new Map(fanSpeedData.map(p => [p.timestamp, p.value]));
 
-    // Combine all datasets by timestamp, using interpolation for missing values
-    const combinedData = completeTimestamps.map(timestamp => {
-      const roundedTs = roundToInterval(timestamp);
-      
-      // Get values with interpolation for numeric fields
-      const motorTemp = getInterpolatedValue(motorTempMap, timestamp, sortedTimestamps, maxGapMs) ?? motorTempMap.get(roundedTs);
-      const current = getInterpolatedValue(currentMap, timestamp, sortedTimestamps, maxGapMs) ?? currentMap.get(roundedTs);
-      const outsideTemp = getInterpolatedValue(outsideTempMap, timestamp, sortedTimestamps, maxGapMs) ?? outsideTempMap.get(roundedTs);
-      const insideTemp = getInterpolatedValue(insideTempMap, timestamp, sortedTimestamps, maxGapMs) ?? insideTempMap.get(roundedTs);
-      const deltaT = getInterpolatedValue(deltaTMap, timestamp, sortedTimestamps, maxGapMs) ?? deltaTMap.get(roundedTs);
-      const fanSpeed = getInterpolatedValue(fanSpeedMap, timestamp, sortedTimestamps, maxGapMs) ?? fanSpeedMap.get(roundedTs);
-      
-      // For boolean/status values, use forward-fill if gap is reasonable
-      const fanOn = fanActiveMap.get(roundedTs) ?? 
-        (getForwardFilledValue(fanActiveMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
-      const coolOn = isCoolingMap.get(roundedTs) ?? 
-        (getForwardFilledValue(isCoolingMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
-      const heatOn = isHeatingMap.get(roundedTs) ?? 
-        (getForwardFilledValue(isHeatingMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
-      const waterOn = hasWaterMap.get(roundedTs) ?? 
-        (getForwardFilledValue(hasWaterMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
-      const pumpOn = pumpActiveMap.get(roundedTs) ?? 
-        (getForwardFilledValue(pumpActiveMap, timestamp, sortedTimestamps, maxGapMs) ?? null);
-      
-      // Convert to display values - use 0 only if we truly have no data (not interpolated)
-      // For boolean values (fanActive, isCooling, isHeating, hasWater, pumpActive), use null if not present (won't show line)
-      // Positioning: Fan/Cool/Heat at 120°C, Pump at 115°C, Water/Pump at 0°C
-      return {
-        time: formatTime(timestamp),
-        timestamp, // Keep for sorting
+    // Union of all server timestamps, sorted ascending.
+    const tsSet = new Set<number>();
+    [
+      motorTempData, currentData, outsideTempData, insideTempData, deltaTData,
+      fanActiveData, isCoolingData, isHeatingData, hasWaterData, pumpActiveData,
+      fanSpeedData,
+    ].forEach(arr => arr.forEach(p => tsSet.add(p.timestamp)));
+    const sortedTs = Array.from(tsSet).sort((a, b) => a - b);
+
+    if (sortedTs.length === 0) return [] as any[];
+
+    const formatTime = (ts: number): string => {
+      const d = new Date(ts);
+      const hh = d.getHours().toString().padStart(2, '0');
+      const mm = d.getMinutes().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      const year = d.getFullYear().toString().slice(-2);
+      if (selectedPeriod === '24h') return `${hh}:${mm}`;
+      if (selectedPeriod === '7d' || selectedPeriod === '30d') return `${month}/${day} ${hh}:${mm}`;
+      return `${month}/${day}/${year}`;
+    };
+
+    // Forward-fill helper for boolean-like fields: find most recent value at or
+    // before ts, within maxGapMs. Returns null otherwise.
+    // Uses a binary search so this stays fast for thousands of points.
+    const findPrevIndex = (ts: number): number => {
+      let lo = 0, hi = sortedTs.length - 1, res = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (sortedTs[mid] <= ts) { res = mid; lo = mid + 1; }
+        else { hi = mid - 1; }
+      }
+      return res;
+    };
+
+    const forwardFill = (map: Map<number, number>, ts: number): number | null => {
+      let idx = findPrevIndex(ts);
+      while (idx >= 0) {
+        const t = sortedTs[idx];
+        if (ts - t > maxGapMs) return null;
+        const v = map.get(t);
+        if (v != null) return v;
+        idx--;
+      }
+      return null;
+    };
+
+    // Build one point per server timestamp.
+    const points: any[] = [];
+    for (let i = 0; i < sortedTs.length; i++) {
+      const ts = sortedTs[i];
+
+      const motorTemp = motorTempMap.get(ts);
+      const current = currentMap.get(ts);
+      const outsideTemp = outsideTempMap.get(ts);
+      const insideTemp = insideTempMap.get(ts);
+      const deltaT = deltaTMap.get(ts);
+      const fanSpeed = fanSpeedMap.get(ts);
+
+      // Boolean-ish fields: use exact value if available, otherwise forward-fill
+      // up to maxGapMs so that step lines stay continuous across sparse posts.
+      const fanOn = fanActiveMap.get(ts) ?? forwardFill(fanActiveMap, ts);
+      const coolOn = isCoolingMap.get(ts) ?? forwardFill(isCoolingMap, ts);
+      const heatOn = isHeatingMap.get(ts) ?? forwardFill(isHeatingMap, ts);
+      const waterOn = hasWaterMap.get(ts) ?? forwardFill(hasWaterMap, ts);
+      const pumpOn = pumpActiveMap.get(ts) ?? forwardFill(pumpActiveMap, ts);
+
+      points.push({
+        time: formatTime(ts),
+        timestamp: ts,
         motorTemp: motorTemp != null ? parseFloat(motorTemp.toFixed(1)) : null,
         current: current != null ? parseFloat(current.toFixed(1)) : null,
         outsideTemp: outsideTemp != null ? parseFloat(outsideTemp.toFixed(1)) : null,
         insideTemp: insideTemp != null ? parseFloat(insideTemp.toFixed(1)) : null,
         deltaT: deltaT != null ? parseFloat(deltaT.toFixed(1)) : null,
-        fanSpeed: fanSpeed != null ? Math.max(0, Math.min(100, parseFloat(fanSpeed.toFixed(1)))) : null, // 0-100%, null for heatpumps
-        fanActive: fanOn != null && fanOn > 0 ? 120 : null, // At top of graph (120°C) - evaporative/AC only
-        isCooling: coolOn != null && coolOn > 0 ? 120 : null, // At top of graph (120°C) - evaporative/AC only
-        isHeating: heatOn != null && heatOn > 0 ? 120 : null, // At top of graph (120°C) - heatpump only
-        fanAndCool: (fanOn != null && fanOn > 0 && coolOn != null && coolOn > 0) ? 120 : null, // At top of graph (120°C)
-        pumpActive: pumpOn != null && pumpOn > 0 ? 115 : null, // Just below cool/fan (115°C)
-        hasWater: waterOn != null && waterOn > 0 ? 0 : null, // At base of graph (0°C) - For evap: water, For heatpump: pump
+        fanSpeed: fanSpeed != null
+          ? Math.max(0, Math.min(100, parseFloat(fanSpeed.toFixed(1))))
+          : null,
+        fanActive: fanOn != null && fanOn > 0 ? 120 : null,
+        isCooling: coolOn != null && coolOn > 0 ? 120 : null,
+        isHeating: heatOn != null && heatOn > 0 ? 120 : null,
+        fanAndCool: (fanOn != null && fanOn > 0 && coolOn != null && coolOn > 0) ? 120 : null,
+        pumpActive: pumpOn != null && pumpOn > 0 ? 115 : null,
+        hasWater: waterOn != null && waterOn > 0 ? 0 : null,
         fanStatus: (fanOn != null && fanOn > 0) ? 'ON' : 'OFF',
         coolStatus: (coolOn != null && coolOn > 0) ? 'ON' : 'OFF',
         heatStatus: (heatOn != null && heatOn > 0) ? 'ON' : 'OFF',
         pumpStatus: (pumpOn != null && pumpOn > 0) ? 'ON' : 'OFF',
-        waterStatus: (waterOn != null && waterOn > 0) ? 'FULL' : 'EMPTY'
-      };
-    });
-    
-    // Sort by timestamp to ensure correct order
-    const sortedData = combinedData.sort((a, b) => a.timestamp - b.timestamp);
+        waterStatus: (waterOn != null && waterOn > 0) ? 'FULL' : 'EMPTY',
+      });
+
+      // Insert an all-null break point for large gaps so the line visibly breaks
+      // (Recharts connectNulls={false} will stop drawing). Small gaps are drawn
+      // as straight interpolating segments, which matches our "up to 20 minutes"
+      // bridging behaviour.
+      if (i + 1 < sortedTs.length) {
+        const nextTs = sortedTs[i + 1];
+        if (nextTs - ts > maxGapMs) {
+          const mid = ts + Math.floor((nextTs - ts) / 2);
+          points.push({
+            time: formatTime(mid),
+            timestamp: mid,
+            motorTemp: null,
+            current: null,
+            outsideTemp: null,
+            insideTemp: null,
+            deltaT: null,
+            fanSpeed: null,
+            fanActive: null,
+            isCooling: null,
+            isHeating: null,
+            fanAndCool: null,
+            pumpActive: null,
+            hasWater: null,
+            fanStatus: 'OFF',
+            coolStatus: 'OFF',
+            heatStatus: 'OFF',
+            pumpStatus: 'OFF',
+            waterStatus: 'EMPTY',
+          });
+        }
+      }
+    }
+
+    const sortedData = points;
     
     // Apply moving average smoothing for longer periods (7d, 30d, 1y) to reduce jagged lines
     if (selectedPeriod !== '24h') {
@@ -964,6 +986,62 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     
     return sortedData;
   }, [historicalData, selectedPeriod]);
+
+  const widePageWidth = useMemo(() => {
+    if (selectedPeriod !== '24h' && selectedPeriod !== '7d' && selectedPeriod !== '30d') return undefined;
+    if (!viewportWidth) return undefined;
+    const targetDays =
+      selectedPeriod === '24h' ? 7 :
+      selectedPeriod === '7d' ? 30 :
+      365;
+
+    // If the backend hasn't been migrated yet (e.g. period strings not supported),
+    // we may only receive ~24h worth of data. Size the "wide page" to the actual
+    // data span so the UI doesn't show empty days.
+    const minTs = chartData.length ? chartData[0]?.timestamp : undefined;
+    const maxTs = chartData.length ? chartData[chartData.length - 1]?.timestamp : undefined;
+    const spanDays =
+      typeof minTs === 'number' && typeof maxTs === 'number'
+        ? Math.max(1, Math.ceil((maxTs - minTs) / (24 * 60 * 60 * 1000)))
+        : targetDays;
+
+    const availableDays = Math.min(targetDays, spanDays);
+    const windowDays = selectedPeriod === '24h' ? 1 : selectedPeriod === '7d' ? 7 : 30;
+    // wide page shown inside a fixed viewport; scale by buffer/window ratio
+    const scale = Math.max(1, availableDays / windowDays);
+    return Math.max(viewportWidth, viewportWidth * scale);
+  }, [selectedPeriod, viewportWidth, chartData]);
+
+  const wideTranslateX = useMemo(() => {
+    if (selectedPeriod !== '24h' && selectedPeriod !== '7d' && selectedPeriod !== '30d') return 0;
+    if (!widePageWidth || !viewportWidth) return 0;
+    const maxShift = Math.max(0, widePageWidth - viewportWidth);
+    const minTs = chartData.length ? chartData[0]?.timestamp : undefined;
+    const maxTs = chartData.length ? chartData[chartData.length - 1]?.timestamp : undefined;
+    if (typeof minTs !== 'number' || typeof maxTs !== 'number' || maxTs <= minTs) return 0;
+
+    const windowMs =
+      selectedPeriod === '24h'
+        ? 24 * 60 * 60 * 1000
+        : selectedPeriod === '7d'
+          ? 7 * 24 * 60 * 60 * 1000
+          : 30 * 24 * 60 * 60 * 1000;
+
+    // Target window end is "maxTs minus hoursBack"
+    const desiredEnd = maxTs - hoursBack * 60 * 60 * 1000;
+    const clampedEnd = Math.max(minTs + windowMs, Math.min(maxTs, desiredEnd));
+    const clampedStart = clampedEnd - windowMs;
+
+    // Convert the start time to a pixel offset across the total span.
+    const spanMs = maxTs - minTs;
+    // We only scroll across the "scrollable" span (span - window), not the full span.
+    const scrollableMs = Math.max(1, spanMs - windowMs);
+    const startRatio = (clampedStart - minTs) / scrollableMs; // 0..1 (clamped below)
+    const clampedRatio = Math.max(0, Math.min(1, startRatio));
+    return -clampedRatio * maxShift;
+  }, [selectedPeriod, widePageWidth, viewportWidth, hoursBack, chartData]);
+
+  const windowedChartData = useMemo(() => chartData, [chartData]);
 
   const handleSetpointUpdate = async () => {
     const setpoint = parseFloat(newSetpoint);
@@ -1106,8 +1184,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   
                   {machine.type === 'heatpump' && (
                     <>
-                      <StatusLight status={machine.hasWater ? 'active' : 'inactive'} label="Pump" />
-                      <StatusLight status={machine.hasHeat ? 'active' : 'inactive'} label="Heat" />
+                      <StatusLight status={machine.hasWater ? 'active' : 'inactive'} label="Contactor (GPIO5)" />
+                      <StatusLight status={machine.hasHeat ? 'active' : 'inactive'} label="Heating" />
                     </>
                   )}
                   
@@ -1205,7 +1283,20 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               <CardHeader className="border-b-[0.1875rem] border-[#8FB83D] flex flex-row items-center justify-between">
                 <CardTitle className="text-[1.125rem] font-semibold" style={{ color: '#8FB83D' }}>Historical Data</CardTitle>
                 <div className="flex gap-2">
-                  {(['24h', '7d', '30d', '1y'] as Period[]).map(period => (
+                  <div className="hidden md:flex flex-col items-end text-[0.6875rem] text-muted-foreground mr-2 leading-tight">
+                    <span>Machine: {machine.id.slice(0, 8)}… • Points: {historicalRangeSummary.total}</span>
+                    <span>
+                      Range:{' '}
+                      {oldestHistoricalTimestamp
+                        ? new Date(oldestHistoricalTimestamp).toLocaleString()
+                        : '—'}
+                      {' → '}
+                      {newestHistoricalTimestamp
+                        ? new Date(newestHistoricalTimestamp).toLocaleString()
+                        : '—'}
+                    </span>
+                  </div>
+                  {(['24h', '7d', '30d'] as Period[]).map((period) => (
                     <Button
                       key={period}
                       size="sm"
@@ -1213,8 +1304,8 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       onClick={() => setSelectedPeriod(period)}
                       disabled={loadingHistoricalData}
                       className={`min-w-[60px] border-[3px] ${
-                        selectedPeriod === period 
-                          ? 'border-[#8FB83D] bg-[#8FB83D] text-white' 
+                        selectedPeriod === period
+                          ? 'border-[#8FB83D] bg-[#8FB83D] text-white'
                           : 'border-[#8FB83D] bg-background hover:bg-[#8FB83D]/10'
                       }`}
                       style={{ color: selectedPeriod === period ? 'white' : '#8FB83D' }}
@@ -1229,16 +1320,98 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   <div className="flex items-center justify-center h-[400px]">
                     <p className="text-muted-foreground">Loading historical data...</p>
                   </div>
-                ) : chartData.length === 0 ? (
+                ) : windowedChartData.length === 0 ? (
                   <div className="flex items-center justify-center h-[400px]">
                     <p className="text-muted-foreground">No historical data available for the selected period</p>
                   </div>
                 ) : (
-                  <HistoricalChart 
-                    chartData={chartData}
-                    machineType={machine.type}
-                    temperatureSetpoint={machine.temperatureSetpoint}
-                  />
+                  <>
+                    {selectedPeriod === '24h' || selectedPeriod === '7d' || selectedPeriod === '30d' ? (
+                      <div ref={viewportRef} className="relative overflow-hidden">
+                        <div
+                          className="will-change-transform transition-transform duration-300 ease-out"
+                          style={{
+                            width: widePageWidth ? `${widePageWidth}px` : undefined,
+                            transform: `translateX(${wideTranslateX}px)`,
+                          }}
+                        >
+                          <HistoricalChart
+                            chartData={windowedChartData}
+                            machineType={machine.type}
+                            temperatureSetpoint={machine.temperatureSetpoint}
+                            selectedPeriod={selectedPeriod}
+                            hiddenLines={hiddenLines}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <HistoricalChart
+                        chartData={windowedChartData}
+                        machineType={machine.type}
+                        temperatureSetpoint={machine.temperatureSetpoint}
+                        selectedPeriod={selectedPeriod}
+                        hiddenLines={hiddenLines}
+                      />
+                    )}
+
+                    {/* Fixed legend (outside moving viewport) */}
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
+                      {seriesLegendItems.map((item) => {
+                        const isHidden = hiddenLines.has(item.key);
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => toggleSeries(item.key)}
+                            className={cn(
+                              "flex items-center gap-2 rounded-md border px-2 py-1 transition-opacity",
+                              isHidden ? "opacity-40" : "opacity-100",
+                              "hover:opacity-70",
+                            )}
+                            style={{ borderColor: item.color }}
+                          >
+                            <span className="inline-block h-0.5 w-6" style={{ backgroundColor: item.color }} />
+                            <span className="text-muted-foreground">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(selectedPeriod === '24h' || selectedPeriod === '7d' || selectedPeriod === '30d') && (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>
+                            {selectedPeriod === '24h' ? '6 days back' : selectedPeriod === '7d' ? '23 days back' : '335 days back'}
+                          </span>
+                          <span className="text-foreground font-medium">
+                            {selectedPeriod === '24h'
+                              ? (hoursBack === 0 ? 'Viewing: Last 24h' : `Viewing: 24h ending ${hoursBack}h ago`)
+                              : selectedPeriod === '7d'
+                                ? (hoursBack === 0 ? 'Viewing: Last 7d' : `Viewing: 7d ending ${hoursBack}h ago`)
+                                : (hoursBack === 0 ? 'Viewing: Last 30d' : `Viewing: 30d ending ${hoursBack}h ago`)}
+                          </span>
+                          <span>Now</span>
+                        </div>
+                        <Slider
+                          // Render right-to-left: right = now (0h back), left = oldest buffer
+                          value={[
+                            (selectedPeriod === '24h' ? 144 : selectedPeriod === '7d' ? 23 * 24 : 335 * 24) - hoursBack
+                          ]}
+                          min={0}
+                          max={selectedPeriod === '24h' ? 144 : selectedPeriod === '7d' ? 23 * 24 : 335 * 24}
+                          step={1}
+                          onValueChange={(v) => {
+                            const max = selectedPeriod === '24h' ? 144 : selectedPeriod === '7d' ? 23 * 24 : 335 * 24;
+                            const next = max - (v[0] ?? max);
+                            setHoursBack(next);
+                          }}
+                          className="select-none"
+                          trackClassName="h-1.5"
+                          rangeClassName="bg-transparent"
+                          thumbClassName="h-4 w-10 rounded-md"
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
