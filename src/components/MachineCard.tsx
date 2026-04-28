@@ -379,7 +379,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                 />
                 <StatusLight
                   status={machine.hasWater ? 'active' : 'inactive'}
-                  label="Contactor (GPIO5)"
+                  label="Contactor"
                   size="sm"
                 />
                 <StatusLight
