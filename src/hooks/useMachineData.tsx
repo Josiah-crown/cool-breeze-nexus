@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { MachineStatus, MachineHistoricalData } from '@/types/machine';
 import { fetchHistoricalDataForMachines } from '@/lib/historicalData';
@@ -17,18 +17,24 @@ const useMachineData = (userId: string, userRole: string) => {
   const [users, setUsers] = useState<UserHierarchy[]>([]);
   const [historicalData, setHistoricalData] = useState<{ [key: string]: MachineHistoricalData }>({});
   const [loading, setLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (options?: { background?: boolean }) => {
     if (!userId) {
       setMachines([]);
       setUsers([]);
       setHistoricalData({});
       setLoading(false);
+      hasLoadedOnceRef.current = false;
       return;
     }
 
+    const background = options?.background === true && hasLoadedOnceRef.current;
+
     try {
-      setLoading(true);
+      if (!background) {
+        setLoading(true);
+      }
 
       const mapMachine = (m: any, notifPrefsMap: Map<string, boolean>, latestTimestamps: Map<string, Date>): MachineStatus => {
         const motorTemp = m.motor_temp ?? 0;
@@ -285,6 +291,7 @@ const useMachineData = (userId: string, userRole: string) => {
       setMachines(visibleMachines);
       setUsers(transformedUsers);
       setHistoricalData(realHistoricalData);
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -297,11 +304,12 @@ const useMachineData = (userId: string, userRole: string) => {
       setLoading(false);
       return;
     }
-    fetchData();
+    hasLoadedOnceRef.current = false;
+    void fetchData();
   }, [fetchData, userId]);
 
   const refetch = useCallback(() => {
-    fetchData();
+    void fetchData({ background: true });
   }, [fetchData]);
 
   return {

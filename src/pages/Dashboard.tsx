@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMachineData } from "@/hooks/useMachineData";
 import MachineCard from "@/components/MachineCard";
@@ -47,8 +47,18 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     }
   }, [machines, selectedMachine?.id]);
 
+  const refetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!user) return;
+
+    const scheduleRefetch = () => {
+      if (refetchDebounceRef.current) clearTimeout(refetchDebounceRef.current);
+      refetchDebounceRef.current = setTimeout(() => {
+        refetchDebounceRef.current = null;
+        refetch();
+      }, 800);
+    };
 
     const channel = supabase
       .channel("dashboard-machines-updates")
@@ -60,16 +70,17 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
           table: "machines",
         },
         () => {
-          refetch();
+          scheduleRefetch();
         },
       )
       .subscribe();
 
     const pollInterval = setInterval(() => {
       refetch();
-    }, 10000);
+    }, 30000);
 
     return () => {
+      if (refetchDebounceRef.current) clearTimeout(refetchDebounceRef.current);
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
@@ -135,7 +146,7 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     );
   }
 
-  if (dataLoading) {
+  if (dataLoading && machines.length === 0) {
     return <DashboardLoading embedded={embedded} />;
   }
 

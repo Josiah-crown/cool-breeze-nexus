@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type SiteMachineGroup = {
@@ -16,6 +16,7 @@ export function useSiteMachineGroups(visibleMachineIds: string[]) {
   const [groups, setGroups] = useState<SiteMachineGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const idKey = useMemo(() => [...visibleMachineIds].sort().join(","), [visibleMachineIds]);
 
@@ -23,7 +24,10 @@ export function useSiteMachineGroups(visibleMachineIds: string[]) {
   const visibleIdsStable = useMemo(() => (idKey.length === 0 ? [] : idKey.split(",")), [idKey]);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const background = hasLoadedOnceRef.current;
+    if (!background) {
+      setLoading(true);
+    }
     setError(null);
     const idSet = new Set(visibleIdsStable);
     try {
@@ -101,6 +105,7 @@ export function useSiteMachineGroups(visibleMachineIds: string[]) {
           machineIds: Array.from(siteToMachines.get(s.id) || []),
         })),
       );
+      hasLoadedOnceRef.current = true;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed to load site groupings";
       setError(msg);
@@ -111,6 +116,7 @@ export function useSiteMachineGroups(visibleMachineIds: string[]) {
   }, [idKey, visibleIdsStable]);
 
   useEffect(() => {
+    hasLoadedOnceRef.current = false;
     void load();
   }, [load]);
 
