@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 const Login: React.FC = () => {
+  const ENABLE_GHL_SYNC = import.meta.env.VITE_ENABLE_GHL_SYNC === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -93,6 +94,15 @@ const Login: React.FC = () => {
 
         if (roleError) throw roleError;
 
+        // MVP: GoHighLevel sync disabled by default (feature-flagged)
+        if (ENABLE_GHL_SYNC) {
+          try {
+            await supabase.functions.invoke('gohighlevel-enqueue', { body: { reason: 'signup' } });
+          } catch {
+            // Non-blocking: signup must succeed even if CRM sync fails
+          }
+        }
+
         // Redirect to email confirmation page
         navigate('/email-confirmation');
       } else {
@@ -127,7 +137,7 @@ const Login: React.FC = () => {
       </div>
       <Card className="w-full max-w-md bg-card border-2 border-border">
         <CardHeader className="text-center space-y-2 border-b border-border pb-3 sm:pb-4 px-4 sm:px-6">
-          <CardTitle className="text-2xl sm:text-3xl font-bold" style={{ color: '#8fb73d' }}>
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-accent">
             Machine Monitor
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm text-muted-foreground">
@@ -186,10 +196,7 @@ const Login: React.FC = () => {
             )}
             <Button 
               type="submit" 
-              className="w-full text-white transition-all" 
-              style={{ backgroundColor: '#8fb73d' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7aa332'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8fb73d'}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
               disabled={isLoading || (isSignup && !recaptchaToken)}
             >
               {isLoading ? (isSignup ? 'Creating account...' : 'Signing in...') : (isSignup ? 'Sign Up' : 'Sign In')}

@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { MachineType } from '@/types/machine';
 import { 
   getAvailableManufacturers, 
-  isManufacturerRequired,
   type Manufacturer 
 } from '@/lib/machineConfig';
+import { generateEsp32ApiKey } from '@/lib/espCredentials';
 
 interface AddMachineDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ interface AddMachineDialogProps {
 export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMachineAdded }: AddMachineDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [createdSummary, setCreatedSummary] = useState<{ id: string; apiKey: string } | null>(null);
   const [assignableUsers, setAssignableUsers] = useState<Array<{ id: string; name: string; role: string }>>([]);
   const [assignmentType, setAssignmentType] = useState<'self' | 'other'>('self');
   // Initialize with auto-selected manufacturer if only one option
@@ -44,6 +46,7 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
   useEffect(() => {
     if (open) {
       loadAssignableUsers();
+      setCreatedSummary(null);
     }
   }, [open, userRole]);
 
@@ -169,6 +172,37 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
     }
   };
 
+  const resetFormState = () => {
+    const defaultType: MachineType = 'evaporative';
+    const defaultManufacturers = getAvailableManufacturers(defaultType);
+    const defaultManufacturer = defaultManufacturers.length === 1 ? defaultManufacturers[0] : '';
+    setFormData({
+      name: '',
+      type: defaultType,
+      manufacturer: defaultManufacturer,
+      apiEndpoint: '',
+      assignedUserId: '',
+    });
+    setAssignmentType('self');
+  };
+
+  const handleDialogOpenChange = (next: boolean) => {
+    if (!next) {
+      setCreatedSummary(null);
+      resetFormState();
+    }
+    onOpenChange(next);
+  };
+
+  const copyField = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      sonnerToast.success(`${label} copied`);
+    } catch {
+      sonnerToast.error('Copy failed');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -210,6 +244,8 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
         console.warn('Unexpected error fetching owner profile', profileErr);
       }
 
+      const apiKey = generateEsp32ApiKey();
+
       const { data, error } = await supabase
         .from('machines')
         .insert({
@@ -219,39 +255,21 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
           owner_id: finalOwnerId,
           api_endpoint: formData.apiEndpoint || null,
           location: defaultLocation,
+          api_key: apiKey,
         })
-        .select()
+        .select('id, api_key')
         .single();
 
       if (error) throw error;
 
+      setCreatedSummary({ id: data.id, apiKey: data.api_key as string });
+
       toast({
-        title: 'Success',
-        description: (
-          <div className="space-y-1">
-            <p>Machine created successfully</p>
-            <p className="text-xs text-muted-foreground">API Key: {data.api_key}</p>
-            <p className="text-xs text-muted-foreground">Store this key securely - it won't be shown again!</p>
-          </div>
-        ),
+        title: 'Machine created',
+        description: 'Copy the machine ID and API key into the ESP32.',
       });
 
       onMachineAdded();
-      onOpenChange(false);
-      
-      // Reset form with auto-selected manufacturer for default type
-      const defaultType: MachineType = 'evaporative';
-      const defaultManufacturers = getAvailableManufacturers(defaultType);
-      const defaultManufacturer = defaultManufacturers.length === 1 ? defaultManufacturers[0] : '';
-      
-      setFormData({
-        name: '',
-        type: defaultType,
-        manufacturer: defaultManufacturer,
-        apiEndpoint: '',
-        assignedUserId: '',
-      });
-      setAssignmentType('self');
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -264,8 +282,45 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-2 border-border">
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent className="bg-card border-2 border-border max-h-[90vh] overflow-y-auto">
+        {createdSummary ? (
+          <>
+            <DialogHeader className="border-b border-border pb-4">
+              <DialogTitle className="text-2xl font-bold text-primary">Machine created</DialogTitle>
+              <p className="text-sm text-muted-foreground pt-2">
+                Copy the machine ID and API key into the ESP32. Standard firmware already uses the correct cloud
+                connection.
+              </p>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Machine ID</Label>
+                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                  <Input readOnly value={createdSummary.id} className="font-mono text-xs min-w-0 flex-1" />
+                  <Button type="button" variant="outline" onClick={() => void copyField(createdSummary.id, "Machine ID")}>
+                    Copy
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>API key</Label>
+                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                  <Input readOnly value={createdSummary.apiKey} className="font-mono text-xs min-w-0 flex-1" />
+                  <Button type="button" variant="outline" onClick={() => void copyField(createdSummary.apiKey, "API key")}>
+                    Copy
+                  </Button>
+                </div>
+              </div>
+              <DialogFooter className="pt-2">
+                <Button type="button" className="w-full sm:w-auto" onClick={() => handleDialogOpenChange(false)}>
+                  Done
+                </Button>
+              </DialogFooter>
+            </div>
+          </>
+        ) : (
+          <>
         <DialogHeader className="border-b border-border pb-4">
           <DialogTitle className="text-2xl font-bold text-primary">Add New Machine</DialogTitle>
         </DialogHeader>
@@ -385,7 +440,7 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleDialogOpenChange(false)}
               className="border-border hover:bg-secondary hover:text-secondary-foreground transition-all"
             >
               Cancel
@@ -399,6 +454,8 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
             </Button>
           </DialogFooter>
         </form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -2,71 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Professional IoT Design System - Industrial Dark Theme */
+/* Cmonitor Design System (token-driven) */
 @layer base {
   :root {
-    /* Modern Neutral Base (clean + premium) */
+    /* Base */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* matches Home's deep green ink (#0D2211-ish) */
+    --foreground: 147 46% 9%;
     
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 147 46% 9%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 147 46% 9%;
     
-    /* Modern Tech Palette (cyan → blue) */
-    --primary: 199 89% 48%;
-    --primary-foreground: 210 40% 98%;
-    --primary-glow: 199 89% 58%;
+    /* Brand palette (Home-inspired greens) */
+    /* primary ~ #5BBF5E */
+    --primary: 122 41% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 122 45% 62%;
     
     --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary-foreground: 147 46% 9%;
     
     --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* matches Home muted copy (#4A6B4D-ish) */
+    --muted-foreground: 125 19% 36%;
     
-    /* Fresh accent (lime/green) for active states */
-    --accent: 142 72% 45%;
-    --accent-foreground: 222 47% 11%;
-    --accent-glow: 142 72% 55%;
+    /* accent ~ #3D9E40 */
+    --accent: 122 44% 43%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 122 55% 50%;
     
     /* Electric Green for active states */
     --electric-green: 84 90% 52%;
-    --electric-green-foreground: 222 47% 11%;
+    --electric-green-foreground: 147 46% 9%;
     
     /* Status Colors */
-    --success: 142 76% 36%;
-    --success-foreground: 213 31% 91%;
+    --success: 122 44% 43%;
+    --success-foreground: 0 0% 100%;
     --warning: 43 96% 56%;
-    --warning-foreground: 210 11% 15%;
+    --warning-foreground: 147 46% 9%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 213 31% 91%;
+    --destructive-foreground: 0 0% 100%;
     
     /* UI Elements */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 199 89% 48%;
+    --ring: 122 41% 55%;
     
     /* Industrial Specific */
     --panel-bg: 0 0% 100%;
     --control-bg: 0 0% 100%;
     --control-border: 220 13% 86%;
     --status-bg: 0 0% 100%;
-    --navbar-bg: 222 47% 11%;
+    --navbar-bg: 0 0% 100%;
+
+    /* Header (sitewide) */
+    --header-bg: 0 0% 100%;
+    --header-border: 220 13% 91%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(217 91% 62%));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
     --gradient-panel: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 33% 97%));
     --gradient-control: linear-gradient(145deg, hsl(220 33% 98%), hsl(220 20% 96%));
     
     /* Shadows & Glows */
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow: 0 6px 10px -6px hsl(222 47% 11% / 0.18), 0 2px 6px -4px hsl(222 47% 11% / 0.12);
-    --shadow-lg: 0 18px 24px -18px hsl(222 47% 11% / 0.28), 0 8px 14px -10px hsl(222 47% 11% / 0.18);
-    --shadow-xl: 0 28px 40px -28px hsl(222 47% 11% / 0.35), 0 12px 18px -14px hsl(222 47% 11% / 0.22);
-    --glow-primary: 0 0 22px hsl(var(--primary) / 0.26);
-    --glow-accent: 0 0 22px hsl(var(--accent) / 0.22);
+    --shadow-sm: 0 1px 2px 0 hsl(147 46% 9% / 0.05);
+    --shadow: 0 6px 10px -6px hsl(147 46% 9% / 0.18), 0 2px 6px -4px hsl(147 46% 9% / 0.12);
+    --shadow-lg: 0 18px 24px -18px hsl(147 46% 9% / 0.28), 0 8px 14px -10px hsl(147 46% 9% / 0.18);
+    --shadow-xl: 0 28px 40px -28px hsl(147 46% 9% / 0.35), 0 12px 18px -14px hsl(147 46% 9% / 0.22);
+    --glow-primary: 0 0 22px hsl(var(--primary) / 0.22);
+    --glow-accent: 0 0 22px hsl(var(--accent) / 0.20);
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

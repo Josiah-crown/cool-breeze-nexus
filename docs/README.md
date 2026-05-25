@@ -4,6 +4,16 @@ Welcome to the CoolBreeze Nexus documentation! This folder is organized by categ
 
 ---
 
+## 🏢 Building Management System (BMS)
+
+**Start here for sites, buildings, layouts, and humidity control:**
+
+- **[PRD-BMS.md](./PRD-BMS.md)** ⭐ — Master product requirements (platform + all BMS modules)
+- **[CMONITOR_SITES_ERF_MANUAL.md](./CMONITOR_SITES_ERF_MANUAL.md)** ⭐ — Sites & ERF plan for installers and clients (machine ownership, place/remove, troubleshooting)
+- Superseded drafts live in [`archive/bms-v1-sources/`](./archive/bms-v1-sources/) (historical only)
+
+---
+
 ## 📁 Folder Structure
 
 ### **🔧 [hardware/](./hardware/)**
@@ -33,6 +43,12 @@ Website, UI components, and frontend-specific documentation.
 - Historical data setup
 - Machine subcategory configuration
 - Adding new subcategories
+
+### **📦 [product/](./product/)**
+Product features and sales tooling on the public website.
+
+**Key Topics:**
+- **[SOLAR_QUOTING.md](./product/SOLAR_QUOTING.md)** ⭐ — Solar PV quote builder, savings calculator, client proposal (May 2026)
 
 ### **📋 [general/](./general/)**
 General setup guides, troubleshooting, and system-wide documentation.
@@ -89,6 +105,9 @@ Default parameters and configuration for different machine types.
 - [Quick Start Raw Data](./supabase/QUICK_START_RAW_DATA.md)
 - [CIRRUS Data Processing](./supabase/CIRRUS_DATA_PROCESSING.md)
 - [CIRRUS Setup Summary](./supabase/CIRRUS_SETUP_SUMMARY.md)
+
+### **Product / sales**
+- [Solar PV quoting (v1)](./product/SOLAR_QUOTING.md)
 
 ### **Frontend**
 - [Historical Data Setup](./frontend/HISTORICAL_DATA_SETUP.md)

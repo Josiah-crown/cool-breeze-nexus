@@ -198,7 +198,40 @@ Before finalizing the log:
 
 ---
 
-**Last Updated:** November 20, 2025  
-**Purpose:** Prevent date mistakes in daily log creation  
+## 🔒 Immutability — past daily logs (DO NOT EDIT)
+
+Daily logs are a **historical record**. Once a session is closed, the log for that date is **frozen**.
+
+### Rules
+- ❌ **DO NOT edit** any file matching `DAILY_LOGS/YYYY-MM-DD_*.md` if the date in the filename is **before today**.
+- ❌ **DO NOT** “fix”, “update”, “consolidate”, or refresh footers on past logs when working on PRDs, refactors, or other docs.
+- ❌ **DO NOT** copy content from a past log into a living doc and then rewrite the original log to match.
+- ✅ **DO** create a **new** daily log for **today** when documenting new work.
+- ✅ **DO** use a **correction addendum** when a past log contains a factual error (see below).
+
+### Same-day exception (only)
+You may edit **today’s** log **during the same session** (e.g. add a section you forgot before end of day). Do not backdate or change the filename date.
+
+### Corrections to past logs
+If something in an old log is wrong, **do not edit the old file**. Instead:
+
+1. Create a new file: `YYYY-MM-DD_CORRECTION_<original-date>_<topic>.md` (use **today’s** date).
+2. Reference the original log by filename and state what was wrong and what is correct.
+3. If product docs need updating, change the **living doc** (e.g. `docs/PRD-BMS.md`), not the historical log.
+
+**Example:** `2026-05-20_CORRECTION_2026-04-30_buildings-storage-path.md`
+
+### When consolidating documentation
+- Pull facts **from** daily logs **into** living docs (PRD, architecture notes).
+- Leave the source daily log **unchanged**.
+- Archived docs go to `docs/archive/` — also treat as read-only unless explicitly asked to revise history.
+
+### Agent reference
+Cross-agent operating rules (file touch policy, git, migrations): **`AAA_CLAUDE.md` → “Agent operating procedure (OPP)”**.
+
+---
+
+**Last Updated:** May 20, 2026  
+**Purpose:** Prevent date mistakes in daily log creation; protect historical logs from retroactive edits  
 **Status:** ✅ Active checklist
 

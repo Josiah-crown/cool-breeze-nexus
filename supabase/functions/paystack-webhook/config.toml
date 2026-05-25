@@ -1,0 +1,2 @@
+# Paystack servers call this URL without a Supabase JWT.
+verify_jwt = false

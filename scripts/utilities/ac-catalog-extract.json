@@ -1,0 +1,537 @@
+{
+  "categories": [
+    {
+      "id": "ac-0",
+      "label": "ALLIANCE COMFEE INVERTER MID WALL SPLIT UNITS"
+    },
+    {
+      "id": "ac-1",
+      "label": "ALLIANCE EMERALD INVERTER MIDWALL SPLIT UNITS"
+    },
+    {
+      "id": "ac-2",
+      "label": "ALLIANCE R32 CASSETTE UNITS INVERTER"
+    },
+    {
+      "id": "ac-3",
+      "label": "ALLIANCE DUCTED INVERTER UNITS R32"
+    },
+    {
+      "id": "ac-4",
+      "label": "SAMSUNG HSP HIDE AWAY INVERTER R410"
+    },
+    {
+      "id": "ac-5",
+      "label": "SAMSUNG WINDFREE AR9500 INVERTER UNIT R410"
+    },
+    {
+      "id": "ac-6",
+      "label": "SLIM 1 WAY  CASSETTE INVERTER  R32"
+    },
+    {
+      "id": "ac-7",
+      "label": "MINI 4 WAY CASSETE HEAT PUMP INVERTER R32"
+    },
+    {
+      "id": "ac-8",
+      "label": "4 WAY CASSETE HEAT PUMP INVERTER R32"
+    },
+    {
+      "id": "ac-9",
+      "label": "HISENSE Midwall Split"
+    },
+    {
+      "id": "ac-10",
+      "label": "HISENSE CASSETTE"
+    },
+    {
+      "id": "ac-11",
+      "label": "HISENSE CEILING CONCEALED INVERTER"
+    },
+    {
+      "id": "ac-12",
+      "label": "FLEXIBLE DUCTING"
+    },
+    {
+      "id": "ac-13",
+      "label": "PURTECH RETURN AIR GRILLS"
+    },
+    {
+      "id": "ac-14",
+      "label": "SLIM LINE RETURN AIR GRILLS"
+    },
+    {
+      "id": "ac-15",
+      "label": "SUNLINE DIFFUSERS"
+    },
+    {
+      "id": "ac-16",
+      "label": "LINEAR ELITE DIFFUSER"
+    },
+    {
+      "id": "ac-17",
+      "label": "BABY LINEAR GRILLE"
+    }
+  ],
+  "products": [
+    {
+      "id": "ac-FCMI-09-25",
+      "categoryId": "ac-0",
+      "partCode": "FCMI-09",
+      "name": "9000 BTU Heating and Cooling Split Inverter- Comfee",
+      "comment": "Alliance Unit",
+      "listPrice": 5494.96,
+      "tags": []
+    },
+    {
+      "id": "ac-FCMI-12-26",
+      "categoryId": "ac-0",
+      "partCode": "FCMI-12",
+      "name": "12 000 BTU Heating and Cooling Split Inverter - Comfee",
+      "comment": "Alliance Unit",
+      "listPrice": 6121.04,
+      "tags": []
+    },
+    {
+      "id": "ac-FCMI-18-27",
+      "categoryId": "ac-0",
+      "partCode": "FCMI-18",
+      "name": "18 000 BTU Heating and Cooling Split Inverter - Comfee",
+      "comment": "Alliance Unit",
+      "listPrice": 8834.09,
+      "tags": []
+    },
+    {
+      "id": "ac-FCMI-24-28",
+      "categoryId": "ac-0",
+      "partCode": "FCMI-24",
+      "name": "24 000 BTU Heating and Cooling Split Inverter - Comfee",
+      "comment": "Alliance Unit",
+      "listPrice": 11025.39,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUSI09-R32-32",
+      "categoryId": "ac-1",
+      "partCode": "FOUSI09-R32",
+      "name": "9 000 BTU Heating and Cooling Split Inverter",
+      "comment": "Alliance Unit",
+      "listPrice": 5912.34,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUSI12-R32-33",
+      "categoryId": "ac-1",
+      "partCode": "FOUSI12-R32",
+      "name": "12 000 BTU Heating and Cooling Split Inverter",
+      "comment": "Alliance Unit",
+      "listPrice": 6677.57,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUSI18-R32-34",
+      "categoryId": "ac-1",
+      "partCode": "FOUSI18-R32",
+      "name": "18 000 BTU Heating and Cooling Split Inverter",
+      "comment": "Alliance Unit",
+      "listPrice": 9042.78,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUSI24-R32-35",
+      "categoryId": "ac-1",
+      "partCode": "FOUSI24-R32",
+      "name": "24 000 BTU Heating and Cooling Split Inverter",
+      "comment": "Alliance Unit",
+      "listPrice": 12729.74,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUCI12-R32-39",
+      "categoryId": "ac-2",
+      "partCode": "FOUCI12-R32",
+      "name": "12 000 BTU Compact Cassette",
+      "comment": null,
+      "listPrice": 12938.43,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUCI18-R32-40",
+      "categoryId": "ac-2",
+      "partCode": "FOUCI18-R32",
+      "name": "18000 BTU Compact Cassette",
+      "comment": null,
+      "listPrice": 17599.3,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUCI24-R32-41",
+      "categoryId": "ac-2",
+      "partCode": "FOUCI24-R32",
+      "name": "24000 BTU Cassette",
+      "comment": null,
+      "listPrice": 19616.7,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUCI36-1-R32-42",
+      "categoryId": "ac-2",
+      "partCode": "FOUCI36/1-R32",
+      "name": "36000 BTU Cassette",
+      "comment": "Single phase",
+      "listPrice": 23094.96,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUCI36-3-R32-43",
+      "categoryId": "ac-2",
+      "partCode": "FOUCI36/3-R32",
+      "name": "36000 BTU Cassette",
+      "comment": "3 phase",
+      "listPrice": 23164.52,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUCI48-3-R32-44",
+      "categoryId": "ac-2",
+      "partCode": "FOUCI48/3-R32",
+      "name": "48000BTU Cassette",
+      "comment": null,
+      "listPrice": 26434.09,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUCI60-R32-45",
+      "categoryId": "ac-2",
+      "partCode": "FOUCI60-R32",
+      "name": "60000BTU Cassette",
+      "comment": null,
+      "listPrice": 31164.52,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUDI24-R32-50",
+      "categoryId": "ac-3",
+      "partCode": "FOUDI24-R32",
+      "name": "24 000 BTU R410 Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 17947.13,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUDI36-1-R32-51",
+      "categoryId": "ac-3",
+      "partCode": "FOUDI36/1-R32",
+      "name": "36 000 BTU R410 Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 27039.2,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUDI36-3-R32-52",
+      "categoryId": "ac-3",
+      "partCode": "FOUDI36/3-R32",
+      "name": "36 000 BTU R410 Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 27039.2,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUDI48-3-R32-53",
+      "categoryId": "ac-3",
+      "partCode": "FOUDI48/3-R32",
+      "name": "48 000 BTU R410 Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 31679.2,
+      "tags": []
+    },
+    {
+      "id": "ac-FOUDI60-R32-54",
+      "categoryId": "ac-3",
+      "partCode": "FOUDI60-R32",
+      "name": "60 000 BTU R410 Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 34079.2,
+      "tags": []
+    },
+    {
+      "id": "ac-AC035RNMDKG-EU-62",
+      "categoryId": "ac-3",
+      "partCode": "AC035RNMDKG/EU",
+      "name": "12 000 Btu heating and cooling Samsung Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 16834.09,
+      "tags": []
+    },
+    {
+      "id": "ac-AC052RNMDKG-EU-63",
+      "categoryId": "ac-3",
+      "partCode": "AC052RNMDKG/EU",
+      "name": "18 000 Btu heating and cooling Samsung Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 19686.26,
+      "tags": []
+    },
+    {
+      "id": "ac-AC071RNMDKG-EU-64",
+      "categoryId": "ac-3",
+      "partCode": "AC071RNMDKG/EU",
+      "name": "24 000 Btu heating and cooling Samsung Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 20173.22,
+      "tags": []
+    },
+    {
+      "id": "ac-AC100RNMDKG-EU-66",
+      "categoryId": "ac-3",
+      "partCode": "AC100RNMDKG/EU",
+      "name": "36 000 Btu heating and cooling Samsung Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 26016.7,
+      "tags": []
+    },
+    {
+      "id": "ac-AC140RNMDKG-EU-68",
+      "categoryId": "ac-3",
+      "partCode": "AC140RNMDKG/EU",
+      "name": "48 000 Btu heating and cooling Samsung Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 30608.0,
+      "tags": []
+    },
+    {
+      "id": "ac-AC160BNMDEH-AF-69",
+      "categoryId": "ac-3",
+      "partCode": "AC160BNMDEH/AF",
+      "name": "55 000 Btu heating and cooling Samsung Inverter Ducted unit",
+      "comment": null,
+      "listPrice": 38399.3,
+      "tags": []
+    },
+    {
+      "id": "ac-AC180JNHPKH-EU-74",
+      "categoryId": "ac-4",
+      "partCode": "AC180JNHPKH/EU",
+      "name": "60 000 Btu Samsung Heating and Cooling Samsung Inverter Ducted unit",
+      "comment": "60,000BTU",
+      "listPrice": 49599.3,
+      "tags": []
+    },
+    {
+      "id": "ac-AC200KNHPKH-EU-75",
+      "categoryId": "ac-4",
+      "partCode": "AC200KNHPKH/EU",
+      "name": "72 000 Btu Samsung Heating and Cooling Samsung Inverter Ducted unit",
+      "comment": "72000BTU",
+      "listPrice": 63234.09,
+      "tags": []
+    },
+    {
+      "id": "ac-AC250KNHPKH-EU-76",
+      "categoryId": "ac-4",
+      "partCode": "AC250KNHPKH/EU",
+      "name": "85 000 Btu Samsung Heating and Cooling Samsung Inverter Ducted unit",
+      "comment": "85000BTU",
+      "listPrice": 66781.91,
+      "tags": []
+    },
+    {
+      "id": "ac-AR40F09C0AG-FA-79",
+      "categoryId": "ac-4",
+      "partCode": "AR40F09C0AG/FA",
+      "name": "SAMSUNG AR4500 INVERTER R410",
+      "comment": "9000BTU",
+      "listPrice": 7651.48,
+      "tags": []
+    },
+    {
+      "id": "ac-AR12TSHGAWK-FA-80",
+      "categoryId": "ac-4",
+      "partCode": "AR12TSHGAWK/FA",
+      "name": "SAMSUNG AR4500 INVERTER R410",
+      "comment": "12000BTU",
+      "listPrice": 8347.13,
+      "tags": []
+    },
+    {
+      "id": "ac-AR18TSHGAWK-FA-81",
+      "categoryId": "ac-4",
+      "partCode": "AR18TSHGAWK/FA",
+      "name": "SAMSUNG AR4500 INVERTER R410",
+      "comment": "18000BTU",
+      "listPrice": 11964.52,
+      "tags": []
+    },
+    {
+      "id": "ac-AR24TSHGAWK-FA-82",
+      "categoryId": "ac-4",
+      "partCode": "AR24TSHGAWK/FA",
+      "name": "SAMSUNG AR4500 INVERTER R410",
+      "comment": "24000BTU",
+      "listPrice": 15512.34,
+      "tags": []
+    },
+    {
+      "id": "ac-AR12MSPXBWKNFA-85",
+      "categoryId": "ac-5",
+      "partCode": "AR12MSPXBWKNFA",
+      "name": "12 000 Btu heating and cooling R410 Samsung Wind Free Unit",
+      "comment": "12000BTU",
+      "listPrice": 13564.52,
+      "tags": []
+    },
+    {
+      "id": "ac-AR18MSPXBWKNFA-86",
+      "categoryId": "ac-5",
+      "partCode": "AR18MSPXBWKNFA",
+      "name": "18 000 Btu heating and cooling R410 Samsung Wind Free Unit",
+      "comment": "18000BTU",
+      "listPrice": 18503.66,
+      "tags": []
+    },
+    {
+      "id": "ac-AR24MSPXBWKNFA-87",
+      "categoryId": "ac-5",
+      "partCode": "AR24MSPXBWKNFA",
+      "name": "24 000 Btu heating and cooling R410 Samsung Wind Free Unit",
+      "comment": "24000BTU",
+      "listPrice": 21773.22,
+      "tags": []
+    },
+    {
+      "id": "ac-AC071RN4PKG-EU-90",
+      "categoryId": "ac-5",
+      "partCode": "AC071RN4PKG/EU",
+      "name": "Samsung 24000BTU 360\u00b0 Cassette (1 & 3 Phase)",
+      "comment": "24000BTU",
+      "listPrice": 23581.91,
+      "tags": []
+    },
+    {
+      "id": "ac-AC100MN4PKH-EU-91",
+      "categoryId": "ac-5",
+      "partCode": "AC100MN4PKH/EU",
+      "name": "Samsung 36000BTU 360\u00b0 Cassette (1 & 3 Phase)",
+      "comment": "36000BTU",
+      "listPrice": 29703.66,
+      "tags": []
+    },
+    {
+      "id": "ac-AC140MN4PKH-EU-92",
+      "categoryId": "ac-5",
+      "partCode": "AC140MN4PKH/EU",
+      "name": "Samsung 48000BTU 360\u00b0 Cassette (1 & 3 Phase)",
+      "comment": "48000BTU",
+      "listPrice": 33877.57,
+      "tags": []
+    },
+    {
+      "id": "ac-AC026RN1DKG-EU-95",
+      "categoryId": "ac-6",
+      "partCode": "AC026RN1DKG/EU",
+      "name": "SLIM 1 WAY CASSETTE INVERTER R410",
+      "comment": "9000BTU",
+      "listPrice": 8138.43,
+      "tags": []
+    },
+    {
+      "id": "ac-AC035RN1DKG-EU-96",
+      "categoryId": "ac-6",
+      "partCode": "AC035RN1DKG/EU",
+      "name": "SLIM 1 WAY CASSETTE INVERTER R410",
+      "comment": "12000BTU",
+      "listPrice": 8555.82,
+      "tags": []
+    },
+    {
+      "id": "ac-AJ020TNNDKH-EA-99",
+      "categoryId": "ac-7",
+      "partCode": "AJ020TNNDKH/EA",
+      "name": "MINI 4 WAY CASSETTE INVERTER R32",
+      "comment": "7000BTU",
+      "listPrice": 7651.48,
+      "tags": []
+    },
+    {
+      "id": "ac-AJ026TNNDKH-EA-100",
+      "categoryId": "ac-7",
+      "partCode": "AJ026TNNDKH/EA",
+      "name": "MINI 4 WAY CASSETTE INVERTER R32",
+      "comment": "9000BTU",
+      "listPrice": 8138.43,
+      "tags": []
+    },
+    {
+      "id": "ac-AJ035TNNDKH-EA-101",
+      "categoryId": "ac-7",
+      "partCode": "AJ035TNNDKH/EA",
+      "name": "MINI 4 WAY CASSETTE INVERTER R32",
+      "comment": "12000BTU",
+      "listPrice": 8556.62,
+      "tags": []
+    },
+    {
+      "id": "ac-AJ052TNNDKH-EA-102",
+      "categoryId": "ac-7",
+      "partCode": "AJ052TNNDKH/EA",
+      "name": "MINI 4 WAY CASSETTE INVERTER R32",
+      "comment": "18000BTU",
+      "listPrice": 8974.02,
+      "tags": []
+    },
+    {
+      "id": "ac-AC052RN4DKG-EU-106",
+      "categoryId": "ac-8",
+      "partCode": "AC052RN4DKG/EU",
+      "name": "MINI 4 WAY CASSETTE INVERTER R32",
+      "comment": "18000BTU",
+      "listPrice": 20799.3,
+      "tags": []
+    },
+    {
+      "id": "ac-AC035RNNDKG-EU-107",
+      "categoryId": "ac-8",
+      "partCode": "AC035RNNDKG/EU",
+      "name": "4 WAY CASSETTE HEAT INVERTER R410",
+      "comment": "24000BTU",
+      "listPrice": 21912.34,
+      "tags": []
+    },
+    {
+      "id": "ac-AC052RNNDKG-EU-108",
+      "categoryId": "ac-8",
+      "partCode": "AC052RNNDKG/EU",
+      "name": "4 WAY CASSETTE HEAT INVERTER R410",
+      "comment": "30000BTU",
+      "listPrice": 27894.96,
+      "tags": []
+    },
+    {
+      "id": "ac-AC071RNNDKG-EU-109",
+      "categoryId": "ac-8",
+      "partCode": "AC071RNNDKG/EU",
+      "name": "4 WAY CASSETTE HEAT INVERTER R410",
+      "comment": "36000BTU",
+      "listPrice": 32068.87,
+      "tags": []
+    },
+    {
+      "id": "ac-Trunking-181",
+      "categoryId": "ac-11",
+      "partCode": "Trunking",
+      "name": "100*40 p/m",
+      "comment": null,
+      "listPrice": 153.0,
+      "tags": []
+    },
+    {
+      "id": "ac-Brackets-185",
+      "categoryId": "ac-11",
+      "partCode": "Brackets",
+      "name": "600mm Brackets",
+      "comment": null,
+      "listPrice": 450.43,
+      "tags": []
+    }
+  ]
+}

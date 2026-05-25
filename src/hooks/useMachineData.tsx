@@ -19,6 +19,14 @@ const useMachineData = (userId: string, userRole: string) => {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    if (!userId) {
+      setMachines([]);
+      setUsers([]);
+      setHistoricalData({});
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -285,8 +293,12 @@ const useMachineData = (userId: string, userRole: string) => {
   }, [userId, userRole]);
 
   useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, userId]);
 
   const refetch = useCallback(() => {
     fetchData();

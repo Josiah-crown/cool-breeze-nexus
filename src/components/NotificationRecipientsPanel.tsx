@@ -46,7 +46,7 @@ export const NotificationRecipientsPanel: React.FC<NotificationRecipientsPanelPr
 
       const { id: currentUserId, role: currentUserRole } = user;
       const allowedIdsSet = new Set<string>([currentUserId]);
-      let allowAll = currentUserRole === 'super_admin';
+      const allowAll = currentUserRole === 'super_admin';
 
       if (!allowAll) {
         if (currentUserRole === 'company') {

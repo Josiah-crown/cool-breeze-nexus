@@ -1,0 +1,881 @@
+/** Auto-generated AC catalog from Template Name - Area - AC Quote 1 - New.xlsx. Regenerate: python scripts/utilities/gen_qc1_catalog.py */
+import type { Qc1Category, QuoteProduct, QuoteTemplateId } from "@/types/quotes";
+import { SOLAR_QC1_CATEGORIES, SOLAR_QC1_PRODUCTS } from "@/config/solarQc1Products";
+
+export const QUOTE_TEMPLATES: { id: QuoteTemplateId; label: string; description: string }[] = [
+  { id: "ac_v1", label: "Air conditioning", description: "QC1 → Quote (Alliance / Samsung / Hisense)" },
+  { id: "solar_pv_v1", label: "Solar PV", description: "QC1 → Quote + savings calculator" },
+];
+
+export const AC_QC1_CATEGORIES: Qc1Category[] = [
+  {
+    "id": "ac-alliance-comfee-inverter-mid-wall-split-units",
+    "label": "ALLIANCE COMFEE INVERTER MID WALL SPLIT UNITS",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-alliance-emerald-inverter-midwall-split-units",
+    "label": "ALLIANCE EMERALD INVERTER MIDWALL SPLIT UNITS",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-alliance-r32-cassette-units-inverter",
+    "label": "ALLIANCE R32 CASSETTE UNITS INVERTER",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-alliance-ducted-inverter-units-r32",
+    "label": "ALLIANCE DUCTED INVERTER UNITS R32",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-samsung-hsp-hide-away-inverter-r410",
+    "label": "SAMSUNG HSP HIDE AWAY INVERTER R410",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-samsung-windfree-ar9500-inverter-unit-r410",
+    "label": "SAMSUNG WINDFREE AR9500 INVERTER UNIT R410",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-slim-1-way-cassette-inverter-r32",
+    "label": "SLIM 1 WAY  CASSETTE INVERTER  R32",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-mini-4-way-cassete-heat-pump-inverter-r32",
+    "label": "MINI 4 WAY CASSETE HEAT PUMP INVERTER R32",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-4-way-cassete-heat-pump-inverter-r32",
+    "label": "4 WAY CASSETE HEAT PUMP INVERTER R32",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-hisense-midwall-split",
+    "label": "HISENSE Midwall Split",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-hisense-cassette",
+    "label": "HISENSE CASSETTE",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-hisense-ceiling-concealed-inverter",
+    "label": "HISENSE CEILING CONCEALED INVERTER",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-flexible-ducting",
+    "label": "FLEXIBLE DUCTING",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-purtech-return-air-grills",
+    "label": "PURTECH RETURN AIR GRILLS",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-slim-line-return-air-grills",
+    "label": "SLIM LINE RETURN AIR GRILLS",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-sunline-diffusers",
+    "label": "SUNLINE DIFFUSERS",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-linear-elite-diffuser",
+    "label": "LINEAR ELITE DIFFUSER",
+    "templateId": "ac_v1"
+  },
+  {
+    "id": "ac-baby-linear-grille",
+    "label": "BABY LINEAR GRILLE",
+    "templateId": "ac_v1"
+  }
+] as const satisfies Qc1Category[];
+
+
+
+export const AC_QC1_PRODUCTS: QuoteProduct[] = [
+  {
+    "id": "ac-fcmi-09-25",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-comfee-inverter-mid-wall-split-units",
+    "partCode": "FCMI-09",
+    "name": "9000 BTU Heating and Cooling Split Inverter- Comfee",
+    "comment": "Alliance Unit",
+    "listPrice": 5494.96,
+    "tags": [
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fcmi-12-26",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-comfee-inverter-mid-wall-split-units",
+    "partCode": "FCMI-12",
+    "name": "12 000 BTU Heating and Cooling Split Inverter - Comfee",
+    "comment": "Alliance Unit",
+    "listPrice": 6121.04,
+    "tags": [
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fcmi-18-27",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-comfee-inverter-mid-wall-split-units",
+    "partCode": "FCMI-18",
+    "name": "18 000 BTU Heating and Cooling Split Inverter - Comfee",
+    "comment": "Alliance Unit",
+    "listPrice": 8834.09,
+    "tags": [
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fcmi-24-28",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-comfee-inverter-mid-wall-split-units",
+    "partCode": "FCMI-24",
+    "name": "24 000 BTU Heating and Cooling Split Inverter - Comfee",
+    "comment": "Alliance Unit",
+    "listPrice": 11025.39,
+    "tags": [
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fousi09-r32-32",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-emerald-inverter-midwall-split-units",
+    "partCode": "FOUSI09-R32",
+    "name": "9 000 BTU Heating and Cooling Split Inverter",
+    "comment": "Alliance Unit",
+    "listPrice": 5912.34,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fousi12-r32-33",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-emerald-inverter-midwall-split-units",
+    "partCode": "FOUSI12-R32",
+    "name": "12 000 BTU Heating and Cooling Split Inverter",
+    "comment": "Alliance Unit",
+    "listPrice": 6677.57,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fousi18-r32-34",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-emerald-inverter-midwall-split-units",
+    "partCode": "FOUSI18-R32",
+    "name": "18 000 BTU Heating and Cooling Split Inverter",
+    "comment": "Alliance Unit",
+    "listPrice": 9042.78,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fousi24-r32-35",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-emerald-inverter-midwall-split-units",
+    "partCode": "FOUSI24-R32",
+    "name": "24 000 BTU Heating and Cooling Split Inverter",
+    "comment": "Alliance Unit",
+    "listPrice": 12729.74,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:mid-wall",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fouci12-r32-39",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-r32-cassette-units-inverter",
+    "partCode": "FOUCI12-R32",
+    "name": "12 000 BTU Compact Cassette",
+    "comment": null,
+    "listPrice": 12938.43,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fouci18-r32-40",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-r32-cassette-units-inverter",
+    "partCode": "FOUCI18-R32",
+    "name": "18000 BTU Compact Cassette",
+    "comment": null,
+    "listPrice": 17599.3,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fouci24-r32-41",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-r32-cassette-units-inverter",
+    "partCode": "FOUCI24-R32",
+    "name": "24000 BTU Cassette",
+    "comment": null,
+    "listPrice": 19616.7,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fouci36-1-r32-42",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-r32-cassette-units-inverter",
+    "partCode": "FOUCI36/1-R32",
+    "name": "36000 BTU Cassette",
+    "comment": "Single phase",
+    "listPrice": 23094.96,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fouci36-3-r32-43",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-r32-cassette-units-inverter",
+    "partCode": "FOUCI36/3-R32",
+    "name": "36000 BTU Cassette",
+    "comment": "3 phase",
+    "listPrice": 23164.52,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:three",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fouci48-3-r32-44",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-r32-cassette-units-inverter",
+    "partCode": "FOUCI48/3-R32",
+    "name": "48000BTU Cassette",
+    "comment": null,
+    "listPrice": 26434.09,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:three",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-fouci60-r32-45",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-r32-cassette-units-inverter",
+    "partCode": "FOUCI60-R32",
+    "name": "60000BTU Cassette",
+    "comment": null,
+    "listPrice": 31164.52,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-foudi24-r32-50",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "FOUDI24-R32",
+    "name": "24 000 BTU R410 Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 17947.13,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-foudi36-1-r32-51",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "FOUDI36/1-R32",
+    "name": "36 000 BTU R410 Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 27039.2,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-foudi36-3-r32-52",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "FOUDI36/3-R32",
+    "name": "36 000 BTU R410 Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 27039.2,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:three",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-foudi48-3-r32-53",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "FOUDI48/3-R32",
+    "name": "48 000 BTU R410 Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 31679.2,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:three",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-foudi60-r32-54",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "FOUDI60-R32",
+    "name": "60 000 BTU R410 Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 34079.2,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance"
+    ]
+  },
+  {
+    "id": "ac-ac035rnmdkg-eu-62",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "AC035RNMDKG/EU",
+    "name": "12 000 Btu heating and cooling Samsung Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 16834.09,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac052rnmdkg-eu-63",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "AC052RNMDKG/EU",
+    "name": "18 000 Btu heating and cooling Samsung Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 19686.26,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac071rnmdkg-eu-64",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "AC071RNMDKG/EU",
+    "name": "24 000 Btu heating and cooling Samsung Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 20173.22,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac100rnmdkg-eu-66",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "AC100RNMDKG/EU",
+    "name": "36 000 Btu heating and cooling Samsung Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 26016.7,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac140rnmdkg-eu-68",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "AC140RNMDKG/EU",
+    "name": "48 000 Btu heating and cooling Samsung Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 30608.0,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac160bnmdeh-af-69",
+    "templateId": "ac_v1",
+    "categoryId": "ac-alliance-ducted-inverter-units-r32",
+    "partCode": "AC160BNMDEH/AF",
+    "name": "55 000 Btu heating and cooling Samsung Inverter Ducted unit",
+    "comment": null,
+    "listPrice": 38399.3,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:alliance",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac180jnhpkh-eu-74",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-hsp-hide-away-inverter-r410",
+    "partCode": "AC180JNHPKH/EU",
+    "name": "60 000 Btu Samsung Heating and Cooling Samsung Inverter Ducted unit",
+    "comment": "60,000BTU",
+    "listPrice": 49599.3,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac200knhpkh-eu-75",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-hsp-hide-away-inverter-r410",
+    "partCode": "AC200KNHPKH/EU",
+    "name": "72 000 Btu Samsung Heating and Cooling Samsung Inverter Ducted unit",
+    "comment": "72000BTU",
+    "listPrice": 63234.09,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac250knhpkh-eu-76",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-hsp-hide-away-inverter-r410",
+    "partCode": "AC250KNHPKH/EU",
+    "name": "85 000 Btu Samsung Heating and Cooling Samsung Inverter Ducted unit",
+    "comment": "85000BTU",
+    "listPrice": 66781.91,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ar40f09c0ag-fa-79",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-hsp-hide-away-inverter-r410",
+    "partCode": "AR40F09C0AG/FA",
+    "name": "SAMSUNG AR4500 INVERTER R410",
+    "comment": "9000BTU",
+    "listPrice": 7651.48,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ar12tshgawk-fa-80",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-hsp-hide-away-inverter-r410",
+    "partCode": "AR12TSHGAWK/FA",
+    "name": "SAMSUNG AR4500 INVERTER R410",
+    "comment": "12000BTU",
+    "listPrice": 8347.13,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ar18tshgawk-fa-81",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-hsp-hide-away-inverter-r410",
+    "partCode": "AR18TSHGAWK/FA",
+    "name": "SAMSUNG AR4500 INVERTER R410",
+    "comment": "18000BTU",
+    "listPrice": 11964.52,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ar24tshgawk-fa-82",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-hsp-hide-away-inverter-r410",
+    "partCode": "AR24TSHGAWK/FA",
+    "name": "SAMSUNG AR4500 INVERTER R410",
+    "comment": "24000BTU",
+    "listPrice": 15512.34,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:ducted",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ar12mspxbwknfa-85",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-windfree-ar9500-inverter-unit-r410",
+    "partCode": "AR12MSPXBWKNFA",
+    "name": "12 000 Btu heating and cooling R410 Samsung Wind Free Unit",
+    "comment": "12000BTU",
+    "listPrice": 13564.52,
+    "tags": [
+      "refrigerant:r410",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ar18mspxbwknfa-86",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-windfree-ar9500-inverter-unit-r410",
+    "partCode": "AR18MSPXBWKNFA",
+    "name": "18 000 Btu heating and cooling R410 Samsung Wind Free Unit",
+    "comment": "18000BTU",
+    "listPrice": 18503.66,
+    "tags": [
+      "refrigerant:r410",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ar24mspxbwknfa-87",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-windfree-ar9500-inverter-unit-r410",
+    "partCode": "AR24MSPXBWKNFA",
+    "name": "24 000 Btu heating and cooling R410 Samsung Wind Free Unit",
+    "comment": "24000BTU",
+    "listPrice": 21773.22,
+    "tags": [
+      "refrigerant:r410",
+      "phase:single",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac071rn4pkg-eu-90",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-windfree-ar9500-inverter-unit-r410",
+    "partCode": "AC071RN4PKG/EU",
+    "name": "Samsung 24000BTU 360\u00b0 Cassette (1 & 3 Phase)",
+    "comment": "24000BTU",
+    "listPrice": 23581.91,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:cassette",
+      "phase:three",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac100mn4pkh-eu-91",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-windfree-ar9500-inverter-unit-r410",
+    "partCode": "AC100MN4PKH/EU",
+    "name": "Samsung 36000BTU 360\u00b0 Cassette (1 & 3 Phase)",
+    "comment": "36000BTU",
+    "listPrice": 29703.66,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:cassette",
+      "phase:three",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac140mn4pkh-eu-92",
+    "templateId": "ac_v1",
+    "categoryId": "ac-samsung-windfree-ar9500-inverter-unit-r410",
+    "partCode": "AC140MN4PKH/EU",
+    "name": "Samsung 48000BTU 360\u00b0 Cassette (1 & 3 Phase)",
+    "comment": "48000BTU",
+    "listPrice": 33877.57,
+    "tags": [
+      "refrigerant:r410",
+      "unit-type:cassette",
+      "phase:three",
+      "brand:samsung"
+    ]
+  },
+  {
+    "id": "ac-ac026rn1dkg-eu-95",
+    "templateId": "ac_v1",
+    "categoryId": "ac-slim-1-way-cassette-inverter-r32",
+    "partCode": "AC026RN1DKG/EU",
+    "name": "SLIM 1 WAY CASSETTE INVERTER R410",
+    "comment": "9000BTU",
+    "listPrice": 8138.43,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-ac035rn1dkg-eu-96",
+    "templateId": "ac_v1",
+    "categoryId": "ac-slim-1-way-cassette-inverter-r32",
+    "partCode": "AC035RN1DKG/EU",
+    "name": "SLIM 1 WAY CASSETTE INVERTER R410",
+    "comment": "12000BTU",
+    "listPrice": 8555.82,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-aj020tnndkh-ea-99",
+    "templateId": "ac_v1",
+    "categoryId": "ac-mini-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AJ020TNNDKH/EA",
+    "name": "MINI 4 WAY CASSETTE INVERTER R32",
+    "comment": "7000BTU",
+    "listPrice": 7651.48,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-aj026tnndkh-ea-100",
+    "templateId": "ac_v1",
+    "categoryId": "ac-mini-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AJ026TNNDKH/EA",
+    "name": "MINI 4 WAY CASSETTE INVERTER R32",
+    "comment": "9000BTU",
+    "listPrice": 8138.43,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-aj035tnndkh-ea-101",
+    "templateId": "ac_v1",
+    "categoryId": "ac-mini-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AJ035TNNDKH/EA",
+    "name": "MINI 4 WAY CASSETTE INVERTER R32",
+    "comment": "12000BTU",
+    "listPrice": 8556.62,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-aj052tnndkh-ea-102",
+    "templateId": "ac_v1",
+    "categoryId": "ac-mini-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AJ052TNNDKH/EA",
+    "name": "MINI 4 WAY CASSETTE INVERTER R32",
+    "comment": "18000BTU",
+    "listPrice": 8974.02,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-ac052rn4dkg-eu-106",
+    "templateId": "ac_v1",
+    "categoryId": "ac-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AC052RN4DKG/EU",
+    "name": "MINI 4 WAY CASSETTE INVERTER R32",
+    "comment": "18000BTU",
+    "listPrice": 20799.3,
+    "tags": [
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-ac035rnndkg-eu-107",
+    "templateId": "ac_v1",
+    "categoryId": "ac-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AC035RNNDKG/EU",
+    "name": "4 WAY CASSETTE HEAT INVERTER R410",
+    "comment": "24000BTU",
+    "listPrice": 21912.34,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-ac052rnndkg-eu-108",
+    "templateId": "ac_v1",
+    "categoryId": "ac-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AC052RNNDKG/EU",
+    "name": "4 WAY CASSETTE HEAT INVERTER R410",
+    "comment": "30000BTU",
+    "listPrice": 27894.96,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-ac071rnndkg-eu-109",
+    "templateId": "ac_v1",
+    "categoryId": "ac-4-way-cassete-heat-pump-inverter-r32",
+    "partCode": "AC071RNNDKG/EU",
+    "name": "4 WAY CASSETTE HEAT INVERTER R410",
+    "comment": "36000BTU",
+    "listPrice": 32068.87,
+    "tags": [
+      "refrigerant:r410",
+      "refrigerant:r32",
+      "unit-type:cassette",
+      "phase:single"
+    ]
+  },
+  {
+    "id": "ac-trunking-181",
+    "templateId": "ac_v1",
+    "categoryId": "ac-hisense-ceiling-concealed-inverter",
+    "partCode": "Trunking",
+    "name": "100*40 p/m",
+    "comment": null,
+    "listPrice": 153.0,
+    "tags": [
+      "unit-type:ducted",
+      "phase:single",
+      "brand:hisense"
+    ]
+  },
+  {
+    "id": "ac-brackets-185",
+    "templateId": "ac_v1",
+    "categoryId": "ac-hisense-ceiling-concealed-inverter",
+    "partCode": "Brackets",
+    "name": "600mm Brackets",
+    "comment": null,
+    "listPrice": 450.43,
+    "tags": [
+      "unit-type:ducted",
+      "phase:single",
+      "brand:hisense"
+    ]
+  }
+] as unknown as QuoteProduct[];
+
+
+export function getCategories(templateId: QuoteTemplateId): Qc1Category[] {
+  if (templateId === "ac_v1") return AC_QC1_CATEGORIES;
+  return SOLAR_QC1_CATEGORIES;
+}
+
+export function getProducts(templateId: QuoteTemplateId): QuoteProduct[] {
+  if (templateId === "ac_v1") return AC_QC1_PRODUCTS;
+  return SOLAR_QC1_PRODUCTS;
+}
+
+export const ALL_QC1_PRODUCTS: QuoteProduct[] = [...AC_QC1_PRODUCTS, ...SOLAR_QC1_PRODUCTS];

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
@@ -25,44 +25,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const profileLoadInFlightRef = useRef<string | null>(null);
+  const userRef = useRef<User | null>(null);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          // Defer any Supabase calls to avoid deadlocks inside the callback
-          setTimeout(() => {
-            loadUserProfile(session.user);
-          }, 0);
-        } else {
-          setUser(null);
-          setIsLoading(false);
-        }
-      }
-    );
+    userRef.current = user;
+  }, [user]);
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      
-      if (session?.user) {
-        setTimeout(() => {
-          loadUserProfile(session.user);
-        }, 0);
-      } else {
-        setIsLoading(false);
-      }
-    });
+  const loadUserProfile = useCallback(async (supabaseUser: SupabaseUser) => {
+    if (profileLoadInFlightRef.current === supabaseUser.id) {
+      return;
+    }
+    profileLoadInFlightRef.current = supabaseUser.id;
+    const isSameUser = userRef.current?.id === supabaseUser.id;
+    if (!isSameUser) {
+      setIsLoading(true);
+    }
 
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      console.log('Loading/initializing profile for user:', supabaseUser.id);
 
       // 1) Ensure profile exists (use maybeSingle to avoid throwing on empty)
       const { data: profile, error: profileError } = await supabase
@@ -131,9 +111,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: supabaseUser.email?.split('@')[0] || 'User',
       });
     } finally {
+      profileLoadInFlightRef.current = null;
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+
+      if (session?.user) {
+        if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "USER_UPDATED") {
+          setTimeout(() => {
+            void loadUserProfile(session.user);
+          }, 0);
+        } else {
+          setIsLoading(false);
+        }
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [loadUserProfile]);
 
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -148,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
+    setIsLoading(false);
   };
 
   return (

@@ -72,6 +72,7 @@ const unsigned long HTTP_POST_TIMEOUT = 10000;          // 10 seconds
 const unsigned long MAX_WIFI_ON_TIME = 60000;           // 1 minute (safety net)
 const unsigned long AUTO_RESET_INTERVAL = 21600000;     // 6 hours
 const unsigned long BOOT_BUTTON_HOLD_TIME = 10000;      // 10 seconds (WiFi reset only)
+const unsigned long WIFI_RESET_HOLD_TIME = 5000;        // 5 seconds (external reset button on cable)
 const unsigned long WATCHDOG_TIMEOUT = 60;              // 60 seconds
 const unsigned long WIFI_STUCK_TIMEOUT = 120000;        // 2 minutes
 const unsigned long WIFI_INITIAL_CONNECT_TIMEOUT_MS = 15000;  // 15s per attempt before retry (boot until first connect)
@@ -85,6 +86,9 @@ const int TEMP_PIN_EXTERIOR = 22;
 const int TEMP_PIN_INTERIOR = 23;
 const int CT_PIN = 36;
 const int BOOT_BUTTON_PIN = 0;
+// External WiFi reset button (recommended: on ~2m cable for easy access)
+// Choose a free GPIO with INPUT_PULLUP and wire button to GND.
+const int WIFI_RESET_PIN = 26;
 
 // ALL 6 VOLTAGE INPUTS (Universal - works for all manufacturers)
 const int GPIO_INPUT_1 = 35;  // Green - Fan (Cirrus/CoolBreeze)
@@ -208,6 +212,12 @@ float lastValidInteriorTemp = 25.0;
 #define TEMP_MIN_VALID -50.0
 #define TEMP_MAX_VALID 120.0
 
+// Temperature calibration offsets (°C)
+// Set these per installation if probes read consistently high/low.
+const float MOTOR_TEMP_OFFSET_C = 0.0;
+const float EXTERIOR_TEMP_OFFSET_C = 0.0;
+const float INTERIOR_TEMP_OFFSET_C = 0.0;
+
 // ============================================
 // Setup Function
 // ============================================
@@ -234,6 +244,7 @@ void setup() {
   lastWatchdogFeed = millis();
   
   pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(WIFI_RESET_PIN, INPUT_PULLUP);
   
   esp_task_wdt_deinit();
   esp_task_wdt_config_t wdt_config = {
@@ -448,9 +459,9 @@ void readSensors() {
   sensorInterior.requestTemperatures();
   delay(750);
   
-  motorTemp = readTemperatureWithValidation(sensorMotor, lastValidMotorTemp);
-  exteriorTemp = readTemperatureWithValidation(sensorExterior, lastValidExteriorTemp);
-  interiorTemp = readTemperatureWithValidation(sensorInterior, lastValidInteriorTemp);
+  motorTemp = readTemperatureWithValidation(sensorMotor, lastValidMotorTemp) + MOTOR_TEMP_OFFSET_C;
+  exteriorTemp = readTemperatureWithValidation(sensorExterior, lastValidExteriorTemp) + EXTERIOR_TEMP_OFFSET_C;
+  interiorTemp = readTemperatureWithValidation(sensorInterior, lastValidInteriorTemp) + INTERIOR_TEMP_OFFSET_C;
   
   float rawCurrent = abs(emon1.calcIrms(1480));
   current = (rawCurrent < 0.1) ? 0.0 : rawCurrent;
@@ -574,12 +585,17 @@ float readTemperatureWithValidation(DallasTemperature &sensor, float &lastValid)
 
 void checkBootButton(unsigned long currentMillis) {
   bool buttonState = digitalRead(BOOT_BUTTON_PIN) == LOW;
+  bool wifiResetState = digitalRead(WIFI_RESET_PIN) == LOW;
   
-  if(buttonState && !bootButtonPressed) {
+  // Either the on-board BOOT button (10s) OR an external reset button (5s)
+  const bool anyPressed = buttonState || wifiResetState;
+  const unsigned long requiredHold = wifiResetState ? WIFI_RESET_HOLD_TIME : BOOT_BUTTON_HOLD_TIME;
+
+  if(anyPressed && !bootButtonPressed) {
     bootButtonPressTime = currentMillis;
     bootButtonPressed = true;
-  } else if(buttonState && bootButtonPressed) {
-    if(currentMillis - bootButtonPressTime >= BOOT_BUTTON_HOLD_TIME) {
+  } else if(anyPressed && bootButtonPressed) {
+    if(currentMillis - bootButtonPressTime >= requiredHold) {
       Serial.println("Manual reset triggered - clearing WiFi only (Machine ID/API Key preserved)");
       // Clear our stored WiFi credentials and WiFiManager's NVS so config portal opens on next boot
       preferences.remove(PREF_WIFI_SSID);
@@ -589,7 +605,7 @@ void checkBootButton(unsigned long currentMillis) {
       delay(2000);
       ESP.restart();
     }
-  } else if(!buttonState && bootButtonPressed) {
+  } else if(!anyPressed && bootButtonPressed) {
     bootButtonPressed = false;
   }
 }

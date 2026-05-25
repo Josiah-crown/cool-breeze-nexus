@@ -16,8 +16,11 @@ dist-ssr
 docs/
 DAILY_LOGS/
 *.md
-!README.md
+!AAA_README.md
 !QUICK_START.md
+!AGENTS.md
+!AAA_CLAUDE.md
+!DAILY_LOGS/DAILY_LOG_CHECKLIST.md
 
 # Sensitive files
 .env

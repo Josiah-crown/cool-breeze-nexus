@@ -17,9 +17,13 @@ interface ApiKey {
 interface ApiKeyManagerProps {
   machineId?: string;
   mode: 'admin' | 'assign';
+  /** Called after keys change (e.g. assign) so parent can refresh machine row / ESP hint */
+  onKeysUpdated?: () => void;
+  /** assign: only paste/replace UI (for MachineOnSiteSetup advanced section) */
+  assignVariant?: 'default' | 'replaceOnly';
 }
 
-const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
+const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode, onKeysUpdated, assignVariant = 'default' }) => {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [description, setDescription] = useState('');
@@ -88,12 +92,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
 
       toast.success('API key generated successfully');
       setDescription('');
-      fetchApiKeys();
-      
-      // Reload page to refresh all API key lists
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await fetchApiKeys();
     } catch (error: any) {
       toast.error(error.message || 'Failed to generate API key');
     }
@@ -156,12 +155,8 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
 
       toast.success('API key assigned successfully');
       setPasteKey('');
-      fetchApiKeys();
-      
-      // Reload page to refresh all API key lists
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await fetchApiKeys();
+      onKeysUpdated?.();
     } catch (error: any) {
       toast.error(error.message || 'Failed to assign API key');
     }
@@ -177,12 +172,8 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
       if (error) throw error;
 
       toast.success('API key deleted');
-      fetchApiKeys();
-      
-      // Reload page to refresh all API key lists
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await fetchApiKeys();
+      onKeysUpdated?.();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete API key');
     }
@@ -235,11 +226,35 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
   };
 
   if (mode === 'assign') {
-    // Machine detail view - paste and assign mode
+    if (assignVariant === 'replaceOnly') {
+      return (
+        <div className="space-y-2">
+          {loading ? <p className="text-xs text-muted-foreground">Loading…</p> : null}
+          <Input
+            placeholder="Paste existing API key"
+            value={pasteKey}
+            onChange={(e) => setPasteKey(e.target.value)}
+            className="border-2 border-foreground bg-accent/10 hover:bg-accent/20 hover:border-transparent focus:border-[#8FB83D] focus:bg-accent/20 transition-all text-foreground font-mono text-sm"
+          />
+          <Button
+            type="button"
+            onClick={assignApiKey}
+            className="w-full text-white"
+            style={{ backgroundColor: '#8FB83D', border: '2px solid #8FB83D' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#7aa332')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#8FB83D')}
+          >
+            Assign this key to this machine
+          </Button>
+        </div>
+      );
+    }
+
+    // Machine detail — full assign card (legacy / standalone)
     return (
-      <Card className="bg-card border-[3px] border-[#8FB83D]">
+        <Card className="bg-card border-[3px] border-[#8FB83D]">
         <CardHeader className="border-b-[3px] border-[#8FB83D]">
-          <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>ESP32 Connection</CardTitle>
+          <CardTitle className="text-lg" style={{ color: '#8FB83D' }}>API key management</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="space-y-2">
@@ -268,7 +283,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
                 This machine cannot receive data from ESP32 until you assign an API key.
               </p>
               <p className="text-xs text-yellow-700 dark:text-yellow-300 font-medium">
-                Generate a key in the admin panel, then paste it above.
+                Assign a key below, or ask your administrator to provision one.
               </p>
             </div>
           ) : (
@@ -306,44 +321,8 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ machineId, mode }) => {
                   </Button>
                 </div>
               ))}
-              
-              {/* Machine UUID - For ESP32 Configuration */}
-              <div className="mt-4 pt-4 border-t border-accent/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-4 w-4 text-[#8FB83D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-sm font-semibold" style={{ color: '#8FB83D' }}>Machine UUID:</p>
-                </div>
-                <div className="flex items-center gap-2 p-2 bg-background rounded border border-accent/20">
-                  <code className="flex-1 text-xs font-mono break-all" style={{ color: '#8FB83D' }}>
-                    {machineId}
-                  </code>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(machineId || '')}
-                    title="Copy UUID"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Use this UUID when configuring your ESP32 device
-                </p>
-              </div>
             </div>
           )}
-
-          <div className="text-xs space-y-1 bg-accent/10 border border-accent/20 p-3 rounded">
-            <p className="font-semibold" style={{ color: '#8FB83D' }}>ESP32 Implementation:</p>
-            <ul className="list-disc list-inside space-y-1 text-foreground">
-              <li>Include API key in HTTP header: <code className="bg-background text-foreground px-1 rounded">X-API-Key: your_key</code></li>
-              <li>Send data to: <code className="bg-background text-foreground px-1 rounded">POST /machines/update</code></li>
-              <li>Get your API key from the super admin dashboard</li>
-              <li>Store securely in ESP32 EEPROM or SPIFFS</li>
-            </ul>
-          </div>
         </CardContent>
       </Card>
     );

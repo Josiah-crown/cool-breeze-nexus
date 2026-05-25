@@ -5,7 +5,7 @@ import { StatusLight } from './StatusLight';
 import { FanComponent } from './FanComponent';
 import { HeatPumpComponent } from './HeatPumpComponent';
 import { AirConditionerComponent } from './AirConditionerComponent';
-import ApiKeyManager from './ApiKeyManager';
+import MachineOnSiteSetup from './MachineOnSiteSetup';
 import { NotificationRecipientsPanel } from './NotificationRecipientsPanel';
 import { AlertThresholdsEditor } from './AlertThresholdsEditor';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
@@ -38,6 +38,8 @@ interface MachineDetailViewProps {
   machine: MachineStatus;
   historicalData: MachineHistoricalData;
   onClose: () => void;
+  /** Refreshed after API key assign so ESP panel shows Bearer hint without full page reload */
+  onMachineApiKeyUpdated?: () => void;
 }
 
 type Period = '24h' | '7d' | '30d' | '1y';
@@ -424,9 +426,10 @@ const HistoricalChart = memo(({
 HistoricalChart.displayName = 'HistoricalChart';
 
 const MachineDetailView: React.FC<MachineDetailViewProps> = ({
-  machine: initialMachine, 
+  machine: initialMachine,
   historicalData: initialHistoricalData,
-  onClose 
+  onClose,
+  onMachineApiKeyUpdated,
 }) => {
   const { toast } = useToast();
   const toastRef = useRef(toast);
@@ -462,7 +465,16 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [newLocation, setNewLocation] = useState(initialMachine.location || '');
   const [locationFallback, setLocationFallback] = useState<string | null>(null);
-  
+
+  const refreshMachineApiKeyFromDb = useCallback(async () => {
+    const { data, error } = await supabase.from("machines").select("api_key").eq("id", machine.id).maybeSingle();
+    if (!error && data) {
+      const row = data as { api_key: string | null };
+      setMachine((prev) => ({ ...prev, apiKey: row.api_key ?? null }));
+    }
+    onMachineApiKeyUpdated?.();
+  }, [machine.id, onMachineApiKeyUpdated]);
+
   // Fetch latest reading from processing table (same source as historical graph)
   const fetchLatestReading = async () => {
     const processingTable = getProcessingTable(machine.type as MachineType, machine.manufacturer);
@@ -1137,14 +1149,9 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
         
         <CardContent className="p-[1.5rem]">
           <div className="space-y-[1.5rem]">
-            {/* Machine Visual & API Key - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-[1.5rem]">
-              <div className="flex justify-center items-start">
-                {getMachineComponent()}
-              </div>
-              <div>
-                <ApiKeyManager machineId={machine.id} mode="assign" />
-              </div>
+            {/* Machine visual — full width */}
+            <div className="flex justify-center items-start">
+              {getMachineComponent()}
             </div>
             
             {/* System Status & Current Readings - Side by Side */}
@@ -1426,6 +1433,13 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
             <AlertThresholdsEditor 
               machineId={machine.id}
               machineType={machine.type}
+            />
+
+            {/* ESP ingest + API keys — bottom of detail view, side by side on wide screens */}
+            <MachineOnSiteSetup
+              machineId={machine.id}
+              machineApiKey={machine.apiKey ?? null}
+              onKeysUpdated={refreshMachineApiKeyFromDb}
             />
           </div>
         </CardContent>
