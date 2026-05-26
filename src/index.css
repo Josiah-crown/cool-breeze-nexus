@@ -189,26 +189,7 @@
     color: hsl(var(--accent));
   }
   
-  /* Status Indicators */
-  .status-light {
-    @apply w-4 h-4 rounded-full border-2 border-[hsl(var(--border))]
-           transition-all duration-300 shadow-inner;
-  }
-  
-  .status-light.active {
-    @apply border-accent bg-gradient-to-br from-accent to-[hsl(var(--accent-glow))]
-           shadow-[var(--glow-accent)] animate-pulse;
-  }
-  
-  .status-light.warning {
-    @apply border-warning bg-gradient-to-br from-warning to-[hsl(var(--warning))]
-           shadow-[0_0_20px_hsl(var(--warning)_/_0.3)];
-  }
-  
-  .status-light.error {
-    @apply border-destructive bg-gradient-to-br from-destructive to-[hsl(var(--destructive))]
-           shadow-[0_0_20px_hsl(var(--destructive)_/_0.3)];
-  }
+  /* Status LED dots — sizing/shape live in StatusLight.tsx (uniform circles, shrink-0) */
   
   /* Professional Panels with rounded styling */
   .panel {

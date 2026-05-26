@@ -96,29 +96,19 @@ export function polygonFromBuildingShape(shape: BuildingShapeForMatch): OutlineP
   return rectToOutlinePolygon(shape.x_pct, shape.y_pct, shape.w_pct, shape.h_pct);
 }
 
-/** Prefer building containing the point; otherwise nearest building centroid. */
+/**
+ * Building id only when the point lies inside a saved outline (polygon or bbox).
+ * Returns null if outside all buildings — pins stay in the "not assigned to a building" zone.
+ */
 export function nearestBuildingIdForPoint(point: OutlinePointPct, shapes: BuildingShapeForMatch[]): string | null {
   if (shapes.length === 0) return null;
 
-  let containing: string | null = null;
   for (const s of shapes) {
     if (pointInPolygon(point, polygonFromBuildingShape(s))) {
-      containing = s.building_id;
+      return s.building_id;
     }
   }
-  if (containing) return containing;
-
-  let bestId: string | null = null;
-  let bestDist = Infinity;
-  for (const s of shapes) {
-    const c = outlineCentroid(polygonFromBuildingShape(s));
-    const d = Math.hypot(point.x_pct - c.x_pct, point.y_pct - c.y_pct);
-    if (d < bestDist) {
-      bestDist = d;
-      bestId = s.building_id;
-    }
-  }
-  return bestId;
+  return null;
 }
 
 export type BuildingOutlineColor = {

@@ -28,7 +28,8 @@
 ## Commercial / legal (summary)
 
 - **Per-site agreements** and schedule binding: see `docs/PRD-BMS.md` (§2.6–2.6.3). Legal state is scoped to **`site_id`** where applicable.
-- **Dashboard (machines):** machines are grouped under **BMS sites** (floorplan pins → building → site); each site is a **collapsible section defaulting to open**. **API keys / ESP ingest** live on the **machine detail** sheet (bottom), not the dashboard grid.
+- **Dashboard (machines):** machines are grouped under **BMS sites** (floorplan pins → building → site); each site is a **collapsible section defaulting to open**. **API keys / ESP ingest** live on the **machine detail** sheet (bottom), not the dashboard grid — **hidden for `client` role** (`src/lib/accountRoles.ts`: `canManageMachines` / `isClientViewer`).
+- **Sites (Layer 2):** clients have **view-only** access (`user_can_manage_site` excludes clients). They reach **`/dashboard/sites`** via tab **Sites (view)** or dashboard **View sites**; ERF machine icons open **`MachineDetailView`** without layout edit controls.
 
 ## New machine / non-Cursor AI
 

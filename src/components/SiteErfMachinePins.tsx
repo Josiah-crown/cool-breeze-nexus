@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import type { OutlinePointPct } from "@/lib/siteErfOutline";
+import { pointerMovedBeyondTap } from "@/lib/erfCanvasPointer";
 import { displayPositionForMachinePins, machinePinAccent, machineTypeIcon } from "@/lib/siteErfMachine";
 import type { MachineType } from "@/types/machine";
 
@@ -23,6 +24,8 @@ type SiteErfMachinePinsProps = {
   placementPreviewBuildingId?: string | null;
   dragPreviewBuildingId?: string | null;
   hoverEnabled?: boolean;
+  canDragPins?: boolean;
+  onMachineClick?: (machineId: string) => void;
   onMachineHover?: (machineId: string, buildingId: string | null) => void;
   onMachineHoverEnd?: () => void;
   onPinPointerDown?: (evt: React.PointerEvent, machineId: string, x_pct: number, y_pct: number) => void;
@@ -41,6 +44,9 @@ function MachinePinMarker({
   isHighlighted,
   isDragging,
   isPlacing,
+  isPlacementPreview = false,
+  canDragPins,
+  onMachineClick,
   hoverEnabled,
   onHover,
   onHoverEnd,
@@ -58,6 +64,9 @@ function MachinePinMarker({
   isHighlighted: boolean;
   isDragging: boolean;
   isPlacing: boolean;
+  isPlacementPreview?: boolean;
+  canDragPins: boolean;
+  onMachineClick?: (machineId: string) => void;
   hoverEnabled: boolean;
   onHover?: (machineId: string, buildingId: string | null) => void;
   onHoverEnd?: () => void;
@@ -67,38 +76,89 @@ function MachinePinMarker({
 }) {
   const accent = machinePinAccent(buildingId, orderedBuildingIds);
   const Icon = machineTypeIcon(machineType);
+  const tapStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const openFromTap = (e: React.SyntheticEvent) => {
+    if (!onMachineClick) return;
+    e.stopPropagation();
+    onMachineClick(machineId);
+  };
 
   return (
     <div
-      data-erf-machine-pin
-      data-erf-machine-hit
-      draggable
+      data-erf-machine-pin={isPlacementPreview ? undefined : true}
+      data-erf-placement-preview={isPlacementPreview ? true : undefined}
+      data-erf-machine-hit={isPlacementPreview ? undefined : true}
+      draggable={canDragPins && !isPlacementPreview}
+      role={onMachineClick ? "button" : undefined}
+      tabIndex={onMachineClick ? 0 : undefined}
       className={[
-        "absolute z-10 flex -translate-x-1/2 -translate-y-1/2 touch-none flex-col items-center",
-        isDragging ? "cursor-grabbing z-20" : "cursor-grab active:cursor-grabbing",
+        "absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center p-1",
+        isPlacementPreview ? "pointer-events-none" : "pointer-events-auto",
+        canDragPins
+          ? "touch-none"
+          : "touch-manipulation",
+        canDragPins
+          ? isDragging
+            ? "cursor-grabbing z-20"
+            : "cursor-grab active:cursor-grabbing"
+          : "cursor-pointer z-20",
       ].join(" ")}
       style={{ left: `${x_pct}%`, top: `${y_pct}%` }}
-      title={`${name} — drag to reposition`}
+      title={canDragPins ? `${name} — drag to reposition` : `${name} — tap to view live readings`}
       onPointerEnter={hoverEnabled ? () => onHover?.(machineId, buildingId) : undefined}
       onPointerLeave={hoverEnabled ? () => onHoverEnd?.() : undefined}
-      onPointerDown={onPointerDown}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      onPointerDown={
+        canDragPins
+          ? onPointerDown
+          : onMachineClick
+            ? (e) => {
+                tapStartRef.current = { x: e.clientX, y: e.clientY };
+                e.stopPropagation();
+              }
+            : undefined
+      }
+      onPointerUp={
+        !canDragPins && onMachineClick
+          ? (e) => {
+              const start = tapStartRef.current;
+              tapStartRef.current = null;
+              if (!start || pointerMovedBeyondTap(start, { x: e.clientX, y: e.clientY })) return;
+              openFromTap(e);
+            }
+          : undefined
+      }
+      onDragStart={canDragPins ? onDragStart : undefined}
+      onDragEnd={canDragPins ? onDragEnd : undefined}
+      onKeyDown={
+        onMachineClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                onMachineClick(machineId);
+              }
+            }
+          : undefined
+      }
     >
       <div
         className={[
-          "flex h-9 w-9 items-center justify-center rounded-lg border-2 bg-white shadow-md transition-transform sm:h-8 sm:w-8",
-          isHighlighted || isPlacing ? "scale-110 ring-2 ring-offset-1" : "",
-          isDragging ? "ring-2 ring-primary" : "",
+          "flex h-9 w-9 items-center justify-center rounded-lg border-2 bg-white shadow-md sm:h-8 sm:w-8",
+          !isDragging && "transition-transform",
+          isDragging ? "z-30 scale-105 ring-2 ring-primary ring-offset-1 shadow-lg" : "",
+          !isDragging && (isHighlighted || isPlacing) ? "scale-110 ring-2 ring-offset-1" : "",
         ].join(" ")}
         style={{
           borderColor: accent.stroke,
-          ...(isHighlighted || isPlacing ? { outlineColor: accent.stroke, boxShadow: `0 0 0 2px ${accent.stroke}44` } : {}),
+          ...(!isDragging && (isHighlighted || isPlacing)
+            ? { outlineColor: accent.stroke, boxShadow: `0 0 0 2px ${accent.stroke}44` }
+            : {}),
         }}
       >
         <Icon className="h-4 w-4" style={{ color: accent.strokeDark }} aria-hidden />
       </div>
-      {isHighlighted && (
+      {isHighlighted && !isDragging && (
         <span className="mt-0.5 max-w-[7rem] truncate rounded bg-white/95 px-1.5 py-0.5 text-[10px] font-semibold text-[#0D2211] shadow-sm">
           {name}
         </span>
@@ -119,6 +179,8 @@ const SiteErfMachinePins: React.FC<SiteErfMachinePinsProps> = ({
   placementPreviewBuildingId = null,
   dragPreviewBuildingId = null,
   hoverEnabled = true,
+  canDragPins = true,
+  onMachineClick,
   onMachineHover,
   onMachineHoverEnd,
   onPinPointerDown,
@@ -150,7 +212,9 @@ const SiteErfMachinePins: React.FC<SiteErfMachinePinsProps> = ({
             isHighlighted={highlightedMachineId === p.machine_id}
             isDragging={isDragging}
             isPlacing={placingMachineId === p.machine_id}
-            hoverEnabled={hoverEnabled && !placingMachineId}
+            hoverEnabled={hoverEnabled && !placingMachineId && !isDragging}
+            canDragPins={canDragPins}
+            onMachineClick={onMachineClick}
             onHover={onMachineHover}
             onHoverEnd={onMachineHoverEnd}
             onPointerDown={(e) => onPinPointerDown?.(e, p.machine_id, p.x_pct, p.y_pct)}
@@ -172,6 +236,8 @@ const SiteErfMachinePins: React.FC<SiteErfMachinePinsProps> = ({
           isHighlighted
           isDragging={false}
           isPlacing
+          isPlacementPreview
+          canDragPins={false}
           hoverEnabled={false}
         />
       )}

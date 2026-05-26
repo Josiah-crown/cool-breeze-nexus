@@ -170,8 +170,8 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 
 ### Authenticated (Dashboard hub)
 - `/dashboard/*` nested hub layout
-  - **Dashboard home (`/dashboard`)** — machine cards grouped by **BMS site** (machines placed on a site’s building floorplan). Each site is a **collapsible block defaulting to open**; machines not pinned to any site appear under **“Not on a site map”**. Hierarchy tree + company filter dropdown were removed from this page; org/user tools use **Add client / user** and **Sites** routes. **ESP32 API key pool** is not on the dashboard — use each **machine’s expanded detail** (bottom) for **ESP ingest URL** + **API key management**.
-  - sites section (includes ERF view + building list)
+  - **Dashboard home (`/dashboard`)** — machine cards grouped by **BMS site** (machines placed on a site’s building floorplan). Each site is a **collapsible block defaulting to open**; machines not pinned to any site appear under **“Not on a site map”**. Hierarchy tree + company filter dropdown were removed from this page. **Installers/companies/super_admin:** toolbar **Add machine**, **Add client / user**, **Sites**, **Settings**. **`client` role:** **Refresh** + **View sites** only; machine cards and detail sheet are read-only (no rename, alerts config, ESP keys). Helpers: `src/lib/accountRoles.ts` (`canManageMachines`, `isClientViewer`). Poll/realtime refetch uses background reload (no full-page spinner after first load).
+  - **`/dashboard/sites`** (`Sites.tsx`, embedded in hub) — ERF plan, buildings, machine pins. **Clients:** view-only (RLS `user_can_manage_site` false for clients); tap ERF machine icon or machine card → **`MachineDetailView`**. **Installers+:** upload ERF, client site owner, company assignment, draw outlines, place/move pins. Manual: `docs/CMONITOR_SITES_ERF_MANUAL.md`.
   - buildings opened from within sites flow
 
 ### Legal / commercial (PRD pointers)
@@ -189,7 +189,8 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 - Dashboard hub layout: `src/pages/DashboardLayout.tsx`
 - Dashboard home: `src/pages/Dashboard.tsx` (site-grouped machine grid: `src/components/DashboardSiteMachineSections.tsx`, `src/hooks/useSiteMachineGroups.ts`)
 - Machine expanded sheet: `src/components/MachineDetailView.tsx` (ESP ingest + API keys at bottom)
-- Sites + ERF UI: `src/pages/Sites.tsx`
+- Sites + ERF UI: `src/pages/Sites.tsx`, `src/components/SiteErfMachinePins.tsx`, `src/components/SiteErfOutlineLayer.tsx`
+- Role helpers (UI gating): `src/lib/accountRoles.ts`
 - Shared top bar: `src/components/TopTaskbar.tsx`
 
 ### Monitoring / historical data (Layer 1)
@@ -265,11 +266,14 @@ Site
   - `supabase/migrations/20260413000000_create_sites.sql`
   - `supabase/migrations/20260430000000_buildings_and_humidity_v1.sql`
   - `supabase/migrations/20260430000001_create_site_rpc.sql`
-- Site ERF + shapes (May 06 work):
-  - `supabase/migrations/20260506000010_site_erf_and_shapes_v1.sql`
-  - tables:
-    - `site_erf_assets` (one ERF image path per site)
-    - `site_building_shapes` (% coords: `x_pct`, `y_pct`, `w_pct`, `h_pct`)
+- Site ERF + machine positions (May 2026):
+  - `supabase/migrations/20260521120000_site_erf_and_machine_positions_v1.sql` — `site_erf_assets`, `site_machine_positions`, building `polygon_pct`
+  - `supabase/migrations/20260506000010_site_erf_and_shapes_v1.sql` (legacy shapes table; polygon path preferred)
+- Sites access + client read-only (May 21–25):
+  - `20260522100000_sites_manage_policies_v1.sql`
+  - `20260522110000_create_site_client_owner_v1.sql` — `create_site(..., p_owner_id)`
+  - `20260522120000_sites_company_and_access_v1.sql` — `sites.company_id`, expanded access helpers
+  - `20260522130000_sites_client_readonly_v1.sql` — clients cannot `user_can_manage_site`
 
 **Storage (current MVP shortcut):**
 - Bucket: `floorplans`
@@ -290,7 +294,7 @@ Site
 - `super_admin`: global access
 - `company`: manage company scope
 - `installer`: manage assigned client scope
-- `client`: mostly read-only for assigned machines/sites
+- `client`: read machines and **view** sites/ERF; **cannot** manage site layout (`user_can_manage_site` false — migration `20260522130000`). UI mirrors via `src/lib/accountRoles.ts`.
 
 Security model: Supabase **RLS everywhere**. Never “fix access” only in frontend — verify DB policies and service-role usage in edge functions.
 

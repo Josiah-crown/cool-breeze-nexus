@@ -12,7 +12,13 @@ export interface UserHierarchy {
   companyId?: string;
 }
 
-const useMachineData = (userId: string, userRole: string) => {
+type UseMachineDataOptions = {
+  /** When false, skips 24h chart prefetch (e.g. Sites — detail view loads its own history). */
+  includeHistorical?: boolean;
+};
+
+const useMachineData = (userId: string, userRole: string, options?: UseMachineDataOptions) => {
+  const includeHistorical = options?.includeHistorical !== false;
   const [machines, setMachines] = useState<MachineStatus[]>([]);
   const [users, setUsers] = useState<UserHierarchy[]>([]);
   const [historicalData, setHistoricalData] = useState<{ [key: string]: MachineHistoricalData }>({});
@@ -107,43 +113,60 @@ const useMachineData = (userId: string, userRole: string) => {
       const latestTimestamps = new Map<string, Date>();
       
       if (machineIds.length > 0) {
-        // Check readings_raw table for latest timestamps
-        const { data: latestReadingsRaw } = await supabase
-          .from('readings_raw')
-          .select('machine_id, created_at')
-          .in('machine_id', machineIds)
-          .order('created_at', { ascending: false });
-        
-        // Check cirrus table for latest timestamps
-        const { data: latestCirrus } = await supabase
-          .from('cirrus')
-          .select('machine_id, timestamp')
-          .in('machine_id', machineIds)
-          .order('timestamp', { ascending: false });
-        
-        // Check coolbreeze table for latest timestamps
-        const { data: latestCoolBreeze, error: coolbreezeError } = await supabase
-          .from('coolbreeze')
-          .select('machine_id, timestamp')
-          .in('machine_id', machineIds)
-          .order('timestamp', { ascending: false });
-        
-        // Handle table-not-found errors: suppress 404 errors, but log other errors
+        const readingsByMachine = new Map<string, Date>();
+
+        const [
+          { data: latestReadingsRaw },
+          { data: latestCirrus },
+          { data: latestCoolBreeze, error: coolbreezeError },
+          { data: latestAlliance, error: allianceError },
+        ] = await Promise.all([
+          supabase
+            .from('readings_raw')
+            .select('machine_id, created_at')
+            .in('machine_id', machineIds)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('cirrus')
+            .select('machine_id, timestamp')
+            .in('machine_id', machineIds)
+            .order('timestamp', { ascending: false }),
+          supabase
+            .from('coolbreeze')
+            .select('machine_id, timestamp')
+            .in('machine_id', machineIds)
+            .order('timestamp', { ascending: false }),
+          supabase
+            .from('alliance')
+            .select('machine_id, timestamp')
+            .in('machine_id', machineIds)
+            .order('timestamp', { ascending: false }),
+        ]);
+
         if (coolbreezeError) {
-          if (coolbreezeError.code === 'PGRST205' || coolbreezeError.message?.includes('Could not find the table') || coolbreezeError.message?.includes('does not exist')) {
-            // Table doesn't exist - this is a 404 that needs to be fixed by creating the table
-            // For now, treat as empty data (0 readings)
+          if (
+            coolbreezeError.code === 'PGRST205' ||
+            coolbreezeError.message?.includes('Could not find the table') ||
+            coolbreezeError.message?.includes('does not exist')
+          ) {
             console.debug('[useMachineData] coolbreeze table does not exist yet - showing 0 readings');
           } else {
-            // Other errors (permissions, etc.) - log but continue
             console.warn('[useMachineData] Error fetching coolbreeze timestamps:', coolbreezeError);
           }
         }
-        
-        // Build map of latest timestamps (take most recent from any table)
-        // Group by machine_id and take the most recent timestamp for each
-        const readingsByMachine = new Map<string, Date>();
-        
+
+        if (allianceError) {
+          if (
+            allianceError.code === 'PGRST205' ||
+            allianceError.message?.includes('Could not find the table') ||
+            allianceError.message?.includes('does not exist')
+          ) {
+            console.debug('[useMachineData] alliance table does not exist yet - showing 0 readings');
+          } else {
+            console.warn('[useMachineData] Error fetching alliance timestamps:', allianceError);
+          }
+        }
+
         (latestReadingsRaw || []).forEach((reading: any) => {
           const existing = readingsByMachine.get(reading.machine_id);
           const readingTime = new Date(reading.created_at);
@@ -151,7 +174,7 @@ const useMachineData = (userId: string, userRole: string) => {
             readingsByMachine.set(reading.machine_id, readingTime);
           }
         });
-        
+
         (latestCirrus || []).forEach((reading: any) => {
           const existing = readingsByMachine.get(reading.machine_id);
           const readingTime = new Date(reading.timestamp);
@@ -159,7 +182,7 @@ const useMachineData = (userId: string, userRole: string) => {
             readingsByMachine.set(reading.machine_id, readingTime);
           }
         });
-        
+
         (latestCoolBreeze || []).forEach((reading: any) => {
           const existing = readingsByMachine.get(reading.machine_id);
           const readingTime = new Date(reading.timestamp);
@@ -167,26 +190,7 @@ const useMachineData = (userId: string, userRole: string) => {
             readingsByMachine.set(reading.machine_id, readingTime);
           }
         });
-        
-        // Check alliance table for latest timestamps (if it exists)
-        const { data: latestAlliance, error: allianceError } = await supabase
-          .from('alliance')
-          .select('machine_id, timestamp')
-          .in('machine_id', machineIds)
-          .order('timestamp', { ascending: false });
-        
-        // Handle table-not-found errors: suppress 404 errors, but log other errors
-        if (allianceError) {
-          if (allianceError.code === 'PGRST205' || allianceError.message?.includes('Could not find the table') || allianceError.message?.includes('does not exist')) {
-            // Table doesn't exist - this is a 404 that needs to be fixed by creating the table
-            // For now, treat as empty data (0 readings)
-            console.debug('[useMachineData] alliance table does not exist yet - showing 0 readings');
-          } else {
-            // Other errors (permissions, etc.) - log but continue
-            console.warn('[useMachineData] Error fetching alliance timestamps:', allianceError);
-          }
-        }
-        
+
         (latestAlliance || []).forEach((reading: any) => {
           const existing = readingsByMachine.get(reading.machine_id);
           const readingTime = new Date(reading.timestamp);
@@ -194,8 +198,7 @@ const useMachineData = (userId: string, userRole: string) => {
             readingsByMachine.set(reading.machine_id, readingTime);
           }
         });
-        
-        // Copy to latestTimestamps map
+
         readingsByMachine.forEach((timestamp, machineId) => {
           latestTimestamps.set(machineId, timestamp);
         });
@@ -284,20 +287,23 @@ const useMachineData = (userId: string, userRole: string) => {
           .map((m: any) => mapMachine(m, notifPrefsMap, latestTimestamps));
       }
 
-      // Fetch real historical data for each machine (24h period by default)
-      const visibleMachineIds = visibleMachines.map(m => m.id);
-      const realHistoricalData = await fetchHistoricalDataForMachines(visibleMachineIds, '24h');
-
       setMachines(visibleMachines);
       setUsers(transformedUsers);
-      setHistoricalData(realHistoricalData);
+
+      if (includeHistorical && visibleMachines.length > 0) {
+        const visibleMachineIds = visibleMachines.map((m) => m.id);
+        const realHistoricalData = await fetchHistoricalDataForMachines(visibleMachineIds, '24h');
+        setHistoricalData(realHistoricalData);
+      } else {
+        setHistoricalData({});
+      }
       hasLoadedOnceRef.current = true;
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoading(false);
     }
-  }, [userId, userRole]);
+  }, [userId, userRole, includeHistorical]);
 
   useEffect(() => {
     if (!userId) {

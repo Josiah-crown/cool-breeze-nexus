@@ -102,7 +102,7 @@ export function useSiteMachineGroups(visibleMachineIds: string[]) {
           siteId: s.id,
           siteName: s.name,
           siteAddress: s.address,
-          machineIds: Array.from(siteToMachines.get(s.id) || []),
+          machineIds: Array.from(siteToMachines.get(s.id) || []).sort(),
         })),
       );
       hasLoadedOnceRef.current = true;

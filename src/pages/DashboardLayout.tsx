@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import TopTaskbar from "@/components/TopTaskbar";
+import { isClientViewer } from "@/lib/accountRoles";
 
 const DashboardLayout: React.FC = () => {
   const { user } = useAuth();
@@ -38,7 +39,7 @@ const DashboardLayout: React.FC = () => {
                 ].join(" ")
               }
             >
-              Sites
+              {isClientViewer(user?.role) ? "Sites (view)" : "Sites"}
             </NavLink>
             <NavLink
               to="/dashboard/alerts"

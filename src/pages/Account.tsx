@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import TopTaskbar from "@/components/TopTaskbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRequiredLegalCompliance } from "@/hooks/useRequiredLegalCompliance";
+import { useLegalCompliance } from "@/contexts/LegalComplianceContext";
 import {
   type LegalAcceptanceRow,
   type LegalDocumentRow,
+  allRequiredDocumentsPublished,
   latestDocByKey,
   missingRequiredAcceptances,
   REQUIRED_DOC_KEYS,
@@ -47,17 +48,32 @@ function agreementHeading(documentKey: string, dbTitle: string) {
   return dbTitle || LEGAL_DISPLAY[k] || documentKey.replace(/_/g, " ");
 }
 
+const PROFILE_SELECT_BASE =
+  "id, name, email, cell_number, full_name_business, country, state, city, street, suburb, po_box";
+const PROFILE_SELECT_WITH_EMAIL_OPT_IN = `${PROFILE_SELECT_BASE}, email_subscribed`;
+
+function isMissingEmailSubscribedColumn(message: string | undefined) {
+  return Boolean(message?.includes("email_subscribed"));
+}
+
 const Account: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const requireLegalNotice = Boolean((location.state as { requireLegal?: boolean } | null)?.requireLegal);
+  const returnTo = (location.state as { from?: string } | null)?.from;
 
-  const { state: legalState, docs, acceptances, reload } = useRequiredLegalCompliance(user?.id);
+  const { state: legalState, docs, acceptances, reload } = useLegalCompliance();
 
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [emailSubscribedSupported, setEmailSubscribedSupported] = useState(true);
 
   const latestMap = useMemo(() => latestDocByKey(docs as LegalDocumentRow[]), [docs]);
+  const documentsPublished = useMemo(
+    () => allRequiredDocumentsPublished(docs as LegalDocumentRow[]),
+    [docs],
+  );
   const missingRequired = useMemo(
     () => missingRequiredAcceptances(docs as LegalDocumentRow[], acceptances as LegalAcceptanceRow[]),
     [docs, acceptances],
@@ -73,16 +89,34 @@ const Account: React.FC = () => {
       if (!user) return;
       setIsLoading(true);
       try {
-        const { data: profileData, error: profileError } = await supabase
+        let profileData: ProfileRow | null = null;
+        let profileError: { message?: string } | null = null;
+
+        const full = await supabase
           .from("profiles")
-          .select(
-            "id, name, email, cell_number, full_name_business, email_subscribed, country, state, city, street, suburb, po_box",
-          )
+          .select(PROFILE_SELECT_WITH_EMAIL_OPT_IN)
           .eq("id", user.id)
           .single();
+        profileData = full.data as ProfileRow | null;
+        profileError = full.error;
+
+        if (profileError && isMissingEmailSubscribedColumn(profileError.message)) {
+          setEmailSubscribedSupported(false);
+          const base = await supabase
+            .from("profiles")
+            .select(PROFILE_SELECT_BASE)
+            .eq("id", user.id)
+            .single();
+          profileData = base.data
+            ? ({ ...base.data, email_subscribed: false } as ProfileRow)
+            : null;
+          profileError = base.error;
+        } else if (!profileError) {
+          setEmailSubscribedSupported(true);
+        }
 
         if (profileError) throw profileError;
-        if (!cancelled) setProfile(profileData as ProfileRow);
+        if (!cancelled) setProfile(profileData);
       } catch (e: any) {
         toast.error(e?.message || "Failed to load account");
       } finally {
@@ -130,7 +164,9 @@ const Account: React.FC = () => {
     if (!user) return;
     const doc = latestMap.get(document_key);
     if (!doc) {
-      toast.error("Document not available");
+      toast.error(
+        "This agreement is not published yet. Run scripts/sql/BOOTSTRAP_LEGAL_TABLES_AND_SEED.sql in Supabase SQL Editor.",
+      );
       return;
     }
     const { error } = await supabase.from("legal_acceptances").insert({
@@ -141,7 +177,22 @@ const Account: React.FC = () => {
     });
     if (error) throw error;
     toast.success(`Signed: ${agreementHeading(doc.document_key, doc.title)}`);
+    const updatedAcceptances: LegalAcceptanceRow[] = [
+      ...acceptances.filter(
+        (a) => !(a.document_key === doc.document_key && a.document_version === doc.version),
+      ),
+      {
+        document_key: doc.document_key,
+        document_version: doc.version,
+        accepted_at: new Date().toISOString(),
+      },
+    ];
     await reload();
+    const stillMissing = missingRequiredAcceptances(docs, updatedAcceptances);
+    if (stillMissing.length === 0 && requireLegalNotice) {
+      const dest = returnTo && returnTo !== "/account" ? returnTo : "/dashboard/sites";
+      navigate(dest, { replace: true });
+    }
   };
 
   if (!user) {
@@ -341,23 +392,27 @@ const Account: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border border-black/10 p-4">
-                    <div>
-                      <div className="text-sm font-semibold text-[#1A2B1C]">Email updates</div>
-                      <div className="text-xs text-[#4A6B4D]">Marketing and product email (separate from alert emails on machines).</div>
+                  {emailSubscribedSupported ? (
+                    <div className="flex items-center justify-between rounded-lg border border-black/10 p-4">
+                      <div>
+                        <div className="text-sm font-semibold text-[#1A2B1C]">Email updates</div>
+                        <div className="text-xs text-[#4A6B4D]">
+                          Marketing and product email (separate from alert emails on machines).
+                        </div>
+                      </div>
+                      <Switch
+                        checked={Boolean(profile?.email_subscribed)}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            await updateProfile({ email_subscribed: checked });
+                            toast.success(checked ? "Email updates enabled" : "Email updates disabled");
+                          } catch (e: any) {
+                            toast.error(e?.message || "Failed to update preference");
+                          }
+                        }}
+                      />
                     </div>
-                    <Switch
-                      checked={Boolean(profile?.email_subscribed)}
-                      onCheckedChange={async (checked) => {
-                        try {
-                          await updateProfile({ email_subscribed: checked });
-                          toast.success(checked ? "Email updates enabled" : "Email updates disabled");
-                        } catch (e: any) {
-                          toast.error(e?.message || "Failed to update preference");
-                        }
-                      }}
-                    />
-                  </div>
+                  ) : null}
                 </CardContent>
               </Card>
 
@@ -372,6 +427,19 @@ const Account: React.FC = () => {
                 <CardContent className="space-y-6">
                   {legalBlockLoading ? (
                     <p className="text-sm text-[#4A6B4D]">Loading agreements…</p>
+                  ) : !documentsPublished ? (
+                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-[#1A2B1C]">
+                      <p className="font-semibold">Agreements not published yet</p>
+                      <p className="mt-2 text-[#4A6B4D]">
+                        The four required documents are not in the database (<code className="text-xs">legal_documents</code>
+                        ). Until they are seeded, signing cannot be recorded and Sites will stay blocked for clients.
+                      </p>
+                      <p className="mt-2 text-[#4A6B4D]">
+                        Administrator: run{" "}
+                        <code className="text-xs">scripts/sql/BOOTSTRAP_LEGAL_TABLES_AND_SEED.sql</code> in Supabase SQL
+                        Editor (creates tables and seeds documents).
+                      </p>
+                    </div>
                   ) : (
                     <>
                       {missingRequired.length > 0 ? (
@@ -393,6 +461,7 @@ const Account: React.FC = () => {
                                 </div>
                                 <Button
                                   className="shrink-0 bg-[#0D2211] text-white hover:bg-[#1A3A1E]"
+                                  disabled={!latestMap.has(m.key)}
                                   onClick={async () => {
                                     try {
                                       await acceptLatest(m.key);

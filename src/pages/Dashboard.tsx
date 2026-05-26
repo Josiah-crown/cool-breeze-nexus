@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import TopTaskbar from "@/components/TopTaskbar";
 import DemoDashboardPreview from "@/components/DemoDashboardPreview";
+import { canManageMachines } from "@/lib/accountRoles";
 
 const DashboardLoading: React.FC<{ embedded?: boolean }> = ({ embedded }) =>
   embedded ? (
@@ -129,6 +130,7 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const selectedMachineForOwnerChange = machines.find((m) => m.id === changeOwnerMachineId);
   const selectedMachineForRename = machines.find((m) => m.id === renameMachineId);
   const selectedMachineForManufacturerChange = machines.find((m) => m.id === changeManufacturerMachineId);
+  const machineManagement = canManageMachines(user?.role);
 
   if (authLoading) {
     return <DashboardLoading embedded={embedded} />;
@@ -215,7 +217,7 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
             Refresh
           </Button>
 
-          {(user.role === "installer" || user.role === "company" || user.role === "super_admin") && (
+          {machineManagement ? (
             <>
               <Button variant="outline" onClick={() => setShowAddMachineDialog(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -225,18 +227,21 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add client / user
               </Button>
+              <Button variant="outline" onClick={() => navigate("/dashboard/sites")}>
+                <Users className="mr-2 h-4 w-4" />
+                Sites
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/account")}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
             </>
+          ) : (
+            <Button variant="outline" onClick={() => navigate("/dashboard/sites")}>
+              <Users className="mr-2 h-4 w-4" />
+              View sites
+            </Button>
           )}
-
-          <Button variant="outline" onClick={() => navigate("/dashboard/sites")}>
-            <Users className="mr-2 h-4 w-4" />
-            Sites
-          </Button>
-
-          <Button variant="outline" onClick={() => navigate("/account")}>
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
         </div>
       </div>
 
@@ -245,7 +250,9 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
       <div className="mb-4">
         <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1">Machines by site</h2>
         <p className="text-xs sm:text-sm text-muted-foreground">
-          Sites are collapsible (open by default). Pin machines on a floorplan under Sites to group them here.
+          {machineManagement
+            ? "Sites are collapsible (open by default). Pin machines on a floorplan under Sites to group them here. Drag cards by the grip handle to set display order within each site."
+            : "View live machine status and history. Contact your installer to change alerts, notifications, or device setup."}
         </p>
       </div>
 
@@ -253,11 +260,12 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
         machines={machines}
         users={users}
         onMachineClick={setSelectedMachine}
-        onDeleteMachine={handleDeleteMachine}
-        onChangeOwner={handleChangeOwner}
-        onRename={handleRename}
-        onChangeManufacturer={handleChangeManufacturer}
-        onNotificationChange={refetch}
+        showMachineManagement={machineManagement}
+        onDeleteMachine={machineManagement ? handleDeleteMachine : undefined}
+        onChangeOwner={machineManagement ? handleChangeOwner : undefined}
+        onRename={machineManagement ? handleRename : undefined}
+        onChangeManufacturer={machineManagement ? handleChangeManufacturer : undefined}
+        onNotificationChange={machineManagement ? refetch : undefined}
       />
     </main>
   );

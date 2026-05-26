@@ -1,10 +1,11 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { useRequiredLegalCompliance } from "@/hooks/useRequiredLegalCompliance";
+import { LegalComplianceProvider, useLegalCompliance } from "@/contexts/LegalComplianceContext";
 import { ZoomWrapper } from "@/components/ZoomWrapper";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -34,8 +35,13 @@ const queryClient = new QueryClient();
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
-  const skipLegalGate = user?.role === "super_admin";
-  const { state: legalState } = useRequiredLegalCompliance(skipLegalGate ? undefined : user?.id);
+  const { state: legalState, skipLegalGate, reload } = useLegalCompliance();
+
+  useEffect(() => {
+    if (user?.id && !skipLegalGate) {
+      void reload();
+    }
+  }, [location.pathname, user?.id, skipLegalGate, reload]);
 
   if (isLoading) {
     return (
@@ -75,6 +81,7 @@ const App = () => (
         <Sonner />
         <ZoomWrapper>
           <BrowserRouter>
+            <LegalComplianceProvider>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
@@ -124,25 +131,18 @@ const App = () => (
                   <Sites />
                 </ProtectedRoute>
               } />
-              <Route path="/dashboard/*" element={<DashboardLayout />}>
+              <Route
+                path="/dashboard/*"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route index element={<Dashboard embedded />} />
-                <Route
-                  path="sites"
-                  element={
-                    <ProtectedRoute>
-                      <Sites embedded />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="sites" element={<Sites embedded />} />
                 <Route path="buildings" element={<Navigate to="/dashboard/sites" replace />} />
-                <Route
-                  path="alerts"
-                  element={
-                    <ProtectedRoute>
-                      <AlertHistory />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="alerts" element={<AlertHistory />} />
               </Route>
               <Route path="/account" element={
                 <ProtectedRoute>
@@ -152,6 +152,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </LegalComplianceProvider>
           </BrowserRouter>
         </ZoomWrapper>
       </TooltipProvider>

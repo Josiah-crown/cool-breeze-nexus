@@ -20,23 +20,23 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ post }) => {
     >
       <Card
         className={cn(
-          "relative flex h-full min-h-[17.5rem] flex-col p-[1rem] cursor-pointer",
+          "relative flex h-full min-h-[22rem] flex-col p-[1rem] cursor-pointer",
           "hover:shadow-xl transition-all duration-300",
           "bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm border-0 shadow-[var(--shadow-sm)] w-full",
         )}
       >
         <div className="flex items-start justify-center gap-2 mb-3 px-1 pt-2 w-full">
-          <div className="flex h-[8rem] w-[80%] max-w-full items-center justify-center overflow-hidden rounded-lg border border-[#8FB83D]/30 bg-muted/50">
+          <div className="flex aspect-square h-[12rem] w-[12rem] max-w-full shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#8FB83D]/30 bg-muted/50">
             {post.imageUrl ? (
               <img
                 src={post.imageUrl}
                 alt=""
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
                 loading="lazy"
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <FileText className="h-12 w-12 text-[#8FB83D]/70" aria-hidden />
+              <FileText className="h-[4.5rem] w-[4.5rem] text-[#8FB83D]/70" aria-hidden />
             )}
           </div>
         </div>

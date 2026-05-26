@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getProcessingTable, type MachineType } from '@/lib/machineConfig';
 import { useAuth } from '@/contexts/AuthContext';
+import { canManageMachines } from '@/lib/accountRoles';
 import { toast as sonnerToast } from 'sonner';
 import { fetchHistoricalData } from '@/lib/historicalData';
 import {
@@ -40,6 +41,8 @@ interface MachineDetailViewProps {
   onClose: () => void;
   /** Refreshed after API key assign so ESP panel shows Bearer hint without full page reload */
   onMachineApiKeyUpdated?: () => void;
+  /** Render inside ERF fullscreen top layer (parent is the fullscreen element). */
+  stackAboveFullscreen?: boolean;
 }
 
 type Period = '24h' | '7d' | '30d' | '1y';
@@ -430,6 +433,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   historicalData: initialHistoricalData,
   onClose,
   onMachineApiKeyUpdated,
+  stackAboveFullscreen = false,
 }) => {
   const { toast } = useToast();
   const toastRef = useRef(toast);
@@ -437,6 +441,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     toastRef.current = toast;
   }, [toast]);
   const { user } = useAuth();
+  const machineManagement = canManageMachines(user?.role);
 
   // Diagnostic: confirm the component is actually mounting and getting the right machine.
   const didLogMountRef = useRef(false);
@@ -1112,13 +1117,21 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      className={cn(
+        "fixed inset-0 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm",
+        stackAboveFullscreen ? "z-[100]" : "z-50",
+      )}
+    >
       {/* Close button - Fixed position, always visible */}
       <Button 
         variant="ghost" 
         size="icon"
         onClick={onClose}
-        className="fixed top-4 right-4 z-[60] w-14 h-14 rounded-full bg-white hover:bg-[#8FB83D]/10 text-[#8FB83D] border-2 border-[#8FB83D] shadow-lg hover:scale-110 transition-all"
+        className={cn(
+          "fixed top-4 right-4 w-14 h-14 rounded-full bg-white hover:bg-[#8FB83D]/10 text-[#8FB83D] border-2 border-[#8FB83D] shadow-lg hover:scale-110 transition-all",
+          stackAboveFullscreen ? "z-[110]" : "z-[60]",
+        )}
       >
         <X className="h-8 w-8" />
       </Button>
@@ -1132,18 +1145,20 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   {machine.location || locationFallback}
                 </p>
               )}
-            <Button 
-              variant="link" 
-              size="sm" 
-              onClick={() => {
-                setNewLocation(machine.location || '');
-                setShowLocationDialog(true);
-              }}
-              className="p-0 h-auto text-[0.75rem]"
-              style={{ color: '#8FB83D' }}
-            >
-              Change Location
-            </Button>
+            {machineManagement && (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => {
+                  setNewLocation(machine.location || "");
+                  setShowLocationDialog(true);
+                }}
+                className="p-0 h-auto text-[0.75rem]"
+                style={{ color: "#8FB83D" }}
+              >
+                Change Location
+              </Button>
+            )}
           </div>
         </CardHeader>
         
@@ -1241,7 +1256,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                   {machine.type === 'heatpump' && (
                     <div className="flex justify-between items-center border-t border-border pt-2">
                       <span className="text-muted-foreground">Setpoint:</span>
-                      {editingSetpoint ? (
+                      {machineManagement && editingSetpoint ? (
                         <div className="flex gap-2 items-center">
                           <Input
                             type="number"
@@ -1257,7 +1272,11 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                       ) : (
                         <div className="flex gap-2 items-center">
                           <span className="font-semibold text-accent">{machine.temperatureSetpoint?.toFixed(0) || 55}°C</span>
-                          <Button size="sm" variant="outline" onClick={() => setEditingSetpoint(true)}>Edit</Button>
+                          {machineManagement && (
+                            <Button size="sm" variant="outline" onClick={() => setEditingSetpoint(true)}>
+                              Edit
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1423,24 +1442,21 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
               </CardContent>
             </Card>
 
-            {/* Notification Recipients Panel */}
-            <NotificationRecipientsPanel 
-              machineId={machine.id} 
-              machineName={machine.name}
-            />
-
-            {/* Alert Thresholds Editor */}
-            <AlertThresholdsEditor 
-              machineId={machine.id}
-              machineType={machine.type}
-            />
-
-            {/* ESP ingest + API keys — bottom of detail view, side by side on wide screens */}
-            <MachineOnSiteSetup
-              machineId={machine.id}
-              machineApiKey={machine.apiKey ?? null}
-              onKeysUpdated={refreshMachineApiKeyFromDb}
-            />
+            {machineManagement ? (
+              <>
+                <NotificationRecipientsPanel machineId={machine.id} machineName={machine.name} />
+                <AlertThresholdsEditor machineId={machine.id} machineType={machine.type} />
+                <MachineOnSiteSetup
+                  machineId={machine.id}
+                  machineApiKey={machine.apiKey ?? null}
+                  onKeysUpdated={refreshMachineApiKeyFromDb}
+                />
+              </>
+            ) : (
+              <p className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                View-only access. Alert settings, notification recipients, and ESP setup are managed by your installer.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

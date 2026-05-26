@@ -31,8 +31,16 @@ export function useRequiredLegalCompliance(userId: string | undefined) {
       ]);
       if (docsError) throw docsError;
       if (accError) throw accError;
-      const d = (docsData || []) as LegalDocumentRow[];
-      const a = (accData || []) as LegalAcceptanceRow[];
+      const d = (docsData || []).map((row) => ({
+        document_key: String((row as LegalDocumentRow).document_key),
+        version: Number((row as LegalDocumentRow).version),
+        title: String((row as LegalDocumentRow).title),
+      })) as LegalDocumentRow[];
+      const a = (accData || []).map((row) => ({
+        document_key: String((row as LegalAcceptanceRow).document_key),
+        document_version: Number((row as LegalAcceptanceRow).document_version),
+        accepted_at: String((row as LegalAcceptanceRow).accepted_at),
+      })) as LegalAcceptanceRow[];
       setDocs(d);
       setAcceptances(a);
       const missing = missingRequiredAcceptances(d, a);

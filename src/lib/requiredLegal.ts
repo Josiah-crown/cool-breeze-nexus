@@ -17,6 +17,12 @@ export type LegalAcceptanceRow = {
   accepted_at: string;
 };
 
+/** True when all four required keys exist in legal_documents (any version row per key). */
+export function allRequiredDocumentsPublished(docs: LegalDocumentRow[]): boolean {
+  const latest = latestDocByKey(docs);
+  return REQUIRED_DOC_KEYS.every((key) => latest.has(key));
+}
+
 export function latestDocByKey(docs: LegalDocumentRow[]): Map<string, LegalDocumentRow> {
   const map = new Map<string, LegalDocumentRow>();
   for (const d of docs) {

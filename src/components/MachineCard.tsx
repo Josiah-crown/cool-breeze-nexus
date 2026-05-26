@@ -12,6 +12,7 @@ import { AirConditionerComponent } from './AirConditionerComponent';
 import { HeatPumpComponent } from './HeatPumpComponent';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { canManageMachines } from '@/lib/accountRoles';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { getProcessingTable, type MachineType } from '@/lib/machineConfig';
@@ -42,6 +43,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [machine, setMachine] = useState<MachineStatus>(initialMachine);
   const { user } = useAuth();
+  const machineManagement = canManageMachines(user?.role);
+  const showMachineAdmin = showManagement && machineManagement;
   
   // Fetch latest reading from processing table (same source as historical graph)
   useEffect(() => {
@@ -121,28 +124,33 @@ const MachineCard: React.FC<MachineCardProps> = ({
 
 
   const getMachineComponent = () => {
-    // Use rem units so it scales with zoom (8rem = 128px at 16px base)
-    const size = 'w-[8rem] h-[8rem]';
+    const size = "w-[8rem] h-[8rem]";
     switch (machine.type) {
-      case 'fan':
-      case 'evaporative':
-        return <FanComponent 
-          isSpinning={machine.fanActive}
-          isCooling={machine.isCooling}
-          isConnected={machine.is_connected}
-          size={size}
-        />;
-      case 'airconditioner':
-        return <AirConditionerComponent 
-          isActive={machine.is_connected && machine.isCooling}
-          size={size}
-        />;
-      case 'heatpump':
-        return <HeatPumpComponent 
-          isHeating={machine.hasHeat}
-          isConnected={machine.is_connected}
-          size={size}
-        />;
+      case "fan":
+      case "evaporative":
+        return (
+          <FanComponent
+            isSpinning={machine.fanActive}
+            isCooling={machine.isCooling}
+            isConnected={machine.is_connected}
+            size={size}
+          />
+        );
+      case "airconditioner":
+        return (
+          <AirConditionerComponent
+            isActive={machine.is_connected && machine.isCooling}
+            size={size}
+          />
+        );
+      case "heatpump":
+        return (
+          <HeatPumpComponent
+            isHeating={machine.hasHeat}
+            isConnected={machine.is_connected}
+            size={size}
+          />
+        );
       default:
         return null;
     }
@@ -153,12 +161,12 @@ const MachineCard: React.FC<MachineCardProps> = ({
       <Card
         className={cn(
           "relative p-[1rem] cursor-pointer hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-[hsl(var(--panel-bg))] to-[hsl(var(--card))] backdrop-blur-sm border-2 w-full",
-          machine.overallStatus === 'error' ? 'border-destructive' : 'border-[#8FB83D]'
+          machine.overallStatus === "error" ? "border-destructive" : "border-[#8FB83D]",
         )}
         onClick={onClick}
       >
         {/* Management Dropdown */}
-        {showManagement && (
+        {showMachineAdmin && (
           <>
           <div className="absolute top-2 right-2 z-10">
             <DropdownMenu>
@@ -186,7 +194,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
                     Change Owner
                   </DropdownMenuItem>
                 )}
-                {showManagement && onChangeManufacturer && (
+                {showMachineAdmin && onChangeManufacturer && (
                   <DropdownMenuItem 
                     onClick={(e) => {
                       e.preventDefault();
@@ -219,7 +227,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
             </DropdownMenu>
           </div>
 
-          {/* Notification Toggle - Bottom Left */}
+          {/* Notification toggle — installers/companies only */}
+          {machineManagement && (
           <div className="absolute bottom-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
             <TooltipProvider delayDuration={0}>
               <Tooltip>
@@ -291,6 +300,7 @@ const MachineCard: React.FC<MachineCardProps> = ({
               </Tooltip>
             </TooltipProvider>
           </div>
+          )}
 
           </>
         )}
@@ -300,104 +310,94 @@ const MachineCard: React.FC<MachineCardProps> = ({
           <div className="flex-shrink-0 w-[8rem] h-[8rem] flex items-center justify-center aspect-square">
             {getMachineComponent()}
           </div>
-          
-          {/* Status Column - Different per machine type */}
-          <div className="flex flex-col gap-[0.375rem] justify-start flex-1 min-w-0">
-            {machine.type === 'evaporative' && (
+
+          <div className="flex min-w-[6.75rem] shrink-0 flex-col justify-start gap-[0.375rem]">
+            {machine.type === "evaporative" && (
               <>
                 <StatusLight
-                  status={machine.isConnected ? 'active' : 'inactive'}
+                  status={machine.isConnected ? "active" : "inactive"}
                   label="Connected"
                   size="sm"
                 />
                 {machine.isConnected ? (
                   <>
                     <StatusLight
-                      status={machine.fanActive ? 'active' : 'inactive'}
+                      status={machine.fanActive ? "active" : "inactive"}
                       label="Fan"
                       size="sm"
                     />
                     <StatusLight
-                      status={machine.isCooling ? 'active' : 'inactive'}
+                      status={machine.isCooling ? "active" : "inactive"}
                       label="Cool"
                       size="sm"
                     />
                     <StatusLight
-                      status={machine.hasWater ? 'active' : 'error'}
+                      status={machine.hasWater ? "active" : "error"}
                       label="Water"
                       size="sm"
                     />
                   </>
                 ) : (
                   <>
-                    <StatusLight
-                      status="inactive"
-                      label="Fan"
-                      size="sm"
-                    />
-                    <StatusLight
-                      status="inactive"
-                      label="Cool"
-                      size="sm"
-                    />
-                    <StatusLight
-                      status="inactive"
-                      label="Water"
-                      size="sm"
-                    />
+                    <StatusLight status="inactive" label="Fan" size="sm" />
+                    <StatusLight status="inactive" label="Cool" size="sm" />
+                    <StatusLight status="inactive" label="Water" size="sm" />
                   </>
                 )}
               </>
             )}
-            
-            {machine.type === 'airconditioner' && (
+
+            {machine.type === "airconditioner" && (
               <>
                 <StatusLight
-                  status={machine.isConnected ? 'active' : 'inactive'}
+                  status={machine.isConnected ? "active" : "inactive"}
                   label="Connected"
                   size="sm"
                 />
                 <StatusLight
-                  status={machine.fanActive ? 'active' : 'inactive'}
+                  status={machine.fanActive ? "active" : "inactive"}
                   label="Fan"
                   size="sm"
                 />
                 <StatusLight
-                  status={machine.isCooling ? 'active' : 'inactive'}
+                  status={machine.isCooling ? "active" : "inactive"}
                   label="Cool"
                   size="sm"
                 />
               </>
             )}
-            
-            {machine.type === 'heatpump' && (
+
+            {machine.type === "heatpump" && (
               <>
                 <StatusLight
-                  status={machine.isConnected ? 'active' : 'inactive'}
+                  status={machine.isConnected ? "active" : "inactive"}
                   label="Connected"
                   size="sm"
                 />
                 <StatusLight
-                  status={machine.hasWater ? 'active' : 'inactive'}
+                  status={machine.hasWater ? "active" : "inactive"}
                   label="Contactor"
                   size="sm"
                 />
                 <StatusLight
-                  status={machine.hasHeat ? 'active' : 'inactive'}
+                  status={machine.hasHeat ? "active" : "inactive"}
                   label="Heating"
                   size="sm"
                 />
                 <StatusLight
                   status={
-                    machine.compressorStatus === 'good' ? 'active' : 
-                    machine.compressorStatus === 'warning' ? 'warning' : 'error'
+                    machine.compressorStatus === "good"
+                      ? "active"
+                      : machine.compressorStatus === "warning"
+                        ? "warning"
+                        : "error"
                   }
                   label="Compressor"
                   size="sm"
                 />
                 <div className="text-center p-[0.375rem] bg-panel-bg rounded-md">
                   <div className="text-[0.75rem] text-muted-foreground">Setpoint</div>
-                  <div className="text-[0.875rem] font-semibold" style={{ color: '#8FB83D' }}>
+                  <div className="text-[0.875rem] font-semibold" style={{ color: "#8FB83D" }}>
                     {machine.temperatureSetpoint?.toFixed(0) || 55}°C
                   </div>
                 </div>
@@ -406,34 +406,29 @@ const MachineCard: React.FC<MachineCardProps> = ({
           </div>
         </div>
 
-        {/* Machine Info Section - Consistent spacing and alignment */}
         <div className="flex flex-col items-center px-[0.75rem] justify-between flex-1 py-[0.5rem] w-full min-w-0">
-          {/* Top Section: Name and metadata */}
           <div className="flex flex-col items-center gap-[0.25rem] w-full min-w-0">
             <h3 className="text-[1rem] font-semibold text-center text-foreground leading-tight break-words w-full px-[0.25rem]">
               {machine.name}
             </h3>
-            {!machine.apiKey && (
+            {machineManagement && !machine.apiKey && (
               <span className="text-[0.625rem] font-medium px-[0.5rem] py-[0.125rem] bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 rounded-full">
                 No API Key
               </span>
             )}
-            
-            {/* Location */}
+
             {machine.location && (
               <p className="text-[0.75rem] text-muted-foreground text-center break-words w-full px-[0.25rem]">
                 {machine.location}
               </p>
             )}
-            
-            {/* Owner Name */}
+
             {ownerName && (
               <p className="text-[0.75rem] text-muted-foreground text-center break-words w-full px-[0.25rem]">
                 Owner: {ownerName}
               </p>
             )}
-            
-            {/* Manufacturer */}
+
             {machine.manufacturer && (
               <p className="text-[0.8125rem] text-muted-foreground text-center leading-none break-words w-full px-[0.25rem]">
                 {machine.manufacturer}
@@ -441,9 +436,8 @@ const MachineCard: React.FC<MachineCardProps> = ({
             )}
           </div>
 
-          {/* Bottom Section: Delta T */}
           <div className="text-center mt-[0.5rem]">
-            <div className="text-[1.5rem] font-bold leading-tight" style={{ color: '#8FB83D' }}>
+            <div className="text-[1.5rem] font-bold leading-tight" style={{ color: "#8FB83D" }}>
               {Math.abs(machine.deltaT).toFixed(1)}°C
             </div>
             <div className="text-[0.75rem] text-muted-foreground">Delta T</div>

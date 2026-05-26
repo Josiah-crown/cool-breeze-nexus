@@ -1,11 +1,17 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MachineStatus } from "@/types/machine";
 import type { UserHierarchy } from "@/hooks/useMachineData";
 import MachineCard from "@/components/MachineCard";
+import SortableMachineGrid from "@/components/SortableMachineGrid";
 import { useSiteMachineGroups } from "@/hooks/useSiteMachineGroups";
+import { useDashboardCardOrder } from "@/hooks/useDashboardCardOrder";
+import {
+  DASHBOARD_UNASSIGNED_GROUP_KEY,
+  siteDashboardGroupKey,
+} from "@/lib/dashboardCardOrder";
 
 type Props = {
   machines: MachineStatus[];
@@ -16,6 +22,11 @@ type Props = {
   onRename?: (id: string) => void;
   onChangeManufacturer?: (id: string) => void;
   onNotificationChange?: () => void;
+  showMachineManagement?: boolean;
+};
+
+const GRID_STYLE: React.CSSProperties = {
+  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 19.5rem), 1fr))",
 };
 
 const DashboardSiteMachineSections: React.FC<Props> = ({
@@ -27,43 +38,40 @@ const DashboardSiteMachineSections: React.FC<Props> = ({
   onRename,
   onChangeManufacturer,
   onNotificationChange,
+  showMachineManagement = false,
 }) => {
   const machineIds = machines.map((m) => m.id);
   const { groups, unassignedMachineIds, loading, error } = useSiteMachineGroups(machineIds);
 
+  const groupKeys = useMemo(() => {
+    const keys = groups.map((g) => siteDashboardGroupKey(g.siteId));
+    if (unassignedMachineIds.length > 0) keys.push(DASHBOARD_UNASSIGNED_GROUP_KEY);
+    return keys;
+  }, [groups, unassignedMachineIds.length]);
+
+  const { getOrderMap, saveOrder } = useDashboardCardOrder(groupKeys);
+
   const machineById = React.useMemo(() => new Map(machines.map((m) => [m.id, m])), [machines]);
 
-  const renderMachineGrid = (ids: string[]) => {
-    const list = ids.map((id) => machineById.get(id)).filter(Boolean) as MachineStatus[];
-    if (list.length === 0) {
-      return (
-        <p className="text-sm text-muted-foreground py-3 px-2">
-          No machines placed on this site yet. Pin machines on a building floorplan under Sites.
-        </p>
-      );
-    }
-    return (
-      <div className="grid gap-3 sm:gap-4 pt-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))" }}>
-        {list.map((machine) => {
-          const owner = users.find((u) => u.id === machine.ownerId);
-          return (
-            <MachineCard
-              key={machine.id}
-              machine={machine}
-              onClick={() => onMachineClick(machine)}
-              ownerName={owner?.name}
-              onDelete={onDeleteMachine}
-              onChangeOwner={onChangeOwner}
-              onRename={onRename}
-              onChangeManufacturer={onChangeManufacturer}
-              showManagement
-              onNotificationChange={onNotificationChange}
-            />
-          );
-        })}
-      </div>
-    );
+  const cardProps = {
+    machinesById: machineById,
+    users,
+    canReorder: showMachineManagement,
+    onOrderSaved: saveOrder,
+    onMachineClick,
+    onDeleteMachine,
+    onChangeOwner,
+    onRename,
+    onChangeManufacturer,
+    onNotificationChange,
+    showMachineManagement,
   };
+
+  const emptySiteMessage = (
+    <p className="text-sm text-muted-foreground py-3 px-2">
+      No machines on this site yet. Go to Sites → select the site → Add machine to plan → tap the ERF image.
+    </p>
+  );
 
   if (loading) {
     return <p className="text-sm text-muted-foreground py-6">Loading sites…</p>;
@@ -73,7 +81,7 @@ const DashboardSiteMachineSections: React.FC<Props> = ({
     return (
       <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
         {error} — showing all machines without site grouping.
-        <div className="mt-4 grid gap-3 sm:gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))" }}>
+        <div className="mt-4 grid gap-3 sm:gap-4 pt-2" style={GRID_STYLE}>
           {machines.map((machine) => {
             const owner = users.find((u) => u.id === machine.ownerId);
             return (
@@ -121,7 +129,15 @@ const DashboardSiteMachineSections: React.FC<Props> = ({
             </div>
             <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="border-t border-border px-3 pb-3">{renderMachineGrid(g.machineIds)}</CollapsibleContent>
+          <CollapsibleContent className="border-t border-border px-3 pb-3">
+            <SortableMachineGrid
+              groupKey={siteDashboardGroupKey(g.siteId)}
+              machineIds={g.machineIds}
+              orderByMachineId={getOrderMap(siteDashboardGroupKey(g.siteId))}
+              emptyMessage={emptySiteMessage}
+              {...cardProps}
+            />
+          </CollapsibleContent>
         </Collapsible>
       ))}
 
@@ -136,12 +152,19 @@ const DashboardSiteMachineSections: React.FC<Props> = ({
             <div>
               <div className="font-semibold text-foreground">Not on a site map</div>
               <div className="text-xs text-muted-foreground">
-                {unassignedMachineIds.length} machines — assign pins under Sites → Building → Floorplan
+                {unassignedMachineIds.length} machines — place on the site ERF under Dashboard → Sites
               </div>
             </div>
             <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="border-t border-border px-3 pb-3">{renderMachineGrid(unassignedMachineIds)}</CollapsibleContent>
+          <CollapsibleContent className="border-t border-border px-3 pb-3">
+            <SortableMachineGrid
+              groupKey={DASHBOARD_UNASSIGNED_GROUP_KEY}
+              machineIds={unassignedMachineIds}
+              orderByMachineId={getOrderMap(DASHBOARD_UNASSIGNED_GROUP_KEY)}
+              {...cardProps}
+            />
+          </CollapsibleContent>
         </Collapsible>
       ) : null}
 

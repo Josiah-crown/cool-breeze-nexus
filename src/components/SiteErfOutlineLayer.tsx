@@ -40,6 +40,8 @@ type SiteErfOutlineLayerProps = {
   onBuildingHoverEnd?: () => void;
   canCloseDraft?: boolean;
   onFinishOutline?: () => void;
+  /** When true, building hit polygons are hidden so ERF taps reach the canvas (e.g. machine place mode). */
+  suppressBuildingHits?: boolean;
 };
 
 function resolvePolygon(shape: BuildingOutlineShape): OutlinePointPct[] {
@@ -75,8 +77,9 @@ const SiteErfOutlineLayer: React.FC<SiteErfOutlineLayerProps> = ({
   onBuildingHoverEnd,
   canCloseDraft = false,
   onFinishOutline,
+  suppressBuildingHits = false,
 }) => {
-  const buildingHoverEnabled = !placingBuildingId && shapes.length > 0;
+  const buildingHoverEnabled = !placingBuildingId && !suppressBuildingHits && shapes.length > 0;
   const draftColor = useMemo(
     () => (placingBuildingId ? buildingOutlineColor(placingBuildingId, orderedBuildingIds) : null),
     [placingBuildingId, orderedBuildingIds],
