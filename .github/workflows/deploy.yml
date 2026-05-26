@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
@@ -37,12 +38,30 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # No actions/checkout — avoids post-job git 403 on this job
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
+      # curl + API — avoids codeload failures downloading actions/download-artifact
+      - name: Download dist artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          artifacts=$(curl -fsSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts")
+          artifact_id=$(echo "$artifacts" | jq -r '.artifacts[] | select(.name=="dist") | .id' | head -1)
+          if [ -z "$artifact_id" ] || [ "$artifact_id" = "null" ]; then
+            echo "No dist artifact found for this run"
+            exit 1
+          fi
+          curl -fsSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${artifact_id}/zip" \
+            -o artifact.zip
+          unzip -q artifact.zip
+          test -d dist || (echo "dist/ missing after unzip" && exit 1)
+          ls -la dist/ | head
 
       - name: Upload dist/ to cPanel (FTPS via lftp)
         env:
