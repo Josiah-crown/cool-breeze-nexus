@@ -23,13 +23,12 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - name: Upload dist/ to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          password: ${{ secrets.CPANEL_PASS }}
-          protocol: ftps
-          port: 21
-          local-dir: dist/
-          server-dir: /public_html/
+      # npm registry — avoids SamKirkland/FTP-Deploy-Action codeload download failures on GitHub
+      - name: Upload dist/ to cPanel (FTPS)
+        run: |
+          npm install --no-save ftp-deploy@2.4.3
+          node scripts/deploy-cpanel.cjs
+        env:
+          CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
+          CPANEL_USER: ${{ secrets.CPANEL_USER }}
+          CPANEL_PASS: ${{ secrets.CPANEL_PASS }}
