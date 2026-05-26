@@ -1,9 +1,22 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import TopTaskbar from "@/components/TopTaskbar";
 import { Button } from "@/components/ui/button";
 
 const CROWN_CONTACT_URL = "https://crowntechnologies.co.za/contact-us";
+
+const demoGuestActions = (
+  <>
+    <Button asChild variant="outline" className="border-border">
+      <a href={CROWN_CONTACT_URL} target="_blank" rel="noreferrer">
+        Contact us
+      </a>
+    </Button>
+    <Button asChild className="bg-foreground text-primary-foreground hover:bg-foreground/90">
+      <Link to="/login?source=demo">Client login</Link>
+    </Button>
+  </>
+);
 
 /** Public marketing demo — client view only (Sites), no login required. */
 const DemoDashboardLayout: React.FC = () => {
@@ -12,13 +25,7 @@ const DemoDashboardLayout: React.FC = () => {
       <TopTaskbar
         subtitle="Client view · live demo site"
         logoHref="/dashboard/demo"
-        rightActions={
-          <Button asChild className="bg-foreground text-primary-foreground hover:bg-foreground/90">
-            <a href={CROWN_CONTACT_URL} target="_blank" rel="noreferrer">
-              Contact us
-            </a>
-          </Button>
-        }
+        rightActions={demoGuestActions}
       />
 
       <div className="border-b border-border bg-muted/40 px-4 py-2 sm:px-6">
