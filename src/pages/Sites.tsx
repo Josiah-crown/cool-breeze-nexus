@@ -39,6 +39,7 @@ import { outlineSnapThresholdPct, pointerMovedBeyondTap } from "@/lib/erfCanvasP
 import { Maximize2, Minimize2, Plus } from "lucide-react";
 import type { MachineHistoricalData, MachineStatus, MachineType } from "@/types/machine";
 import type { UserHierarchy } from "@/hooks/useMachineData";
+import { usePublicClientDemo } from "@/hooks/usePublicClientDemo";
 
 type SiteRow = {
   id: string;
@@ -152,12 +153,33 @@ function formatDbError(e: unknown): string {
   return msg;
 }
 
-const Sites: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
+const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
+  embedded = false,
+  publicDemoMode = false,
+}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { users, machines, refetch } = useMachineData(user?.id || "", user?.role || "client", {
-    includeHistorical: false,
-  });
+  const { payload: demoPayload, loading: demoLoading, error: demoError } = usePublicClientDemo(publicDemoMode);
+  const { users: authUsers, machines: authMachines, refetch } = useMachineData(
+    publicDemoMode ? "" : user?.id || "",
+    publicDemoMode ? "client" : user?.role || "client",
+    { includeHistorical: false },
+  );
+
+  const demoUsers = useMemo<UserHierarchy[]>(() => {
+    if (!demoPayload) return [];
+    return [
+      {
+        id: demoPayload.site.owner_id,
+        name: demoPayload.owner_display_name,
+        email: "",
+        role: "client",
+      },
+    ];
+  }, [demoPayload]);
+
+  const users = publicDemoMode ? demoUsers : authUsers;
+  const machines = publicDemoMode ? demoPayload?.machines ?? [] : authMachines;
 
   const [showAssignClientHierarchy, setShowAssignClientHierarchy] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<MachineStatus | null>(null);
@@ -273,14 +295,15 @@ const Sites: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   };
 
   const canManageSite =
-    user?.role === "super_admin" || user?.role === "company" || user?.role === "installer";
+    !publicDemoMode &&
+    (user?.role === "super_admin" || user?.role === "company" || user?.role === "installer");
 
   const canCreateSite = canManageSite;
 
   /** Layout, ERF, buildings, machine pins — installers/companies/super_admin only; clients view only. */
   const canEditSiteMachines = canManageSite;
 
-  const isClientSiteViewer = user?.role === "client";
+  const isClientSiteViewer = publicDemoMode || user?.role === "client";
 
   const canAssignClientHierarchy = user?.role === "super_admin" || user?.role === "company";
 
@@ -315,7 +338,27 @@ const Sites: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   }, [users, user?.role, user?.id, editSiteCompanyId]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!publicDemoMode || !demoPayload) return;
+    const s = demoPayload.site;
+    setSites([s]);
+    setSelectedSiteId(s.id);
+    try {
+      sessionStorage.setItem(SITE_SELECTION_STORAGE_KEY, s.id);
+    } catch {
+      // ignore
+    }
+    setBuildingsBySiteId({ [s.id]: demoPayload.buildings });
+    setBuildingFloorCounts(demoPayload.building_floor_counts);
+    setBuildingShapes((demoPayload.building_shapes || []) as BuildingShapeRow[]);
+    setSiteMachinePositions(demoPayload.machine_positions as SiteMachinePositionRow[]);
+    setErfAsset(demoPayload.erf_asset);
+    setMemberships([]);
+    setSiteDisplayNames({ [s.owner_id]: demoPayload.owner_display_name });
+    setLoading(false);
+  }, [publicDemoMode, demoPayload]);
+
+  useEffect(() => {
+    if (publicDemoMode || !user) return;
     let ignore = false;
     const load = async () => {
       setLoading(true);
@@ -402,6 +445,7 @@ const Sites: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   }, [user?.id]);
 
   useEffect(() => {
+    if (publicDemoMode) return;
     if (!selectedSiteId) {
       setMemberships([]);
       setSiteDisplayNames({});
@@ -1539,7 +1583,27 @@ const Sites: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     );
   };
 
-  if (!user) return null;
+  if (!publicDemoMode && !user) return null;
+
+  if (publicDemoMode && demoLoading) {
+    return (
+      <div className={embedded ? "p-8 text-center text-sm text-muted-foreground" : "min-h-[40vh] flex items-center justify-center text-sm text-muted-foreground"}>
+        Loading demo site…
+      </div>
+    );
+  }
+
+  if (publicDemoMode && (demoError || !demoPayload)) {
+    return (
+      <div className={embedded ? "p-8" : "mx-auto max-w-lg px-4 py-16"}>
+        <p className="text-sm text-destructive">{demoError || "Demo site not configured."}</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Create a site with machines named “demo”, then run:{" "}
+          <code className="rounded bg-muted px-1">UPDATE sites SET is_public_client_demo = true WHERE …</code>
+        </p>
+      </div>
+    );
+  }
 
   const machineDetailOverlay = selectedMachine ? (
     <MachineDetailView
@@ -2351,7 +2415,7 @@ const Sites: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
     </>
   );
 
-  if (embedded) return content;
+  if (embedded || publicDemoMode) return content;
 
   return (
     <div className="min-h-screen bg-white text-[#1A2B1C]">

@@ -28,6 +28,7 @@ import LegalDocument from "./pages/LegalDocument";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Information from "./pages/Information";
 import DashboardLayout from "./pages/DashboardLayout";
+import DemoDashboardLayout from "./pages/DemoDashboardLayout";
 import AlertHistory from "./pages/AlertHistory";
 
 const queryClient = new QueryClient();
@@ -131,6 +132,10 @@ const App = () => (
                   <Sites />
                 </ProtectedRoute>
               } />
+              <Route path="/dashboard/demo" element={<DemoDashboardLayout />}>
+                <Route index element={<Navigate to="/dashboard/demo/sites" replace />} />
+                <Route path="sites" element={<Sites embedded publicDemoMode />} />
+              </Route>
               <Route
                 path="/dashboard/*"
                 element={

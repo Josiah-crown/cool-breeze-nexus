@@ -26,7 +26,7 @@ const Home: React.FC = () => {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link to="/dashboard">View demo dashboard</Link>
+                <Link to="/dashboard/demo">View demo dashboard</Link>
               </Button>
               <Button asChild variant="outline" className="border-border">
                 <Link to="/login?source=home">Client login</Link>

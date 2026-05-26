@@ -1,0 +1,11 @@
+-- After creating your showcase site and "demo" machines in the UI, mark the site for /dashboard/demo:
+--
+--   UPDATE public.sites
+--   SET is_public_client_demo = true
+--   WHERE name ILIKE '%demo%'
+--   RETURNING id, name;
+--
+-- Reload PostgREST schema if needed. Machines on the public demo must:
+--   - belong to the site owner (sites.owner_id)
+--   - have name ILIKE '%demo%'
+--   - optional: pins on site_machine_positions for ERF layout

@@ -14,9 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Users, UserPlus, Plus, Settings, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import TopTaskbar from "@/components/TopTaskbar";
-import DemoDashboardPreview from "@/components/DemoDashboardPreview";
 import { canManageMachines } from "@/lib/accountRoles";
 
 const DashboardLoading: React.FC<{ embedded?: boolean }> = ({ embedded }) =>
@@ -137,15 +136,7 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   }
 
   if (!user) {
-    if (embedded) {
-      return <DemoDashboardPreview embedded />;
-    }
-    return (
-      <div className="min-h-screen bg-background">
-        <TopTaskbar subtitle="Demo dashboard · sample data" />
-        <DemoDashboardPreview />
-      </div>
-    );
+    return <Navigate to="/dashboard/demo/sites" replace />;
   }
 
   if (dataLoading && machines.length === 0) {

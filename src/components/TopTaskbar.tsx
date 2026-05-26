@@ -85,9 +85,18 @@ const TopTaskbar: React.FC<TopTaskbarProps> = ({ title = "Cmonitor", subtitle, r
             {rightActions ? (
               rightActions
             ) : !user ? (
-              <Button onClick={() => navigate("/login?source=home")} className="bg-foreground text-primary-foreground hover:bg-foreground/90">
-                Client Login
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/dashboard/demo")}
+                  className="border-border"
+                >
+                  Dashboard
+                </Button>
+                <Button onClick={() => navigate("/login?source=home")} className="bg-foreground text-primary-foreground hover:bg-foreground/90">
+                  Client Login
+                </Button>
+              </>
             ) : (
               <>
                 <Button onClick={() => navigate("/dashboard")} className="bg-foreground text-primary-foreground hover:bg-foreground/90">
@@ -145,11 +154,18 @@ const TopTaskbar: React.FC<TopTaskbarProps> = ({ title = "Cmonitor", subtitle, r
                   {rightActions ? (
                     rightActions
                   ) : !user ? (
-                    <SheetClose asChild>
-                      <Button onClick={() => navigate("/login?source=home")} className="w-full bg-foreground text-primary-foreground hover:bg-foreground/90">
-                        Client Login
-                      </Button>
-                    </SheetClose>
+                    <>
+                      <SheetClose asChild>
+                        <Button variant="outline" onClick={() => navigate("/dashboard/demo")} className="w-full">
+                          Dashboard
+                        </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button onClick={() => navigate("/login?source=home")} className="w-full bg-foreground text-primary-foreground hover:bg-foreground/90">
+                          Client Login
+                        </Button>
+                      </SheetClose>
+                    </>
                   ) : (
                     <>
                       <SheetClose asChild>
