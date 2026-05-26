@@ -1,29 +1,23 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import TopTaskbar from "@/components/TopTaskbar";
 import { Button } from "@/components/ui/button";
-import { getExternalSalesUrlForOffer } from "@/config/offers";
+
+const CROWN_CONTACT_URL = "https://crowntechnologies.co.za/contact-us";
 
 /** Public marketing demo — client view only (Sites), no login required. */
 const DemoDashboardLayout: React.FC = () => {
-  const partnerCheckoutUrl = getExternalSalesUrlForOffer("monitoring");
-
   return (
     <div className="min-h-screen bg-background">
       <TopTaskbar
         subtitle="Client view · live demo site"
+        logoHref="/dashboard/demo"
         rightActions={
-          <>
-            <Button asChild variant="outline" className="border-border">
-              <Link to="/login?source=demo">Client login</Link>
-            </Button>
-            <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <a href={partnerCheckoutUrl} target="_blank" rel="noreferrer">
-                Book on Crown Technologies
-              </a>
-            </Button>
-          </>
+          <Button asChild className="bg-foreground text-primary-foreground hover:bg-foreground/90">
+            <a href={CROWN_CONTACT_URL} target="_blank" rel="noreferrer">
+              Contact us
+            </a>
+          </Button>
         }
       />
 

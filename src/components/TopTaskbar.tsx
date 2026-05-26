@@ -91,7 +91,7 @@ const TopTaskbar: React.FC<TopTaskbarProps> = ({ title = "Cmonitor", subtitle, r
                   onClick={() => navigate("/dashboard/demo")}
                   className="border-border"
                 >
-                  Dashboard
+                  Demo dashboard
                 </Button>
                 <Button onClick={() => navigate("/login?source=home")} className="bg-foreground text-primary-foreground hover:bg-foreground/90">
                   Client Login
@@ -157,7 +157,7 @@ const TopTaskbar: React.FC<TopTaskbarProps> = ({ title = "Cmonitor", subtitle, r
                     <>
                       <SheetClose asChild>
                         <Button variant="outline" onClick={() => navigate("/dashboard/demo")} className="w-full">
-                          Dashboard
+                          Demo dashboard
                         </Button>
                       </SheetClose>
                       <SheetClose asChild>
