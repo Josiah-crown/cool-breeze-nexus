@@ -8,6 +8,7 @@ const FtpDeploy = require("ftp-deploy");
 const host = process.env.CPANEL_HOST;
 const user = process.env.CPANEL_USER;
 const password = process.env.CPANEL_PASS;
+const remoteRoot = process.env.CPANEL_REMOTE_ROOT || "/public_html/";
 
 if (!host || !user || !password) {
   console.error("Missing CPANEL_HOST, CPANEL_USER, or CPANEL_PASS");
@@ -23,7 +24,7 @@ const config = {
   port: 21,
   secure: true,
   localRoot: path.join(__dirname, "..", "dist"),
-  remoteRoot: "/public_html/",
+  remoteRoot,
   include: ["*", "**/*"],
   deleteRemote: false,
   forcePasv: true,
