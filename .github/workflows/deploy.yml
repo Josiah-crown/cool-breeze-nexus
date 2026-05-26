@@ -27,6 +27,8 @@ jobs:
       CPANEL_USER: ${{ secrets.CPANEL_USER }}
       CPANEL_PASS: ${{ secrets.CPANEL_PASS }}
       CPANEL_REMOTE_ROOT: ${{ secrets.CPANEL_REMOTE_ROOT }}
+      # Set to "true" only if CPANEL_HOST matches the FTPS certificate hostname
+      CPANEL_TLS_STRICT: ${{ secrets.CPANEL_TLS_STRICT }}
 
     steps:
       - name: Fetch source (GitHub API tarball, no git)
