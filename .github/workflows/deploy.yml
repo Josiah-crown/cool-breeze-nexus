@@ -2,23 +2,20 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   workflow_dispatch:
 
-# Default GITHUB_TOKEN scope (avoids 403 on post-job git cleanup)
 permissions:
   contents: read
 
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -30,12 +27,38 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      # npm registry — avoids SamKirkland/FTP-Deploy-Action codeload download failures on GitHub
-      - name: Upload dist/ to cPanel (FTPS)
-        run: |
-          npm install --no-save ftp-deploy@2.4.3
-          node scripts/deploy-cpanel.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # No actions/checkout — avoids post-job git 403 on this job
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Upload dist/ to cPanel (FTPS via lftp)
         env:
           CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
           CPANEL_USER: ${{ secrets.CPANEL_USER }}
           CPANEL_PASS: ${{ secrets.CPANEL_PASS }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lftp
+          lftp -e "
+            set net:max-retries 3;
+            set net:timeout 30;
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate no;
+            open -u \"\$CPANEL_USER\",\"\$CPANEL_PASS\" ftps://\$CPANEL_HOST:21;
+            mirror -Rev dist/ /public_html/ --parallel=2 --verbose;
+            bye
+          "
