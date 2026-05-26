@@ -27,6 +27,8 @@ const config = {
   include: ["*", "**/*"],
   deleteRemote: false,
   forcePasv: true,
+  // State file only — do not tie deploy to git remotes (avoids git network calls in CI)
+  sftp: false,
 };
 
 ftpDeploy

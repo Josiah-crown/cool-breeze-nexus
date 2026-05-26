@@ -5,6 +5,10 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# Default GITHUB_TOKEN scope (avoids 403 on post-job git cleanup)
+permissions:
+  contents: read
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -12,6 +16,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
