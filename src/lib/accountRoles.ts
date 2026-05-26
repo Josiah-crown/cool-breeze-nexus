@@ -6,3 +6,8 @@ export function canManageMachines(role: string | undefined): boolean {
 export function isClientViewer(role: string | undefined): boolean {
   return role === "client";
 }
+
+/** Super admin and company can open the managed accounts directory (`/dashboard/clients`). */
+export function canViewManagedAccountDirectory(role: string | undefined): boolean {
+  return role === "super_admin" || role === "company";
+}

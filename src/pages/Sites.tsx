@@ -1040,6 +1040,17 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
     }
   };
 
+  const sitePlacedMachineIds = useMemo(() => {
+    const ids = new Set<string>();
+    siteMachinePositions.forEach((p) => ids.add(p.machine_id));
+    return ids;
+  }, [siteMachinePositions]);
+
+  const machinesTransferredOnOwnerChange = useMemo(() => {
+    if (!selectedSite || !editSiteOwnerId || editSiteOwnerId === selectedSite.owner_id) return 0;
+    return sitePlacedMachineIds.size;
+  }, [selectedSite, editSiteOwnerId, sitePlacedMachineIds]);
+
   const openEditSite = () => {
     if (!selectedSite) return;
     setEditSiteName(selectedSite.name);
@@ -1078,10 +1089,25 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
         .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Site update failed");
+      const ownerChanged =
+        canManageSite &&
+        user?.role !== "client" &&
+        editSiteOwnerId &&
+        selectedSite &&
+        editSiteOwnerId !== selectedSite.owner_id;
       setSites((prev) =>
         prev.map((s) => (s.id === selectedSiteId ? (data as SiteRow) : s)).sort((a, b) => a.name.localeCompare(b.name)),
       );
-      toast.success("Site updated");
+      if (ownerChanged) {
+        await refetch();
+        toast.success(
+          sitePlacedMachineIds.size > 0
+            ? `Site updated — ${sitePlacedMachineIds.size} machine(s) on this site map transferred to the new client.`
+            : "Site updated — machine owner changed (no machines on this site map yet).",
+        );
+      } else {
+        toast.success("Site updated");
+      }
       setShowEditSite(false);
     } catch (e: unknown) {
       toast.error(formatDbError(e) || "Failed to update site");
@@ -2211,7 +2237,9 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
           <DialogHeader>
             <DialogTitle>Edit site</DialogTitle>
             <DialogDescription>
-              Update the site name, address, company (super admin), and machine owner client.
+              Update the site name, address, company (super admin), and machine owner client. Changing the client
+              also transfers every machine placed on this site&apos;s ERF map to that client (buildings stay with the
+              site).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -2262,6 +2290,12 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
                     ))}
                   </SelectContent>
                 </Select>
+                {machinesTransferredOnOwnerChange > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Saving will transfer {machinesTransferredOnOwnerChange} machine
+                    {machinesTransferredOnOwnerChange === 1 ? "" : "s"} on this site map to the selected client.
+                  </p>
+                )}
               </div>
             )}
           </div>

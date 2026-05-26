@@ -30,6 +30,7 @@ import Information from "./pages/Information";
 import DashboardLayout from "./pages/DashboardLayout";
 import DemoDashboardLayout from "./pages/DemoDashboardLayout";
 import AlertHistory from "./pages/AlertHistory";
+import ManagedAccounts from "./pages/ManagedAccounts";
 
 const queryClient = new QueryClient();
 
@@ -148,6 +149,7 @@ const App = () => (
                 <Route path="sites" element={<Sites embedded />} />
                 <Route path="buildings" element={<Navigate to="/dashboard/sites" replace />} />
                 <Route path="alerts" element={<AlertHistory />} />
+                <Route path="clients" element={<ManagedAccounts />} />
               </Route>
               <Route path="/account" element={
                 <ProtectedRoute>

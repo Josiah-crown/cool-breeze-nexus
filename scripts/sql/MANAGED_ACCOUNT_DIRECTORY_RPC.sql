@@ -1,0 +1,2 @@
+-- Run in Supabase SQL editor if migration 20260527130000_managed_account_directory_rpc_v1.sql is not applied yet.
+-- Test: SELECT public.get_managed_account_directory();

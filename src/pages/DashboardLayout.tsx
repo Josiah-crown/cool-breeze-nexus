@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import TopTaskbar from "@/components/TopTaskbar";
-import { isClientViewer } from "@/lib/accountRoles";
+import { canViewManagedAccountDirectory, isClientViewer } from "@/lib/accountRoles";
 
 const DashboardLayout: React.FC = () => {
   const { user } = useAuth();
@@ -52,6 +52,19 @@ const DashboardLayout: React.FC = () => {
             >
               Alerts
             </NavLink>
+            {canViewManagedAccountDirectory(user?.role) && (
+              <NavLink
+                to="/dashboard/clients"
+                className={({ isActive }) =>
+                  [
+                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    isActive ? "bg-foreground text-primary-foreground" : "bg-card text-foreground hover:bg-muted",
+                  ].join(" ")
+                }
+              >
+                Clients
+              </NavLink>
+            )}
           </div>
         )}
 
