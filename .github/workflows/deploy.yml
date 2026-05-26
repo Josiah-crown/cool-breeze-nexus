@@ -1,3 +1,6 @@
+# Push to main → npm build → FTPS upload to cPanel public_html
+# Single job (no artifacts / no extra actions) — most reliable when codeload is flaky.
+
 name: Build and Deploy
 
 on:
@@ -5,79 +8,72 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: cpanel-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+# Match repo Settings → Actions → "Read and write permissions" for GITHUB_TOKEN
 permissions:
   contents: read
-  actions: read
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 1
+          submodules: false
+          lfs: false
+          persist-credentials: false
+          # Optional: add repo secret GH_REPO_TOKEN (classic PAT, repo scope) if checkout 403 persists
+          token: ${{ secrets.GH_REPO_TOKEN || github.token }}
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
+          cache: npm
 
-      - run: npm ci
-      - run: npm run build
+      - name: Install and build
+        run: npm ci && npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 1
+      - name: Verify dist
+        run: test -f dist/index.html && du -sh dist/
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      # curl + API — avoids codeload failures downloading actions/download-artifact
-      - name: Download dist artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          artifacts=$(curl -fsSL \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts")
-          artifact_id=$(echo "$artifacts" | jq -r '.artifacts[] | select(.name=="dist") | .id' | head -1)
-          if [ -z "$artifact_id" ] || [ "$artifact_id" = "null" ]; then
-            echo "No dist artifact found for this run"
-            exit 1
-          fi
-          curl -fsSL \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${artifact_id}/zip" \
-            -o artifact.zip
-          unzip -q artifact.zip
-          test -d dist || (echo "dist/ missing after unzip" && exit 1)
-          ls -la dist/ | head
-
-      - name: Upload dist/ to cPanel (FTPS via lftp)
+      - name: Deploy dist to cPanel (FTPS)
         env:
           CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
           CPANEL_USER: ${{ secrets.CPANEL_USER }}
           CPANEL_PASS: ${{ secrets.CPANEL_PASS }}
         run: |
+          set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq lftp
-          lftp -e "
-            set net:max-retries 3;
-            set net:timeout 30;
-            set ftp:ssl-force true;
-            set ftp:ssl-protect-data true;
-            set ssl:verify-certificate no;
-            open -u \"\$CPANEL_USER\",\"\$CPANEL_PASS\" ftps://\$CPANEL_HOST:21;
-            mirror -Rev dist/ /public_html/ --parallel=2 --verbose;
-            bye
-          "
+          for attempt in 1 2 3; do
+            echo "=== FTP upload attempt ${attempt} ==="
+            if lftp -e "
+              set net:max-retries 3;
+              set net:timeout 60;
+              set ftp:ssl-force true;
+              set ftp:ssl-protect-data true;
+              set ssl:verify-certificate no;
+              open -u \"\$CPANEL_USER\",\"\$CPANEL_PASS\" ftps://\$CPANEL_HOST:21;
+              mirror -Rev dist/ /public_html/ --parallel=2 --verbose;
+              bye
+            "; then
+              echo "FTP deploy succeeded"
+              exit 0
+            fi
+            echo "FTP attempt ${attempt} failed; retrying in 20s..."
+            sleep 20
+          done
+          echo "FTP deploy failed after 3 attempts"
+          exit 1
