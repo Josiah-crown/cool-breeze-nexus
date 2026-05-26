@@ -1,5 +1,17 @@
 # Build + FTPS deploy — no JavaScript-based GitHub Actions (no checkout/setup-node).
 # Avoids codeload 403/packfile failures and Node-20-on-actions deprecation (see GitHub changelog 2025-09-19).
+#
+# STABLE PIPELINE (May 2026): tarball → npm build → scripts/deploy-cpanel.cjs (FTPS).
+# Do not replace this workflow unless the user asks — churn caused many failed runs.
+#
+# If a run fails in under ~15s with "Failed to download archive" / codeload / packfile:
+#   → Re-run the workflow (Actions → failed run → Re-run all jobs). Often GitHub infra, not hosting.
+# Do not rewrite deploy.yml for that flake alone.
+#
+# If deploy fails after build (~45s+) with ERR_TLS_CERT_ALTNAME_INVALID / domains.co.za:
+#   → CPANEL_TLS_STRICT must stay unset/false, or set CPANEL_HOST to cPanel "FTP Server" hostname.
+#
+# Secrets: CPANEL_HOST, CPANEL_USER, CPANEL_PASS, VITE_SUPABASE_*; optional CPANEL_REMOTE_ROOT.
 
 name: Build and Deploy
 

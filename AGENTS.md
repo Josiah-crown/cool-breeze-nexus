@@ -31,9 +31,16 @@
 
 Platform roles in `user_roles`: `super_admin`, `company`, `installer`, `client`. UI gating: `src/lib/accountRoles.ts`. Full matrix, hierarchy, RLS, and sync rules: [`AccountsContext.md`](./AccountsContext.md).
 
+## Frontend deploy (GitHub Actions → cPanel)
+
+- **Workflow:** `.github/workflows/deploy.yml` + `scripts/deploy-cpanel.cjs` (push to `main` → build → FTPS `public_html` on **iotnexus.co.za** hosting).
+- **Agents:** Do **not** rewrite this workflow unless the user explicitly asks — a working pipeline was broken by repeated experiments (May 2026).
+- **Flaky fail (&lt;15s, “Failed to download archive” / codeload):** tell the user to **Re-run all jobs** first; do not change YAML for that alone.
+- **FTPS TLS** (`*.domains.co.za` cert): handled in `deploy-cpanel.cjs` (`rejectUnauthorized` off unless `CPANEL_TLS_STRICT=true`).
+
 ## Production DB backlog (May 2026)
 
-Hosted **IOT-nexus** may still need migrations not applied via CLI (slow/manual SQL partial runs). **Before fixing “client can’t see machines after site owner change”:** apply `20260527160000_sync_site_machines_safe_no_card_order_v1.sql`, then `SELECT sync_site_machines_to_owner(site_id)`. Checklist: `scripts/sql/PRODUCTION_BMS_MIGRATION_CHECKLIST.sql`. CLI: `SUPABASE_DB_PASSWORD` + `npx supabase db push --linked --yes`. Details: `DAILY_LOGS/2026-05-26_PRODUCTION_MIGRATIONS_AND_SITE_OWNER_SYNC.md`. **Frontend:** deploy `main` through **`197a2eb`** (Sites machine detail + Change Owner) to cPanel when ready.
+Hosted **IOT-nexus** may still need migrations not applied via CLI (slow/manual SQL partial runs). **Before fixing “client can’t see machines after site owner change”:** apply `20260527160000_sync_site_machines_safe_no_card_order_v1.sql`, then `SELECT sync_site_machines_to_owner(site_id)`. Checklist: `scripts/sql/PRODUCTION_BMS_MIGRATION_CHECKLIST.sql`. CLI: `SUPABASE_DB_PASSWORD` + `npx supabase db push --linked --yes`. Details: `DAILY_LOGS/2026-05-26_PRODUCTION_MIGRATIONS_AND_SITE_OWNER_SYNC.md`. **Frontend:** push `main` — auto-deploy when Actions is green (see **Frontend deploy** above).
 
 ## Commercial / legal (summary)
 

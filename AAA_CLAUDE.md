@@ -160,7 +160,7 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 - Canvas: Konva (floor layout editor)
 - Maps/visuals: Leaflet (used in parts), ERF visualization (site view)
 - Backend: Supabase (Postgres + RLS + Storage + Realtime + Edge Functions)
-- Hosting: cPanel deploy of Vite build (`dist/` → public_html); `public/.htaccess` — SPA rewrite + no-cache `index.html` after FTP deploy
+- Hosting: cPanel deploy of Vite build (`dist/` → `public_html` on iotnexus.co.za / domains.co.za FTPS). **CI:** `.github/workflows/deploy.yml` — do not rewrite without user request; if Actions fails in &lt;15s with codeload “Failed to download archive”, **re-run** before changing YAML (see `AGENTS.md`). `public/.htaccess` — SPA rewrite + no-cache `index.html`
 - Hardware: ESP32 (2.4GHz WiFi), CT sensors, DS18B20 temperature, voltage pickup dividers
 
 ## ROUTES (CURRENT, MAY 2026)
