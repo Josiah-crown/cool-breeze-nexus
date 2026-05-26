@@ -43,7 +43,7 @@ const TopTaskbar: React.FC<TopTaskbarProps> = ({ title = "Cmonitor", subtitle, r
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <a href={logoHref} className="flex min-w-0 items-center gap-3">
-          <div className="flex h-[3.15rem] shrink-0 aspect-[1024/535] items-center justify-center overflow-hidden rounded-md border border-border bg-[#1a1f1a] px-1 shadow-sm">
+          <div className="m-1 flex h-[3.15rem] shrink-0 aspect-[1024/535] items-center justify-center overflow-hidden rounded-md border border-border bg-[#1a1f1a] p-2.5 shadow-sm">
             <img
               src="/3.png"
               alt="Crown Technologies"

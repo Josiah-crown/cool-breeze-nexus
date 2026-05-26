@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Navigate, useNavigate } from "react-router-dom";
 import TopTaskbar from "@/components/TopTaskbar";
-import { canManageMachines } from "@/lib/accountRoles";
+import { canManageMachines, canManageSiteLayout } from "@/lib/accountRoles";
 
 const DashboardLoading: React.FC<{ embedded?: boolean }> = ({ embedded }) =>
   embedded ? (
@@ -130,6 +130,7 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const selectedMachineForRename = machines.find((m) => m.id === renameMachineId);
   const selectedMachineForManufacturerChange = machines.find((m) => m.id === changeManufacturerMachineId);
   const machineManagement = canManageMachines(user?.role);
+  const canReorderDashboardCards = canManageSiteLayout(user?.role);
 
   if (authLoading) {
     return <DashboardLoading embedded={embedded} />;
@@ -242,7 +243,9 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
         <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-1">Machines by site</h2>
         <p className="text-xs sm:text-sm text-muted-foreground">
           {machineManagement
-            ? "Sites are collapsible (open by default). Pin machines on a floorplan under Sites to group them here. Drag cards by the grip handle to set display order within each site."
+            ? canReorderDashboardCards
+              ? "Sites are collapsible (open by default). Pin machines on a floorplan under Sites to group them here. Drag cards by the grip handle to set display order within each site."
+              : "Sites are collapsible (open by default). Pin machines under Sites (head office). You can manage machines and API keys; card order and site layout are set at head office."
             : "View live machine status and history. Contact your installer to change alerts, notifications, or device setup."}
         </p>
       </div>
@@ -252,6 +255,7 @@ const Dashboard: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
         users={users}
         onMachineClick={setSelectedMachine}
         showMachineManagement={machineManagement}
+        canReorderCards={canReorderDashboardCards}
         onDeleteMachine={machineManagement ? handleDeleteMachine : undefined}
         onChangeOwner={machineManagement ? handleChangeOwner : undefined}
         onRename={machineManagement ? handleRename : undefined}

@@ -7,6 +7,8 @@ import type { UserHierarchy } from "@/hooks/useMachineData";
 import { AssignClientInstallerDialog } from "@/components/AssignClientInstallerDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -104,14 +106,47 @@ const ManagedAccounts: React.FC = () => {
   const allowed = canViewManagedAccountDirectory(user?.role);
   const { accounts, viewerRole, loading, error, reload } = useManagedAccountDirectory(allowed);
   const [query, setQuery] = useState("");
+  const [filterCompanyId, setFilterCompanyId] = useState<string>("all");
+  const [filterInstallerId, setFilterInstallerId] = useState<string>("all");
   const [assignClient, setAssignClient] = useState<ManagedAccountRow | null>(null);
+
+  const isSuper = viewerRole === "super_admin";
+
+  const companyOptions = useMemo(() => {
+    return accounts
+      .filter((a) => a.role === "company")
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [accounts]);
+
+  const installerOptions = useMemo(() => {
+    let list = accounts.filter((a) => a.role === "installer");
+    if (isSuper && filterCompanyId !== "all") {
+      list = list.filter((a) => a.company_id === filterCompanyId);
+    }
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [accounts, isSuper, filterCompanyId]);
 
   const hierarchyUsers = useMemo(() => accountsToUserHierarchy(accounts), [accounts]);
 
   const filtered = useMemo(() => {
+    let list = accounts;
+    if (isSuper && filterCompanyId !== "all") {
+      list = list.filter(
+        (a) =>
+          (a.role === "company" && a.id === filterCompanyId) ||
+          a.company_id === filterCompanyId,
+      );
+    }
+    if (isSuper && filterInstallerId !== "all") {
+      list = list.filter(
+        (a) =>
+          (a.role === "installer" && a.id === filterInstallerId) ||
+          (a.role === "client" && a.installer_id === filterInstallerId),
+      );
+    }
     const q = query.trim().toLowerCase();
-    if (!q) return accounts;
-    return accounts.filter(
+    if (!q) return list;
+    return list.filter(
       (a) =>
         a.name.toLowerCase().includes(q) ||
         a.email.toLowerCase().includes(q) ||
@@ -119,7 +154,7 @@ const ManagedAccounts: React.FC = () => {
         (a.company_name?.toLowerCase().includes(q) ?? false) ||
         (a.installer_name?.toLowerCase().includes(q) ?? false),
     );
-  }, [accounts, query]);
+  }, [accounts, query, isSuper, filterCompanyId, filterInstallerId]);
 
   const byRole = useMemo(() => {
     const clients = filtered.filter((a) => a.role === "client");
@@ -134,7 +169,6 @@ const ManagedAccounts: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const isSuper = viewerRole === "super_admin";
   const showCompanyCol = isSuper;
   const showInstallerCol = true;
 
@@ -145,8 +179,8 @@ const ManagedAccounts: React.FC = () => {
           <h1 className="text-lg font-semibold text-foreground">Managed accounts</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             {isSuper
-              ? "All company, installer, and client accounts on the platform."
-              : "Clients and installers assigned to your company."}
+              ? "All accounts on the platform — filter by company or installer."
+              : "Clients you created or assigned, installers under your company, and clients on your company sites."}
           </p>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => void reload()} disabled={loading}>
@@ -155,13 +189,59 @@ const ManagedAccounts: React.FC = () => {
         </Button>
       </div>
 
-      <div className="mb-4 max-w-md">
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search name, email, company, installer…"
-          aria-label="Search accounts"
-        />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        {isSuper && (
+          <>
+            <div className="w-full min-w-[12rem] sm:w-52 space-y-1">
+              <Label className="text-xs text-muted-foreground">Company</Label>
+              <Select
+                value={filterCompanyId}
+                onValueChange={(v) => {
+                  setFilterCompanyId(v);
+                  setFilterInstallerId("all");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All companies" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All companies</SelectItem>
+                  {companyOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full min-w-[12rem] sm:w-52 space-y-1">
+              <Label className="text-xs text-muted-foreground">Installer</Label>
+              <Select value={filterInstallerId} onValueChange={setFilterInstallerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All installers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All installers</SelectItem>
+                  {installerOptions.map((i) => (
+                    <SelectItem key={i.id} value={i.id}>
+                      {i.name}
+                      {i.company_name ? ` · ${i.company_name}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+        <div className="w-full min-w-[12rem] flex-1 sm:max-w-md space-y-1">
+          <Label className="text-xs text-muted-foreground">Search</Label>
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Name, email, business…"
+            aria-label="Search accounts"
+          />
+        </div>
       </div>
 
       {error && (

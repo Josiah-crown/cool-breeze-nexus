@@ -23,6 +23,8 @@ type Props = {
   onChangeManufacturer?: (id: string) => void;
   onNotificationChange?: () => void;
   showMachineManagement?: boolean;
+  /** Dashboard card drag order — head office / super admin only (defaults to showMachineManagement). */
+  canReorderCards?: boolean;
 };
 
 const GRID_STYLE: React.CSSProperties = {
@@ -39,7 +41,9 @@ const DashboardSiteMachineSections: React.FC<Props> = ({
   onChangeManufacturer,
   onNotificationChange,
   showMachineManagement = false,
+  canReorderCards,
 }) => {
+  const reorderEnabled = canReorderCards ?? showMachineManagement;
   const machineIds = machines.map((m) => m.id);
   const { groups, unassignedMachineIds, loading, error } = useSiteMachineGroups(machineIds);
 
@@ -56,7 +60,7 @@ const DashboardSiteMachineSections: React.FC<Props> = ({
   const cardProps = {
     machinesById: machineById,
     users,
-    canReorder: showMachineManagement,
+    canReorder: reorderEnabled,
     onOrderSaved: saveOrder,
     onMachineClick,
     onDeleteMachine,

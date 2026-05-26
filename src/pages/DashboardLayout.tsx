@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import TopTaskbar from "@/components/TopTaskbar";
-import { canViewManagedAccountDirectory, isClientViewer } from "@/lib/accountRoles";
+import { canViewManagedAccountDirectory, isClientViewer, isSiteLayoutViewer } from "@/lib/accountRoles";
 
 const DashboardLayout: React.FC = () => {
   const { user } = useAuth();
@@ -39,7 +39,7 @@ const DashboardLayout: React.FC = () => {
                 ].join(" ")
               }
             >
-              {isClientViewer(user?.role) ? "Sites (view)" : "Sites"}
+              {isClientViewer(user?.role) || isSiteLayoutViewer(user?.role) ? "Sites (view)" : "Sites"}
             </NavLink>
             <NavLink
               to="/dashboard/alerts"

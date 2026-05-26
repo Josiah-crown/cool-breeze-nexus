@@ -208,7 +208,7 @@ const Buildings: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <Label>Site</Label>
-                {(user.role === "super_admin" || user.role === "company" || user.role === "installer") && (
+                {(user.role === "super_admin" || user.role === "company") && (
                   <Button variant="outline" size="sm" onClick={() => setShowCreateSite(true)}>
                     New site
                   </Button>
@@ -286,7 +286,7 @@ const Buildings: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
         subtitle="Layouts • humidity playback • CSV export"
         rightActions={
           <>
-            {(user.role === "super_admin" || user.role === "company" || user.role === "installer") && (
+            {(user.role === "super_admin" || user.role === "company") && (
               <Button className="bg-[#0D2211] text-white hover:bg-[#1A3A1E]" onClick={() => setShowCreate(true)}>
                 New building
               </Button>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Legacy URL: Paystack used to return here with `?reference=`.
- * Purchases now complete on the partner storefront; this page explains that and points users onward.
+ * Purchases now complete on the Crown Technologies website; this page explains that and points users onward.
  */
 const CheckoutSuccess: React.FC = () => {
   return (
@@ -17,9 +17,9 @@ const CheckoutSuccess: React.FC = () => {
           <div className="font-mono text-[11px] uppercase tracking-wider text-accent">Checkout</div>
           <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Thank you</h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Checkout and payment happen on our partner site. After a successful payment, your{" "}
-            <span className="font-medium text-foreground">Cmonitor login</span> is created automatically—check your email
-            for an invite to set a password, then sign in here to view monitoring and complete{" "}
+            Checkout and payment happen on the Crown Technologies website. After a successful payment, your{" "}
+            <span className="font-medium text-foreground">AirComms account</span> is created automatically—check your email
+            for an invite to set a password, then sign in here to use <span className="font-medium text-foreground">Cmonitor</span> monitoring and complete{" "}
             <span className="font-medium text-foreground">Account</span> (profile and agreements).
           </p>
 

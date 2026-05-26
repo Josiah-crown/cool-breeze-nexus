@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, memo, useCallback, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { MachineStatus, MachineHistoricalData } from '@/types/machine';
 import { StatusLight } from './StatusLight';
@@ -37,6 +38,7 @@ import {
 
 interface MachineDetailViewProps {
   machine: MachineStatus;
+  /** Prefetched 24h series from useMachineData (Machines dashboard); detail view then loads the wide buffer for the time slider. */
   historicalData: MachineHistoricalData;
   onClose: () => void;
   /** Refreshed after API key assign so ESP panel shows Bearer hint without full page reload */
@@ -442,6 +444,36 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   }, [toast]);
   const { user } = useAuth();
   const machineManagement = canManageMachines(user?.role);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Lock page scroll (Sites ERF / dashboard layout scrolls behind the overlay otherwise).
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+    };
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    scrollContainerRef.current?.focus({ preventScroll: true });
+    return () => {
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      body.style.position = prev.bodyPosition;
+      body.style.top = prev.bodyTop;
+      body.style.width = prev.bodyWidth;
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
 
   // Diagnostic: confirm the component is actually mounting and getting the right machine.
   const didLogMountRef = useRef(false);
@@ -1116,16 +1148,22 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     }
   };
 
-  return (
+  const overlay = (
     <div
-      className={cn(
-        "fixed inset-0 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm",
-        stackAboveFullscreen ? "z-[100]" : "z-50",
-      )}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${machine.name} details`}
+      className={cn("fixed inset-0", stackAboveFullscreen ? "z-[100]" : "z-50")}
     >
-      {/* Close button - Fixed position, always visible */}
-      <Button 
-        variant="ghost" 
+      <button
+        type="button"
+        aria-label="Close machine details"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <Button
+        variant="ghost"
         size="icon"
         onClick={onClose}
         className={cn(
@@ -1135,8 +1173,15 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       >
         <X className="h-8 w-8" />
       </Button>
-      
-      <Card className="w-full max-w-7xl max-h-[90vh] overflow-y-auto bg-card border-[0.1875rem] border-[#8FB83D]">
+
+      <div
+        ref={scrollContainerRef}
+        tabIndex={-1}
+        className="relative z-[1] h-[100dvh] max-h-[100dvh] overflow-y-scroll overscroll-y-contain outline-none touch-pan-y"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        <div className="mx-auto w-full max-w-7xl px-4 py-6 pb-16 sm:py-8 sm:pb-20">
+      <Card className="w-full bg-card border-[0.1875rem] border-[#8FB83D]">
         <CardHeader className="flex flex-row items-center justify-between border-b-[0.1875rem] border-[#8FB83D] hud-header">
           <div>
             <CardTitle className="text-[1.5rem] font-semibold" style={{ color: '#8FB83D' }}>{machine.name}</CardTitle>
@@ -1494,8 +1539,12 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </div>
+      </div>
     </div>
   );
+
+  return createPortal(overlay, document.body);
 };
 
 export default MachineDetailView;

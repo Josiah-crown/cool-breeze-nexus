@@ -1,0 +1,158 @@
+---
+description: Cmonitor agent OPP — how to operate on this repo (session flow, safety, verification)
+alwaysApply: true
+---
+
+# Cmonitor — agent operating procedure (OPP)
+
+**Deep product + architecture:** `AAA_CLAUDE.md`  
+**Accounts / roles (technical):** `AccountsContext.md`  
+**BMS product scope:** `docs/PRD-BMS.md`  
+**Repo-wide pointer:** `AGENTS.md`  
+**Daily logs:** `DAILY_LOGS/DAILY_LOG_CHECKLIST.md`
+
+This rule is **always applied** in Cursor. Follow it like a runbook: start → work → verify → hand off.
+
+---
+
+## 1. Identity (do not drift)
+
+- **Cmonitor** = monitoring device and system (not “Cool Breeze BMS”, “IoT Nexus”, or generic “BMS” unless legacy UI strings remain).
+- **AirComms** = where customer **accounts** reside (identity, billing, Account page).
+- **Layer 1:** Machine monitoring — **treat as production** unless the user says otherwise.
+- **Layer 2:** Sites, buildings, ERF, floorplans, humidity playback — **in development**; still use RLS and real patterns, no shortcuts that bypass security.
+- **Crown Technologies** = owns brand names (Cmonitor, AirComms, Cirrus); installer operator; **Paystack sales on Crown website** · **Cirrus** = equipment brand (see `AAA_CLAUDE.md`, `AccountsContext.md` §1).
+
+---
+
+## 2. Session start (before any edit)
+
+1. **Date:** Use **today’s date from the user environment** (chat metadata / user_info). Never infer “today” from the newest `DAILY_LOGS` filename or file `mtime`.
+2. **Task type:** Decide: *question only* → read/answer, no code. *Bug* → reproduce mentally, locate, minimal fix. *Feature* → check PRD + existing patterns first.
+3. **Context load (scale with risk):**
+   - **Low risk** (typos, one file, user pointed to path): open that file + neighbors.
+   - **Medium** (new UI, API, hook): skim `AAA_CLAUDE.md` routes/stack; grep for similar feature.
+   - **High** (auth, RLS, migrations, billing, data loss): read `AAA_CLAUDE.md` relevant section + affected SQL/migrations; prefer policies over UI hacks.
+4. **Accounts / roles / provisioning:** read `AccountsContext.md` before changing roles, directory, owner sync, or `accountRoles.ts`.
+5. **BMS / sites / buildings / humidity:** read `docs/PRD-BMS.md` (or the exact section the user names) before changing behavior.
+6. **New session log:** only if the user or checklist expects it — follow `DAILY_LOGS/DAILY_LOG_CHECKLIST.md`.
+
+---
+
+## 3. How we work (operating loop)
+
+### 3.1 Understand
+- Restate the goal in one sentence if ambiguous.
+- Prefer **reading existing code** over guessing APIs. Use search (`grep`/glob) to find callers, types, and migrations.
+- If the user’s request conflicts with `AAA_CLAUDE.md` or PRD, **the user’s latest message wins** — but call out the conflict briefly.
+
+### 3.2 Plan (internal, brief)
+- Smallest change that satisfies the request.
+- List files you expect to touch; avoid drive-by refactors in unrelated modules.
+
+### 3.3 Implement
+- **Match conventions** in the touched folder: imports, naming, error handling, `cn()`, Supabase client usage.
+- **Minimal scope:** no new dependencies, no new files, no broad renames unless asked.
+- **RLS / security:** if access is wrong, fix **Supabase RLS or server-side** logic. Do not “fix” by hiding data in the client or using service role from the browser.
+- **Migrations:** never edit migrations that may already be applied in prod. **Add a new** `supabase/migrations/YYYYMMDDHHMMSS_description.sql` (or project’s timestamp pattern).
+- **Secrets:** never commit `.env`, keys, or paste secrets into chat or markdown that will be committed.
+- **Agent docs:** if you edit `AGENTS.md` or `AAA_CLAUDE.md`, run **§6.1 pair sync** on the other file before considering the task done.
+
+### 3.4 Verify
+- After non-trivial frontend/backend changes: run **`npm run build`** when reasonable; fix errors you introduce.
+- For SQL: sanity-check policies (USING vs WITH CHECK, `auth.uid()`, helper functions).
+- **Do not claim** “tested in browser” unless you actually ran the app or browser tools.
+
+### 3.5 Hand off
+- Summarize **what changed** and **why** (short).
+- Mention **follow-ups** (e.g. regenerate Supabase types, run migration on staging) if any.
+- No forced “say the word” engagement — optional one-line offer if a natural next step exists.
+
+---
+
+## 4. File touch policy (hard boundaries)
+
+| Path / kind | Rule |
+|-------------|------|
+| `DAILY_LOGS/YYYY-MM-DD_*.md` where **date &lt; today** | **Immutable.** No edits, no footer refresh, no “cleanup”. Corrections → new file per checklist (`*_CORRECTION_*` or today’s log). |
+| Today’s daily log | Edits only **same session**, same calendar day. |
+| `docs/archive/**` | **Read-only** unless user explicitly asks to change archived sources. |
+| `docs/PRD-BMS.md` | Living BMS PRD — edit when product truth changes. |
+| `AAA_CLAUDE.md` | Living platform context — update when architecture/routes change materially. **If shared facts change, update `AGENTS.md` in the same change** (see §6.1). |
+| `AGENTS.md` | Short cross-tool agent contract + links. **If hard rules, session-start steps, or canonical paths change, update `AAA_CLAUDE.md` when the full narrative belongs there** — keep both consistent (see §6.1). |
+| `supabase/migrations/*` (already applied) | **Do not rewrite** — append new migration. |
+| `.env`, `*.env`, credentials | Never in git; never paste into committed files. |
+
+---
+
+## 5. Git & delivery
+
+- **No `git commit`** unless the user **explicitly** asks to commit.
+- **No `git push --force`** to `main`/`master`; warn if user requests it.
+- **No `--no-verify`** / skip hooks unless the user explicitly asks.
+- Prefer **small PRs** when the user splits work; follow their PR/commit rules if provided.
+
+---
+
+## 6. Documentation & daily logs
+
+- Prefer **updating one living doc** (`PRD-BMS.md`, `AAA_CLAUDE.md`) over spawning many new markdown files.
+- **Do not** create new `.md` files unless the user asked or session logging requires it (checklist).
+- When consolidating old docs: **move** superseded files to `docs/archive/`, do not delete history without confirmation.
+
+### 6.1 Pair sync — `AGENTS.md` and `AAA_CLAUDE.md` (required)
+
+These two files form a **split contract**: `AGENTS.md` = minimal always-on summary; `AAA_CLAUDE.md` = full platform context. **Do not let them disagree** on facts both files state (identity, hard rules, links to PRD/checklist/bootstrap).
+
+**Trigger:** Whenever you edit **either** `AGENTS.md` **or** `AAA_CLAUDE.md`, immediately **open the other file** and complete a consistency pass before finishing the task.
+
+**Algorithm (apply in order):**
+
+1. **Detect overlap:** List any of: product name, Layer 1/2 status, hard rules (logs, git, migrations, RLS, secrets), links (`PRD-BMS.md`, `DAILY_LOGS/...`, `.cursor/rules/`, bootstrap section), or new “authoritative path” docs.
+2. **If you changed `AAA_CLAUDE.md`:** Update `AGENTS.md` when any overlap item changed — refresh bullets or links so a tool that **only** reads `AGENTS.md` stays correct. Do **not** paste the full `AAA_CLAUDE.md` into `AGENTS.md`; keep `AGENTS.md` short (pointers + non‑negotiables only).
+3. **If you changed `AGENTS.md`:** Update `AAA_CLAUDE.md` when the edit introduces or alters **architecture, routes, bootstrap steps, or narrative** that belongs in the long doc, or when `AGENTS.md` now claims something `AAA_CLAUDE.md` contradicts.
+4. **If neither file needs the other’s content:** State internally “no pair sync delta” and proceed (e.g. typo fix in one file that does not touch shared facts).
+
+**Goal:** One factual story across both files — `AGENTS.md` accurate at a glance; `AAA_CLAUDE.md` authoritative for depth.
+
+---
+
+## 7. When to stop and ask the user
+
+- Production DB state unknown (migrations already applied?).
+- Change would **edit immutable logs**, **rotate secrets**, or **destructive git**.
+- **Ambiguous product behavior** (billing, roles, client-visible copy) with no PRD/code answer.
+- **Two valid architectures** with different cost (e.g. new table vs reuse) — present tradeoff briefly, then wait or pick the smaller scope if user said “you decide”.
+
+---
+
+## 8. Subagents / parallel work
+
+- Subagents do **not** inherit this chat; **repeat critical constraints** in the task prompt (especially: no past log edits, no commits, RLS-only fixes).
+- Parent agent **merges** results; avoid duplicate migrations or conflicting edits to the same file.
+
+---
+
+## 9. Escalation summary
+
+| Situation | Action |
+|-----------|--------|
+| Past daily log edit requested | Refuse; offer correction addendum or new log. |
+| “Fix RLS” via frontend only | Refuse pattern; implement policy or document exact SQL for user to run. |
+| Rewrite old migration | Refuse; new migration only. |
+| Unclear prod state | Ask before applying destructive or irreversible steps. |
+
+---
+
+## 10. Where detail lives (avoid duplicating drift)
+
+| Topic | Source of truth |
+|-------|-----------------|
+| Short agent contract + links (cross-tool) | `AGENTS.md` — must stay aligned with `AAA_CLAUDE.md` on shared facts (§6.1) |
+| Accounts, roles, hierarchy, RLS/RPC for users | `AccountsContext.md` — sync list at top when account behavior changes |
+| Routes, stack, Layer 1/2 tables | `AAA_CLAUDE.md` |
+| BMS features, roadmap, open questions | `docs/PRD-BMS.md` |
+| Onboarding / Paystack / checkout | `docs/CMONITOR_ONBOARDING_WORKFLOW.md` (if present) |
+| Log format + immutability | `DAILY_LOGS/DAILY_LOG_CHECKLIST.md` |
+
+**Rule of thumb:** This `.mdc` = **how to behave**. `AGENTS.md` + `AAA_CLAUDE.md` = **who we are + what the system is** (pair-synced). `AccountsContext.md` = **accounts and roles (technical)**. `PRD-BMS.md` = **what BMS should do** (product/legal for accounts).

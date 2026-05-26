@@ -86,7 +86,7 @@ export const AddMachineDialog = ({ open, onOpenChange, ownerId, userRole, onMach
         });
 
         setAssignableUsers(userList);
-      } else if (userRole === 'admin' || userRole === 'installer') {
+      } else if (userRole === 'installer') {
         // Installer can assign to their clients
         const { data: assignments, error: assignError } = await supabase
           .from('client_admin_assignments')

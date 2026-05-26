@@ -15,6 +15,7 @@ export type ManagedAccountRow = {
   machine_count: number;
   site_count: number;
   assigned_at: string | null;
+  assigned_by: string | null;
 };
 
 type DirectoryPayload = {

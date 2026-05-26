@@ -38,8 +38,10 @@ import { machinePinAccent, machineTypeIcon, machineTypeLabel } from "@/lib/siteE
 import { outlineSnapThresholdPct, pointerMovedBeyondTap } from "@/lib/erfCanvasPointer";
 import { Maximize2, Minimize2, Plus } from "lucide-react";
 import type { MachineHistoricalData, MachineStatus, MachineType } from "@/types/machine";
+import { EMPTY_MACHINE_HISTORICAL } from "@/lib/emptyMachineHistorical";
 import type { UserHierarchy } from "@/hooks/useMachineData";
 import { usePublicClientDemo } from "@/hooks/usePublicClientDemo";
+import { canManageMachines, canManageSiteLayout, isSiteLayoutViewer } from "@/lib/accountRoles";
 
 type SiteRow = {
   id: string;
@@ -112,21 +114,6 @@ type SiteMachinePositionRow = {
 
 const SITE_SELECTION_STORAGE_KEY = "cmonitor_selected_site_id";
 
-const EMPTY_MACHINE_HISTORICAL: MachineHistoricalData = {
-  power: [],
-  deltaT: [],
-  motorTemp: [],
-  current: [],
-  outsideTemp: [],
-  insideTemp: [],
-  fanActive: [],
-  isCooling: [],
-  isHeating: [],
-  hasWater: [],
-  pumpActive: [],
-  fanSpeed: [],
-};
-
 function siteMemberRoleLabel(role: string): string {
   switch (role) {
     case "manager":
@@ -160,10 +147,14 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const { payload: demoPayload, loading: demoLoading, error: demoError } = usePublicClientDemo(publicDemoMode);
-  const { users: authUsers, machines: authMachines, refetch } = useMachineData(
+  const {
+    users: authUsers,
+    machines: authMachines,
+    historicalData: authHistoricalData,
+    refetch,
+  } = useMachineData(
     publicDemoMode ? "" : user?.id || "",
     publicDemoMode ? "client" : user?.role || "client",
-    { includeHistorical: false },
   );
 
   const demoUsers = useMemo<UserHierarchy[]>(() => {
@@ -180,6 +171,9 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
 
   const users = publicDemoMode ? demoUsers : authUsers;
   const machines = publicDemoMode ? demoPayload?.machines ?? [] : authMachines;
+  const historicalData: Record<string, MachineHistoricalData> = publicDemoMode
+    ? {}
+    : authHistoricalData;
 
   const [showAssignClientHierarchy, setShowAssignClientHierarchy] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<MachineStatus | null>(null);
@@ -294,16 +288,18 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
     if (machine) setSelectedMachine(machine);
   };
 
-  const canManageSite =
-    !publicDemoMode &&
-    (user?.role === "super_admin" || user?.role === "company" || user?.role === "installer");
+  /** ERF, buildings, pins, site settings — company (head office) and super_admin only. */
+  const canEditSiteLayout = !publicDemoMode && canManageSiteLayout(user?.role);
 
-  const canCreateSite = canManageSite;
+  const canManageSite = canEditSiteLayout;
+  const canCreateSite = canEditSiteLayout;
+  const canEditSiteMachines = canEditSiteLayout;
 
-  /** Layout, ERF, buildings, machine pins — installers/companies/super_admin only; clients view only. */
-  const canEditSiteMachines = canManageSite;
+  /** Field commissioning: add machines, API keys (installers + head office). */
+  const canCommissionMachines = !publicDemoMode && canManageMachines(user?.role);
 
-  const isClientSiteViewer = publicDemoMode || user?.role === "client";
+  const isClientSiteViewer = publicDemoMode || isSiteLayoutViewer(user?.role);
+  const isInstallerSiteViewer = user?.role === "installer" && !publicDemoMode;
 
   const canAssignClientHierarchy = user?.role === "super_admin" || user?.role === "company";
 
@@ -1099,11 +1095,18 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
         prev.map((s) => (s.id === selectedSiteId ? (data as SiteRow) : s)).sort((a, b) => a.name.localeCompare(b.name)),
       );
       if (ownerChanged) {
+        const { data: syncedCount, error: syncErr } = await supabase.rpc("sync_site_machines_to_owner", {
+          p_site_id: selectedSiteId,
+        });
+        if (syncErr) {
+          console.warn("sync_site_machines_to_owner:", syncErr);
+        }
         await refetch();
+        const n = typeof syncedCount === "number" ? syncedCount : 0;
         toast.success(
-          sitePlacedMachineIds.size > 0
-            ? `Site updated — ${sitePlacedMachineIds.size} machine(s) on this site map transferred to the new client.`
-            : "Site updated — machine owner changed (no machines on this site map yet).",
+          n > 0
+            ? `Site updated — ${n} machine(s) on this site now belong to the client owner.`
+            : "Site updated — client is site owner (no machines linked to this site yet; place machines on the plan or dashboard).",
         );
       } else {
         toast.success("Site updated");
@@ -1388,7 +1391,10 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
               {isClientSiteViewer ? (
                 <>
                   View-only access — the aerial plan shows your machines only (building outlines are hidden). Click a
-                  machine card or icon to open live readings. Contact your installer to change the layout.
+                  machine card or icon to open live readings.
+                  {user?.role === "client"
+                    ? " Contact your installer or Crown Technologies to change the layout."
+                    : " Site layout (ERF, buildings, pins) is managed at head office — use Add machine below to commission devices."}
                 </>
               ) : (
                 <>
@@ -1398,24 +1404,28 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
               )}
             </p>
           </div>
-          {canEditSiteMachines && (
+          {(canEditSiteLayout || canCommissionMachines) && (
             <div className="flex shrink-0 flex-wrap gap-2">
-              <Button
-                size="sm"
-                className="bg-[#0D2211] text-white hover:bg-[#1A3A1E]"
-                disabled={!selectedSiteId || siteMachines.length === 0}
-                onClick={() => {
-                  setAddMachinePickId(unplacedMachines[0]?.id || siteMachines[0]?.id || "");
-                  setShowAddMachineToSite(true);
-                }}
-              >
-                <Plus className="mr-1.5 h-4 w-4" />
-                Add machine to plan
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowAddMachineDialog(true)}>
-                <Plus className="mr-1.5 h-4 w-4" />
-                Add machine
-              </Button>
+              {canEditSiteLayout && (
+                <Button
+                  size="sm"
+                  className="bg-[#0D2211] text-white hover:bg-[#1A3A1E]"
+                  disabled={!selectedSiteId || siteMachines.length === 0}
+                  onClick={() => {
+                    setAddMachinePickId(unplacedMachines[0]?.id || siteMachines[0]?.id || "");
+                    setShowAddMachineToSite(true);
+                  }}
+                >
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Add machine to plan
+                </Button>
+              )}
+              {canCommissionMachines && (
+                <Button size="sm" variant="outline" onClick={() => setShowAddMachineDialog(true)}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Add machine
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -1634,9 +1644,9 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
   const machineDetailOverlay = selectedMachine ? (
     <MachineDetailView
       machine={selectedMachine}
-      historicalData={EMPTY_MACHINE_HISTORICAL}
+      historicalData={historicalData[selectedMachine.id] ?? EMPTY_MACHINE_HISTORICAL}
       onClose={() => setSelectedMachine(null)}
-      onMachineApiKeyUpdated={canEditSiteMachines ? refetch : undefined}
+      onMachineApiKeyUpdated={canCommissionMachines ? refetch : undefined}
       stackAboveFullscreen={erfFullscreen}
     />
   ) : null;
@@ -1653,7 +1663,7 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
         <Card className="w-full p-4 border border-black/10 bg-white">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold">Site ERF</div>
-            {(user.role === "super_admin" || user.role === "company" || user.role === "installer") && (
+            {canEditSiteLayout && (
               <>
                 <input
                   ref={erfFileInputRef}
@@ -1912,7 +1922,9 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
               <div className="mt-1 space-y-0.5 text-xs text-[#5A7A5E]">
                 {isClientSiteViewer && (
                   <p className="rounded-md border border-[#8FB83D]/30 bg-[#E8F5E9]/80 px-2 py-1 text-[#3D5240]">
-                    View only — layout changes are done by your installer.
+                    {isInstallerSiteViewer
+                      ? "View only on layout — ERF and building outlines are managed at head office."
+                      : "View only — layout changes are done by your installer or Crown Technologies."}
                   </p>
                 )}
                 <div>
@@ -1937,7 +1949,7 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
               </div>
             )}
             <div className="mt-3 flex flex-col gap-2">
-              {canEditSiteMachines && (
+              {canEditSiteLayout && (
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     variant="outline"
@@ -1959,6 +1971,12 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
                     Add machine
                   </Button>
                 </div>
+              )}
+              {canCommissionMachines && !canEditSiteLayout && (
+                <Button variant="outline" className="w-full" onClick={() => setShowAddMachineDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add machine
+                </Button>
               )}
               {canManageSite && (
                 <>
@@ -2389,7 +2407,7 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
                 </SelectContent>
               </Select>
               <div className="text-xs text-muted-foreground">
-                company/installer/manager can manage layouts; viewer is read-only.
+                company/manager can manage layouts; installer and viewer are read-only on site layout.
               </div>
             </div>
           </div>
@@ -2437,11 +2455,11 @@ const Sites: React.FC<{ embedded?: boolean; publicDemoMode?: boolean }> = ({
 
       {!erfFullscreen && machineDetailOverlay}
 
-      {canEditSiteMachines && user && (
+      {canCommissionMachines && user && (
         <AddMachineDialog
           open={showAddMachineDialog}
           onOpenChange={setShowAddMachineDialog}
-          ownerId={user.id}
+          ownerId={selectedSite?.owner_id || user.id}
           userRole={user.role as "super_admin" | "installer" | "company" | "client"}
           onMachineAdded={refetch}
         />

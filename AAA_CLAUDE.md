@@ -1,12 +1,13 @@
 # AAA_CLAUDE.md — Cmonitor Platform (AI Context for Cursor)
 
 ## CRITICAL IDENTITY (DO NOT DRIFT)
-- **Product name**: **Cmonitor** (NOT “Cool Breeze BMS”, NOT “IoT Nexus”)
-- **Owner**: **Crown Technologies** (Johannesburg HVAC installer/maintenance company)
-- **Parent / marketing channel**: **AirComms** (**AirComms.com**, **AirComms.co.za**) — checkout and campaigns may live here; **Cmonitor app** (e.g. crowntechnologies.online / iotnexus.site) remains the monitoring product UI after return from payment.
-- **Cirrus relationship**: **Cirrus is a Crown brand** but operated as a **sister company** that sells to the market; Crown is the installer company.
+- **Cmonitor**: the **monitoring device and system** (hardware ingest, machines, readings, alerts, dashboards; Layer 1 production, Layer 2 BMS in development). NOT “Cool Breeze BMS”, NOT “IoT Nexus”.
+- **AirComms**: **where customer accounts reside** (login, profiles, roles, billing, Account/legal UX). AirComms.com / .co.za is the account home brand.
+- **Brand owner**: **Crown Technologies** — owns the brand names **Cmonitor**, **AirComms**, and **Cirrus** (Johannesburg HVAC installer/maintenance operator).
+- **Sales / Paystack checkout**: **Crown Technologies website** (e.g. crowntechnologies.co.za) — customers are **referred here** to buy; not in-app Paystack. After payment, an **AirComms account** is provisioned; the customer signs in to use **Cmonitor** (`CMONITOR_APP_URL` = monitoring app host).
+- **Cirrus**: Equipment brand under Crown; sells to the market (sister-company positioning in market; brands owned by Crown).
 - **Reality**: **Layer 1 machine monitoring is production-live**. **Layer 2 BMS/spatial is in active development**.
-- **Onboarding workflow (authoritative)**: `docs/CMONITOR_ONBOARDING_WORKFLOW.md` — parent checkout → Paystack webhook → Supabase user + paid order → login; **public demo** is read-only Sites at `/dashboard/demo` (live site flagged `is_public_client_demo`, machines with `demo` in name — no per-account demo machines).
+- **Onboarding workflow (authoritative)**: `docs/CMONITOR_ONBOARDING_WORKFLOW.md` — Crown Technologies checkout → Paystack webhook → Supabase user + paid order → login; **public demo** is read-only Sites at `/dashboard/demo` (live site flagged `is_public_client_demo`, machines with `demo` in name — no per-account demo machines).
 
 ## Agent operating procedure (OPP)
 
@@ -15,7 +16,8 @@
 ### Session start
 1. Confirm **today’s date** from the user environment — do not infer from file timestamps or latest log filename.
 2. Skim this file for product identity and routes before changing UI or docs.
-3. If creating or closing a session log, follow `DAILY_LOGS/DAILY_LOG_CHECKLIST.md`.
+3. **Accounts / roles / RLS / provisioning:** read [`AccountsContext.md`](AccountsContext.md) before changing behavior.
+4. If creating or closing a session log, follow `DAILY_LOGS/DAILY_LOG_CHECKLIST.md`.
 
 ### File touch policy
 
@@ -24,6 +26,7 @@
 | **Past daily logs** (`DAILY_LOGS/YYYY-MM-DD_*.md`, date &lt; today) | **Immutable** — never edit. Use a correction addendum or today’s log. |
 | **Today’s daily log** | Append/update only during the **same session**. |
 | **Living product docs** | Edit in place: `docs/PRD-BMS.md`, `docs/CMONITOR_ONBOARDING_WORKFLOW.md`, etc. |
+| **Accounts / roles** | Edit `AccountsContext.md` first; then sync files listed in its **SYNC REQUIRED** block |
 | **Archive** (`docs/archive/`) | **Read-only** unless the user explicitly asks to revise archived sources. |
 | **Secrets** (`.env`, `*.env`, credentials) | Never commit or paste. Do not overwrite without explicit user request. |
 | **Applied migrations** (`supabase/migrations/`) | Do not rewrite migrations already run in production; add a **new** migration instead. |
@@ -45,8 +48,10 @@
 - Do not create new markdown files the user did not ask for (except session logs per checklist).
 
 ### Product naming (when writing user-facing copy)
-- Prefer **Cmonitor** for the platform; BMS/spatial features are **Layer 2** under Cmonitor.
-- **Crown Technologies** = owner/installer; **AirComms** = parent marketing/checkout channel.
+- **Cmonitor** = monitoring device/system (machines, live data, alerts). **AirComms** = account home (login, profile, agreements).
+- BMS/spatial features are **Layer 2** on the Cmonitor monitoring stack.
+- **Crown Technologies** = owns brand names; installer operator; **Paystack sales** (refer customers to Crown website).
+- **AirComms** = where accounts reside; not the Paystack checkout host.
 
 ### Escalate to the user
 - Unclear whether a past log or migration is already applied in production.
@@ -160,19 +165,19 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 
 ## ROUTES (CURRENT, MAY 2026)
 ### Public
-- `/` marketing home — CTAs to `/dashboard/demo`, client login, partner checkout (`VITE_PARENT_CHECKOUT_URL`, default AirComms). Logged-out taskbar: **Demo dashboard** + **Client login**.
+- `/` marketing home — CTAs to `/dashboard/demo`, client login, Crown Technologies sales (`VITE_PARENT_CHECKOUT_URL`, default `https://crowntechnologies.co.za/booking`). Logged-out taskbar: **Demo dashboard** + **Client login**.
 - `/dashboard/demo` → `/dashboard/demo/sites` — **public client demo** (no login): read-only `Sites.tsx` via RPC `get_public_client_demo()`; set `sites.is_public_client_demo = true` + demo-named machines. Taskbar: **Contact us** + **Client login**. Logged-out `/dashboard` redirects here. Paid clients get **no** seeded demo machines on their account.
 - `/login` authentication
-- `/pricing` Cmonitor plans and indicative pricing; **purchase** opens partner storefront (`VITE_PARENT_CHECKOUT_URL`, default AirComms) with `?offer=monitoring` — **no in-app Paystack**
-- `/offers`, `/offers/:offerId` — offer list + detail; CTAs redirect to partner site (or mail for custom SLA quotes)
+- `/pricing` Cmonitor plans and indicative pricing; **purchase** opens **Crown Technologies sales URL** (`VITE_PARENT_CHECKOUT_URL`) with `?offer=monitoring` — **no in-app Paystack**
+- `/offers`, `/offers/:offerId` — offer list + detail; CTAs redirect to **Crown Technologies website** (or mail for custom SLA quotes)
 - `/maintenance` maintenance / repair lead form
-- `/checkout/success` — legacy URL; purchases complete on partner site (see `docs/PRD-BMS.md` §4.5)
+- `/checkout/success` — legacy URL; purchases complete on Crown Technologies website (see `docs/PRD-BMS.md` §4.5)
 - **QC1 quote builder:** **on hold** (routes removed). Residual modules: `src/components/quotes/*`, `src/lib/quote*`, `src/types/quotes.ts`; doc `docs/product/SOLAR_QUOTING.md` may be stale until feature returns.
 
 ### Authenticated (Dashboard hub)
 - `/dashboard/*` nested hub layout
   - **Dashboard home (`/dashboard`)** — machine cards grouped by **BMS site** (machines placed on a site’s building floorplan). Each site is a **collapsible block defaulting to open**; machines not pinned to any site appear under **“Not on a site map”**. Hierarchy tree + company filter dropdown were removed from this page. **Installers/companies/super_admin:** toolbar **Add machine**, **Add client / user**, **Sites**, **Settings**. **`client` role:** **Refresh** + **View sites** only; machine cards and detail sheet are read-only (no rename, alerts config, ESP keys). Helpers: `src/lib/accountRoles.ts` (`canManageMachines`, `isClientViewer`). Poll/realtime refetch uses background reload (no full-page spinner after first load).
-  - **`/dashboard/sites`** (`Sites.tsx`, embedded in hub) — ERF plan, buildings, machine pins. **Clients:** view-only (RLS `user_can_manage_site` false for clients); tap ERF machine icon or machine card → **`MachineDetailView`**. **Installers+:** upload ERF, client site owner, company assignment, draw outlines, place/move pins. Manual: `docs/CMONITOR_SITES_ERF_MANUAL.md`.
+  - **`/dashboard/sites`** (`Sites.tsx`, embedded in hub) — ERF plan, buildings, machine pins. **Clients and installers:** view-only layout (`user_can_manage_site` false — migration `20260527140000`); tap ERF machine icon or machine card → **`MachineDetailView`**. **Company + super_admin:** upload ERF, assign client site owner, company assignment, draw outlines, place/move pins. **Installers** commission machines on dashboard / machine detail (API keys), not Sites layout. Manual: `docs/CMONITOR_SITES_ERF_MANUAL.md`. Accounts: [`AccountsContext.md`](AccountsContext.md).
   - buildings opened from within sites flow
 
 ### Legal / commercial (PRD pointers)
@@ -292,11 +297,10 @@ Site
 - Future: link Layer 1 `machines` → Layer 2 floor pins for spatial context; later zones + presence automation
 
 ## USER ROLES + SECURITY (RLS-ENFORCED)
-**DB enum**: `super_admin`, `company`, `installer`, `client` (see `supabase/migrations/000_COMPLETE_DATABASE_SCHEMA.sql`)
-- `super_admin`: global access
-- `company`: manage company scope
-- `installer`: manage assigned client scope
-- `client`: read machines and **view** sites/ERF; **cannot** manage site layout (`user_can_manage_site` false — migration `20260522130000`). UI mirrors via `src/lib/accountRoles.ts`.
+
+**Authoritative account model:** [`AccountsContext.md`](AccountsContext.md) — platform roles (`user_roles`), org assignments, `sites.owner_id` / `machines.owner_id`, site memberships, capability matrix, RPCs.
+
+**UI gating:** `src/lib/accountRoles.ts` · **Display labels:** `src/lib/roleConfig.ts` (no `super_admin` in roleConfig).
 
 Security model: Supabase **RLS everywhere**. Never “fix access” only in frontend — verify DB policies and service-role usage in edge functions.
 
@@ -316,100 +320,9 @@ Firmware pointers (repo):
 - Supabase provides DB/Auth/Storage/Edge Functions/Realtime
 
 ## SOURCES OF TRUTH
+- **Accounts / roles:** [`AccountsContext.md`](AccountsContext.md)
 - Layer 1 schema + roles: `supabase/migrations/000_COMPLETE_DATABASE_SCHEMA.sql`
 - Layer 2 ERF work: `DAILY_LOGS/2026-05-06_DASHBOARD_HUB_AND_SITE_ERF_WIREFRAMES.md`
 - BMS migrations: `supabase/migrations/20260430*` + `20260506000010_site_erf_and_shapes_v1.sql`
-
-# AAA_CLAUDE.md — Cool Breeze BMS (AI Context)
-
-## PROJECT
-Name: Cool Breeze BMS (Building Management System)  
-Type: Multi-tenant BMS platform with IoT device integration  
-Stack: React, TypeScript, Vite, Tailwind, shadcn/ui, Supabase, Leaflet, Konva  
-Region: South Africa  
-Hosting: iotnexus.site (cPanel)  
-Development: Cursor
-
-## DESCRIPTION
-Building Management System with multi-tenant Sites → Buildings → Floors, visual tooling (site ERF + building layouts), humidity monitoring/playback, and a foundation for presence-based automation (mmWave sensors). Uses Supabase Auth + RLS for tenant isolation.
-
-## SYSTEM HIERARCHY
-```
-Site
-  ├─ ERF (1 image per site) + Building wireframes (rectangles on ERF)
-  └─ Buildings
-      └─ Floors
-          ├─ Pins (machine positions)
-          ├─ Zones (future: presence-controlled)
-          └─ Devices / Machines (ESP32 + controllers)
-```
-
-## CORE FEATURES (CURRENT)
-### Dashboard hub + navigation
-- Nested routes under `/dashboard/*` using `DashboardLayout`
-- Site management and building access live inside the dashboard sections (Buildings grouped under Sites)
-
-### Site ERF (v1 shipped 2026-05-06)
-- Upload 1 ERF image per site
-- Place building rectangles (wireframes) on the ERF
-- “Add building” can seed floors, then enter placing mode to drop the rectangle
-
-### Building layout editor
-- Upload floorplan images per floor
-- Position machines/devices on floorplans (Konva canvas)
-- Save/load layouts from Supabase
-
-### Humidity monitoring & playback
-- Building hourly median timeline (7 days)
-- Slider scrubbing, layout heatmap pins, readouts view, CSV export
-
-## DATA MODEL (HIGHLIGHTS)
-### New (2026-05-06)
-- `site_erf_assets`: one ERF image path per site
-- `site_building_shapes`: building rectangles stored as `%` coordinates:
-  - `x_pct`, `y_pct`, `w_pct`, `h_pct`
-
-### Storage (current MVP choice)
-- ERF images are stored in the existing `floorplans` bucket:
-  - Object key: `site-erf/<site_id>/<timestamp>.<ext>`
-
-## ROUTES (CURRENT REALITY)
-### Public
-- `/` landing
-- `/login`
-
-### Authenticated
-- `/dashboard/*` hub layout (nested)
-  - Sites section (includes building list + ERF view)
-- Building views (opened from within Sites)
-- Layout editor: `/buildings/:id/designer`
-- Humidity: `/buildings/:id`
-
-## WHERE THINGS LIVE (CODE POINTERS)
-- Routing entry: `src/App.tsx`
-- Dashboard hub layout (nested): `src/pages/DashboardLayout.tsx`
-- Sites + ERF UI (upload, add building, placing mode): `src/pages/Sites.tsx`
-- Dashboard hub page: `src/pages/Dashboard.tsx`
-- Shared top bar: `src/components/TopTaskbar.tsx`
-
-## DATABASE POINTERS
-- ERF + shapes migration: `supabase/migrations/20260506000010_site_erf_and_shapes_v1.sql`
-- Core schema/history: `supabase/migrations/` (sites/buildings/floors/humidity are implemented via migrations here)
-
-## ROLES + SECURITY (RLS)
-- Multi-tenant isolation is enforced via Supabase **Row Level Security** (site membership-based access).
-- Roles used in memberships: `owner`, `company`, `installer`, `manager` (capabilities differ; keep UI actions role-gated).
-
-## CURRENT PRIORITIES (MVP)
-- Site ERF v2: drag/move, resize, rename labels, delete/undo safety
-- Layout editor UX: improve “place machine” workflow; defer rooms/partitions until schema/design is agreed
-- Presence foundations: ingestion → occupancy state → policy runner (Edge Function)
-
-## CONVENTIONS
-- camelCase: JS/TS variables, functions
-- PascalCase: components, TS types
-- snake_case: Supabase tables/columns/RPCs
-
-## REFERENCE
-- Daily log for the hub + ERF work: `DAILY_LOGS/2026-05-06_DASHBOARD_HUB_AND_SITE_ERF_WIREFRAMES.md`
+- Production DB backlog (site owner sync, installer layout readonly): [`AGENTS.md`](AGENTS.md), `scripts/sql/PRODUCTION_BMS_MIGRATION_CHECKLIST.sql`
 

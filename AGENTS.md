@@ -1,6 +1,6 @@
 # AGENTS.md — Cmonitor repo instructions for AI agents
 
-**Product:** Cmonitor (Crown Technologies) · React/Vite + Supabase  
+**Monitoring system:** Cmonitor · **Accounts:** AirComms · **Brands:** Crown Technologies · React/Vite + Supabase  
 **Full context:** [`AAA_CLAUDE.md`](./AAA_CLAUDE.md) (identity, architecture, bootstrap, OPP)  
 **Cursor runbook (session flow, verify, handoff):** [`.cursor/rules/cmonitor-agent-opp.mdc`](./.cursor/rules/cmonitor-agent-opp.mdc)
 
@@ -8,8 +8,9 @@
 
 1. Confirm **today’s date** from the environment — not from log file timestamps.
 2. Read **Agent operating procedure** in `AAA_CLAUDE.md` before editing files.
-3. For BMS work: read `docs/PRD-BMS.md`.
-4. For session logs: follow `DAILY_LOGS/DAILY_LOG_CHECKLIST.md`.
+3. For **accounts / roles / RLS / provisioning:** read [`AccountsContext.md`](./AccountsContext.md).
+4. For BMS work: read `docs/PRD-BMS.md`.
+5. For session logs: follow `DAILY_LOGS/DAILY_LOG_CHECKLIST.md`.
 
 ## Hard rules
 
@@ -22,8 +23,17 @@
 
 ## Product naming
 
-- **Cmonitor** = platform (Layer 1 monitoring live, Layer 2 BMS in development)
-- **Crown Technologies** = owner/installer · **AirComms** = marketing/checkout channel
+- **Cmonitor** = monitoring device and system (Layer 1 live, Layer 2 BMS in development)
+- **AirComms** = where customer accounts reside (login, profile, roles)
+- **Crown Technologies** = owns brand names (Cmonitor, AirComms, Cirrus); installer operator; **Paystack sales** on Crown website
+
+## Accounts (summary)
+
+Platform roles in `user_roles`: `super_admin`, `company`, `installer`, `client`. UI gating: `src/lib/accountRoles.ts`. Full matrix, hierarchy, RLS, and sync rules: [`AccountsContext.md`](./AccountsContext.md).
+
+## Production DB backlog (May 2026)
+
+Hosted **IOT-nexus** may still need migrations not applied via CLI (slow/manual SQL partial runs). **Before fixing “client can’t see machines after site owner change”:** apply `20260527160000_sync_site_machines_safe_no_card_order_v1.sql`, then `SELECT sync_site_machines_to_owner(site_id)`. Checklist: `scripts/sql/PRODUCTION_BMS_MIGRATION_CHECKLIST.sql`. CLI: `SUPABASE_DB_PASSWORD` + `npx supabase db push --linked --yes`. Details: `DAILY_LOGS/2026-05-26_PRODUCTION_MIGRATIONS_AND_SITE_OWNER_SYNC.md`.
 
 ## Commercial / legal (summary)
 
