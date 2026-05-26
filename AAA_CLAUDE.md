@@ -177,7 +177,7 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 ### Authenticated (Dashboard hub)
 - `/dashboard/*` nested hub layout
   - **Dashboard home (`/dashboard`)** — machine cards grouped by **BMS site** (machines placed on a site’s building floorplan). Each site is a **collapsible block defaulting to open**; machines not pinned to any site appear under **“Not on a site map”**. Hierarchy tree + company filter dropdown were removed from this page. **Installers/companies/super_admin:** toolbar **Add machine**, **Add client / user**, **Sites**, **Settings**. **`client` role:** **Refresh** + **View sites** only; machine cards and detail sheet are read-only (no rename, alerts config, ESP keys). Helpers: `src/lib/accountRoles.ts` (`canManageMachines`, `isClientViewer`). Poll/realtime refetch uses background reload (no full-page spinner after first load).
-  - **`/dashboard/sites`** (`Sites.tsx`, embedded in hub) — ERF plan, buildings, machine pins. **Clients and installers:** view-only layout (`user_can_manage_site` false — migration `20260527140000`); tap ERF machine icon or machine card → **`MachineDetailView`**. **Company + super_admin:** upload ERF, assign client site owner, company assignment, draw outlines, place/move pins. **Installers** commission machines on dashboard / machine detail (API keys), not Sites layout. Manual: `docs/CMONITOR_SITES_ERF_MANUAL.md`. Accounts: [`AccountsContext.md`](AccountsContext.md).
+  - **`/dashboard/sites`** (`Sites.tsx`, embedded in hub) — ERF plan, buildings, machine pins. **Clients and installers:** view-only layout (`user_can_manage_site` false — migration `20260527140000`); tap ERF machine icon or machine card → **`MachineDetailView`** (same historical chart + time slider as Machines dashboard — see below). **Company + super_admin:** upload ERF, assign client site owner, company assignment, draw outlines, place/move pins. **Installers** commission machines on dashboard / machine detail (API keys), not Sites layout. Manual: `docs/CMONITOR_SITES_ERF_MANUAL.md`. Accounts: [`AccountsContext.md`](AccountsContext.md) §4.1.
   - buildings opened from within sites flow
 
 ### Legal / commercial (PRD pointers)
@@ -195,7 +195,7 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 - Dashboard hub layout: `src/pages/DashboardLayout.tsx`
 - Public demo layout: `src/pages/DemoDashboardLayout.tsx`, `src/lib/publicClientDemo.ts`, `src/hooks/usePublicClientDemo.ts`
 - Dashboard home: `src/pages/Dashboard.tsx` (site-grouped machine grid: `src/components/DashboardSiteMachineSections.tsx`, `src/hooks/useSiteMachineGroups.ts`)
-- Machine expanded sheet: `src/components/MachineDetailView.tsx` (ESP ingest + API keys at bottom)
+- Machine expanded sheet: `src/components/MachineDetailView.tsx` — portal overlay for scroll; `useMachineData` 24h prefetch passed from **Dashboard** and **Sites**; detail loads wide buffer for **6 days back** slider; ESP/API keys at bottom when `canManageMachines`
 - Sites + ERF UI: `src/pages/Sites.tsx`, `src/components/SiteErfMachinePins.tsx`, `src/components/SiteErfOutlineLayer.tsx`
 - Role helpers (UI gating): `src/lib/accountRoles.ts`
 - Shared top bar: `src/components/TopTaskbar.tsx`
@@ -204,7 +204,8 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 - Manufacturer mapping: `src/lib/machineConfig.ts`
 - Roles UI config: `src/lib/roleConfig.ts` (note: DB has `super_admin` too)
 - Historical queries wrapper: `src/lib/historicalData.ts`
-- Machine data hooks: `src/hooks/useMachineData.tsx`
+- Machine data hooks: `src/hooks/useMachineData.tsx` (default `includeHistorical: true` — required for machine detail time slider)
+- Empty historical fallback: `src/lib/emptyMachineHistorical.ts` (demo / missing seed only)
 
 ### Supabase edge functions
 - ESP32 ingestion: `supabase/functions/esp32-data-receiver/index.ts`
