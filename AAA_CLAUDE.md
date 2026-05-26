@@ -6,7 +6,7 @@
 - **Parent / marketing channel**: **AirComms** (**AirComms.com**, **AirComms.co.za**) — checkout and campaigns may live here; **Cmonitor app** (e.g. crowntechnologies.online / iotnexus.site) remains the monitoring product UI after return from payment.
 - **Cirrus relationship**: **Cirrus is a Crown brand** but operated as a **sister company** that sells to the market; Crown is the installer company.
 - **Reality**: **Layer 1 machine monitoring is production-live**. **Layer 2 BMS/spatial is in active development**.
-- **Onboarding workflow (authoritative)**: `docs/CMONITOR_ONBOARDING_WORKFLOW.md` — parent checkout → Paystack webhook → Supabase user + paid order → login; **homepage** holds the public demo (no per-account demo machines).
+- **Onboarding workflow (authoritative)**: `docs/CMONITOR_ONBOARDING_WORKFLOW.md` — parent checkout → Paystack webhook → Supabase user + paid order → login; **public demo** is read-only Sites at `/dashboard/demo` (live site flagged `is_public_client_demo`, machines with `demo` in name — no per-account demo machines).
 
 ## Agent operating procedure (OPP)
 
@@ -155,12 +155,13 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 - Canvas: Konva (floor layout editor)
 - Maps/visuals: Leaflet (used in parts), ERF visualization (site view)
 - Backend: Supabase (Postgres + RLS + Storage + Realtime + Edge Functions)
-- Hosting: cPanel deploy of Vite build (`dist/` → public_html)
+- Hosting: cPanel deploy of Vite build (`dist/` → public_html); `public/.htaccess` — SPA rewrite + no-cache `index.html` after FTP deploy
 - Hardware: ESP32 (2.4GHz WiFi), CT sensors, DS18B20 temperature, voltage pickup dividers
 
 ## ROUTES (CURRENT, MAY 2026)
 ### Public
-- `/` **demo dashboard preview** — **visible to everyone without login** (static sample UI); logged-in users redirect to `/dashboard`. Links to login / parent checkout (`VITE_PARENT_CHECKOUT_URL`, default AirComms). Paid clients get **no** seeded demo machines — only real machines once provisioned.
+- `/` marketing home — CTAs to `/dashboard/demo`, client login, partner checkout (`VITE_PARENT_CHECKOUT_URL`, default AirComms). Logged-out taskbar: **Demo dashboard** + **Client login**.
+- `/dashboard/demo` → `/dashboard/demo/sites` — **public client demo** (no login): read-only `Sites.tsx` via RPC `get_public_client_demo()`; set `sites.is_public_client_demo = true` + demo-named machines. Taskbar: **Contact us** + **Client login**. Logged-out `/dashboard` redirects here. Paid clients get **no** seeded demo machines on their account.
 - `/login` authentication
 - `/pricing` Cmonitor plans and indicative pricing; **purchase** opens partner storefront (`VITE_PARENT_CHECKOUT_URL`, default AirComms) with `?offer=monitoring` — **no in-app Paystack**
 - `/offers`, `/offers/:offerId` — offer list + detail; CTAs redirect to partner site (or mail for custom SLA quotes)
@@ -187,6 +188,7 @@ LAYER 2: SPATIAL / BMS         ⏳ IN DEVELOPMENT
 - Main routing: `src/App.tsx`
 - **Quoting (on hold):** QC1 workbook code remains under `src/components/quotes/`, `src/lib/quoteCalculations.ts`, `src/lib/quoteStorage.ts`, `src/config/qc1Catalog.ts` (not routed in app)
 - Dashboard hub layout: `src/pages/DashboardLayout.tsx`
+- Public demo layout: `src/pages/DemoDashboardLayout.tsx`, `src/lib/publicClientDemo.ts`, `src/hooks/usePublicClientDemo.ts`
 - Dashboard home: `src/pages/Dashboard.tsx` (site-grouped machine grid: `src/components/DashboardSiteMachineSections.tsx`, `src/hooks/useSiteMachineGroups.ts`)
 - Machine expanded sheet: `src/components/MachineDetailView.tsx` (ESP ingest + API keys at bottom)
 - Sites + ERF UI: `src/pages/Sites.tsx`, `src/components/SiteErfMachinePins.tsx`, `src/components/SiteErfOutlineLayer.tsx`
