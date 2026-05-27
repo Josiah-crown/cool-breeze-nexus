@@ -494,7 +494,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
   const [loadingHistoricalData, setLoadingHistoricalData] = useState(false);
   // When in 24h mode, allow shifting the 24h window back across the last 7 days (max 6 days back)
   const [hoursBack, setHoursBack] = useState(0); // 0 = ends "now", 144 = ends 6 days ago
-  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const [viewportEl, setViewportEl] = useState<HTMLDivElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [hiddenLines, setHiddenLines] = useState<Set<string>>(new Set());
   const [editingSetpoint, setEditingSetpoint] = useState(false);
@@ -676,7 +676,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
 
   // Track viewport width so we can size the wide 7-day page.
   useLayoutEffect(() => {
-    const el = viewportRef.current;
+    const el = viewportEl;
     if (!el) return;
 
     const update = () => setViewportWidth(el.clientWidth || 0);
@@ -685,7 +685,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
     const ro = new ResizeObserver(() => update());
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [viewportEl]);
 
   useEffect(() => {
     let ignore = false;
@@ -1398,7 +1398,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
                 ) : (
                   <>
                     {selectedPeriod === '24h' || selectedPeriod === '7d' || selectedPeriod === '30d' ? (
-                      <div ref={viewportRef} className="relative overflow-hidden">
+                      <div ref={setViewportEl} className="relative overflow-hidden">
                         <div
                           className="will-change-transform transition-transform duration-300 ease-out"
                           style={{
