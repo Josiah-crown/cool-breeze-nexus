@@ -1153,7 +1153,10 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={`${machine.name} details`}
-      className={cn("fixed inset-0", stackAboveFullscreen ? "z-[100]" : "z-50")}
+      className={cn(
+        "fixed inset-0",
+        stackAboveFullscreen ? "z-[250]" : "z-50",
+      )}
     >
       <button
         type="button"
@@ -1168,7 +1171,7 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
         onClick={onClose}
         className={cn(
           "fixed top-4 right-4 w-14 h-14 rounded-full bg-white hover:bg-[#8FB83D]/10 text-[#8FB83D] border-2 border-[#8FB83D] shadow-lg hover:scale-110 transition-all",
-          stackAboveFullscreen ? "z-[110]" : "z-[60]",
+          stackAboveFullscreen ? "z-[260]" : "z-[60]",
         )}
       >
         <X className="h-8 w-8" />
@@ -1543,6 +1546,13 @@ const MachineDetailView: React.FC<MachineDetailViewProps> = ({
       </div>
     </div>
   );
+
+  // Fullscreen API promotes one element to the browser top layer; portaling to
+  // document.body would render behind the ERF/building image. Parent (Sites)
+  // mounts this inside the fullscreen container when stackAboveFullscreen.
+  if (stackAboveFullscreen) {
+    return overlay;
+  }
 
   return createPortal(overlay, document.body);
 };
